@@ -1,0 +1,44 @@
+name: mealique
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any
+  cupertino_icons: ^1.0.8
+  http: ^0.13.6
+  flutter_secure_storage: ^8.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/mealique.png"
+  web:
+    generate: true
+    image_path: "assets/mealique.png"
+  windows:
+    generate: true
+    image_path: "assets/mealique.png"
+    icon_size: 48 # min:48, max:256, default: 48
+  macos:
+    generate: true
+    image_path: "assets/mealique.png"
+
+flutter:
+  generate: true
+  uses-material-design: true
+  assets:
+    - assets/mealique.png

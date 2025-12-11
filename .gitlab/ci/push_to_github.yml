@@ -1,0 +1,25 @@
+variables:
+  GIT_DEPTH: 0
+
+stages:
+  - push
+
+push_to_github:
+  stage: push
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache git
+    - git config --global user.name "matti122"
+    - git config --global user.email "matti122@whirlingbits.de"
+
+  script:
+    - git remote -v
+    - git branch -a
+    - git status
+    - git log --oneline --decorate --graph -20
+    - git remote add github https://matti122:${GITHUB_TOKEN}@github.com/WhirlingBits/mealique.git
+    - git push github HEAD:refs/heads/main
+    - git push github --tags
+  only:
+    - main
+  when: manual

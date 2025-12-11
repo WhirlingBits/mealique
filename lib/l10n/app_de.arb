@@ -1,0 +1,9 @@
+{
+    "welcome": "Willkommen",
+    "serverAddress": "Server Adresse",
+    "serverHint": "https://mealie.example",
+    "email": "Email",
+    "password": "Passwort",
+    "login": "Einloggen",
+    "fillAllFields": "Bitte Server, Email und Passwort ausfüllen."
+}
