@@ -16,11 +16,24 @@ dependencies:
   http: ^0.13.6
   flutter_secure_storage: ^8.0.0
 
+  # Networking
+  dio: ^5.4.0
+
+  # Database (Drift & SQLite)
+  drift: ^2.16.0
+  sqlite3_flutter_libs: ^0.5.0
+  path_provider: ^2.1.2
+  path: ^1.9.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.13.1
+
+  # Code Generation für Drift
+  build_runner: ^2.4.8
+  drift_dev: ^2.16.0
 
 flutter_launcher_icons:
   android: true
