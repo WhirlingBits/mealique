@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      // Starte mit dem AuthCheckScreen, um den Login-Status zu prüfen
+      // Start with the AuthCheckScreen to check the login status.
       home: const AuthCheckScreen(),
     );
   }
