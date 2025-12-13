@@ -20,7 +20,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
   Future<void> _login() async {
-    // Holen Sie sich die Übersetzungen hier, da der Kontext benötigt wird
     final l10n = AppLocalizations.of(context)!;
 
     final rawServer = _serverController.text.trim();
@@ -36,7 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!server.startsWith('http://') && !server.startsWith('https://')) {
       server = 'https://$server';
     }
-    // Normalisiere: entferne abschließenden Schrägstrich, dann anhängen
+    // Normalise: remove trailing slash, then append
     if (server.endsWith('/')) server = server.substring(0, server.length - 1);
     final uri = Uri.parse('$server/api/auth/token');
 
