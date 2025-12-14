@@ -475,6 +475,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No meals planned.'**
   String get noMealsPlanned;
+
+  /// No description provided for @noToken.
+  ///
+  /// In en, this message translates to:
+  /// **'No token found. Please log in again.'**
+  String get noToken;
+
+  /// Error message shown when login fails
+  ///
+  /// In en, this message translates to:
+  /// **'Login error: {error}'**
+  String loginError(String error);
 }
 
 class _AppLocalizationsDelegate

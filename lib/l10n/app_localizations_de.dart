@@ -197,4 +197,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get noMealsPlanned => 'No meals planned.';
+
+  @override
+  String get noToken => 'No token found. Please log in again.';
+
+  @override
+  String loginError(String error) {
+    return 'Login error: $error';
+  }
 }

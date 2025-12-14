@@ -1,9 +1,8 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'home_screen.dart';
 import '../../l10n/app_localizations.dart';
+import '../../data/remote/mealie_api.dart';
+import '../../data/local/token_storage.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,7 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _serverController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _storage = FlutterSecureStorage();
+  final _tokenStorage = TokenStorage();
   bool _isLoading = false;
 
   Future<void> _login() async {
@@ -24,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final rawServer = _serverController.text.trim();
     final email = _emailController.text.trim();
-    final password = _password_controller_text();
+    final password = _passwordController.text;
 
     if (rawServer.isEmpty || email.isEmpty || password.isEmpty) {
       _showMessage(l10n.fillAllFields);
@@ -35,51 +34,33 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!server.startsWith('http://') && !server.startsWith('https://')) {
       server = 'https://$server';
     }
-    // Normalise: remove trailing slash, then append
+    // Normalise: remove trailing slash
     if (server.endsWith('/')) server = server.substring(0, server.length - 1);
-    final uri = Uri.parse('$server/api/auth/token');
 
     setState(() => _isLoading = true);
 
     try {
-      final res = await http.post(
-        uri,
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {'username': email, 'password': password},
-      );
+      // 1. API Instanz erstellen
+      final api = MealieApi(baseUrl: server);
 
-      if (res.statusCode != 200) {
-        String msg = 'Login fehlgeschlagen (${res.statusCode})';
-        try {
-          final body = jsonDecode(res.body);
-          if (body is Map && body['detail'] != null) msg = body['detail'].toString();
-        } catch (_) {}
-        _showMessage(msg);
-        return;
-      }
+      // 2. Login durchführen (Token wird intern von MealieApi gespeichert)
+      await api.login(email, password);
 
-      final body = jsonDecode(res.body);
-      final access = body['access_token'] ?? body['accessToken'] ?? body['token'];
-      if (access == null) {
-        _showMessage('Kein access token erhalten.');
-        return;
-      }
-
-      await _storage.write(key: 'mealie_server', value: server);
-      await _storage.write(key: 'access_token', value: access.toString());
+      // 3. Server URL separat speichern für spätere API Aufrufe beim Neustart
+      await _tokenStorage.saveServerUrl(server);
 
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     } catch (e) {
-      _showMessage('Fehler beim Login: $e');
+      // Error handling simplified, as MealieApi throws readable exceptions
+      final msg = e.toString().replaceAll('Exception: ', '');
+      _showMessage(l10n.loginError(msg));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
-
-  String _password_controller_text() => _passwordController.text;
 
   void _showMessage(String msg) {
     if (!mounted) return;
