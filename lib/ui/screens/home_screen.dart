@@ -19,7 +19,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  // Lokaler State, der sich ändern kann
+  // Local state that may change
   late bool _isOffline;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
@@ -33,22 +33,22 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialen Wert vom Widget übernehmen
+    // Apply initial value from widget
     _isOffline = widget.isOffline;
 
-    // 1. Initiale Snackbar zeigen, falls wir schon offline gestartet sind
+    // 1. Display initial snack bar if we have already started offline
     if (_isOffline) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showOfflineSnackBar();
       });
     }
 
-    // 2. Stream abonnieren für Live-Updates
+    // 2. Subscribe to stream for live updates
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
-      // Wenn 'none' im Ergebnis ist, haben wir keine Verbindung
+      //  If the result is 'none' we have no connection.
       final bool isNowOffline = results.contains(ConnectivityResult.none);
 
-      // Nur reagieren, wenn sich der Status wirklich geändert hat
+      // Only react if the status has actually changed
       if (isNowOffline != _isOffline) {
         setState(() {
           _isOffline = isNowOffline;
@@ -57,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
         if (_isOffline) {
           _showOfflineSnackBar();
         } else {
-          // Optional: Snackbar ausblenden oder "Wieder online" anzeigen
+          // Hide snack bar or display ‘Back online’
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
         }
       }
@@ -102,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text(l10n.home),
         actions: [
-          // Wir nutzen hier die lokale Variable _isOffline statt widget.isOffline
+          // Here, we use the local variable _isOffline instead of widget.isOffline.
           if (_isOffline)
             const Padding(
               padding: EdgeInsets.only(right: 16.0),
@@ -111,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
-              // Logout Logik
+              // Logout logic here
             },
           )
         ],
