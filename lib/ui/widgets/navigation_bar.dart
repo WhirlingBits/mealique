@@ -15,31 +15,41 @@ class AppNavigationBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return NavigationBar(
-      onDestinationSelected: onDestinationSelected,
-      selectedIndex: selectedIndex,
-      destinations: <Widget>[
-        NavigationDestination(
-          icon: const Icon(Icons.home_outlined),
-          selectedIcon: const Icon(Icons.home),
-          label: l10n.home,
+    return NavigationBarTheme(
+      data: NavigationBarThemeData(
+        // Setzt die Textfarbe für alle Zustände auf Weiß
+        labelTextStyle: WidgetStateProperty.all(
+          const TextStyle(color: Colors.white),
         ),
-        NavigationDestination(
-          icon: const Icon(Icons.menu_book_outlined),
-          selectedIcon: const Icon(Icons.menu_book),
-          label: l10n.recipes,
+        // Setzt die Icon-Farbe für alle Zustände auf Weiß
+        iconTheme: WidgetStateProperty.all(
+          const IconThemeData(color: Colors.white),
         ),
-        NavigationDestination(
-          icon: const Icon(Icons.add_circle_outline),
-          selectedIcon: const Icon(Icons.add_circle),
-          label: l10n.addRecipe,
-        ),
-        NavigationDestination(
-          icon: const Icon(Icons.shopping_cart_outlined),
-          selectedIcon: const Icon(Icons.shopping_cart),
-          label: l10n.shoppingList,
-        ),
-      ],
+      ),
+      child: NavigationBar(
+        backgroundColor: const Color(0xFFE58325),
+        // Halbtransparenter weißer Indikator für guten Kontrast
+        indicatorColor: Colors.white.withOpacity(0.2),
+        onDestinationSelected: onDestinationSelected,
+        selectedIndex: selectedIndex,
+        destinations: <Widget>[
+          NavigationDestination(
+            icon: const Icon(Icons.home_outlined),
+            selectedIcon: const Icon(Icons.home),
+            label: l10n.home,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.menu_book_outlined),
+            selectedIcon: const Icon(Icons.menu_book),
+            label: l10n.recipes,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.shopping_cart_outlined),
+            selectedIcon: const Icon(Icons.shopping_cart),
+            label: l10n.shoppingList,
+          ),
+        ],
+      ),
     );
   }
 }
