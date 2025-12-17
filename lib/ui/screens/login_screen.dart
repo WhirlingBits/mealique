@@ -40,13 +40,13 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // 1. API Instanz erstellen
+      // 1. Create API instance
       final api = MealieApi(baseUrl: server);
 
-      // 2. Login durchführen (Token wird intern von MealieApi gespeichert)
+      // 2. Log in (token is stored internally by MealieApi)
       await api.login(email, password);
 
-      // 3. Server URL separat speichern für spätere API Aufrufe beim Neustart
+      // 3. Save server URL separately for later API calls when restarting
       await _tokenStorage.saveServerUrl(server);
 
       if (!mounted) return;
@@ -88,6 +88,11 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Image.asset(
+              'assets/mealique.png',
+              height: 120,
+            ),
+            const SizedBox(height: 32),
             TextField(
               controller: _serverController,
               decoration: InputDecoration(
