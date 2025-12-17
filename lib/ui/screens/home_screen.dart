@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:mealique/l10n/app_localizations.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/navigation_bar.dart';
+import 'dashboard_screen.dart';
+import 'recipes_screen.dart';
+import 'shopping_list_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool isOffline;
@@ -19,36 +23,30 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  // Local state that may change
   late bool _isOffline;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
   static const List<Widget> _widgetOptions = <Widget>[
-    Center(child: Text('Home Page')),
-    Center(child: Text('Recipes Page')),
-    Center(child: Text('Add Recipe Page')),
-    Center(child: Text('Shopping List Page')),
+    DashboardScreen(),
+    RecipesScreen(),
+    ShoppingListScreen(),
+    SettingsScreen(),
   ];
 
   @override
   void initState() {
     super.initState();
-    // Apply initial value from widget
     _isOffline = widget.isOffline;
 
-    // 1. Display initial snack bar if we have already started offline
     if (_isOffline) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showOfflineSnackBar();
       });
     }
 
-    // 2. Subscribe to stream for live updates
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
-      //  If the result is 'none' we have no connection.
       final bool isNowOffline = results.contains(ConnectivityResult.none);
 
-      // Only react if the status has actually changed
       if (isNowOffline != _isOffline) {
         setState(() {
           _isOffline = isNowOffline;
@@ -57,7 +55,6 @@ class _HomeScreenState extends State<HomeScreen> {
         if (_isOffline) {
           _showOfflineSnackBar();
         } else {
-          // Hide snack bar or display ‘Back online’
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
         }
       }
@@ -94,31 +91,54 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  // Determines the title based on the current index
+  String _getAppBarTitle(AppLocalizations l10n) {
+    switch (_selectedIndex) {
+      case 0:
+        return l10n.home;
+      case 1:
+        return l10n.recipes;
+      case 2:
+        return l10n.shoppingList;
+      case 3:
+        return l10n.settings;
+      default:
+        return l10n.home;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.home),
+        backgroundColor: const Color(0xFFE58325),
+        foregroundColor: Colors.white,
+        // dynamic titel
+        title: Text(_getAppBarTitle(l10n)),
         actions: [
-          // Here, we use the local variable _isOffline instead of widget.isOffline.
           if (_isOffline)
             const Padding(
               padding: EdgeInsets.only(right: 16.0),
-              child: Icon(Icons.cloud_off, color: Colors.orange),
+              child: Icon(Icons.cloud_off, color: Colors.white),
             ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
-              // Logout logic here
+              // Logout Logik hier
             },
           )
         ],
       ),
-      drawer: const AppDrawer(),
+      drawer: AppDrawer(
+        onDestinationSelected: _onItemTapped,
+      ),
       body: _widgetOptions.elementAt(_selectedIndex),
-      bottomNavigationBar: AppNavigationBar(
+      // Hide navigation bar when Settings (index 3) is selected
+      bottomNavigationBar: _selectedIndex == 3
+          ? null
+          : AppNavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: _onItemTapped,
       ),
