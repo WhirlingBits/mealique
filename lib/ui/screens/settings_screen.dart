@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mealique/l10n/app_localizations.dart';
 import '../../providers/locale_provider.dart';
-import '../../data/local/token_storage.dart'; // Import für TokenStorage
+import '../../data/local/token_storage.dart';
 import 'login_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
