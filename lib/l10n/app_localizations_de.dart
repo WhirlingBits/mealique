@@ -30,49 +30,50 @@ class AppLocalizationsDe extends AppLocalizations {
   String get fillAllFields => 'Bitte Server, Email und Passwort ausfüllen.';
 
   @override
-  String get home => 'Home';
+  String get home => 'Startseite';
 
   @override
-  String get settings => 'Settings';
+  String get settings => 'Einstellungen';
 
   @override
   String get logout => 'Logout';
 
   @override
-  String get invalidCredentials => 'Invalid email or password.';
+  String get invalidCredentials => 'Ungültige E-Mail oder Passwort.';
 
   @override
-  String get networkError => 'Network error. Please try again later.';
+  String get networkError => 'Netzwerkfehler. Bitte versuche es später erneut.';
 
   @override
-  String get recipe => 'Recipe';
+  String get recipe => 'Rezept';
 
   @override
-  String get recipes => 'Recipes';
+  String get recipes => 'Rezepte';
 
   @override
-  String get favorites => 'Favorites';
+  String get favorites => 'Favoriten';
 
   @override
-  String get addToFavorites => 'Add to Favorites';
+  String get addToFavorites => 'Zu Favoriten hinzufügen';
 
   @override
-  String get removeFromFavorites => 'Remove from Favorites';
+  String get removeFromFavorites => 'Favoriten entfernen';
 
   @override
-  String get search => 'Search';
+  String get search => 'Suche';
 
   @override
-  String get noResultsFound => 'No results found.';
+  String get noResultsFound => 'Keine Ergebnisse gefunden.';
 
   @override
-  String get loading => 'Loading...';
+  String get loading => 'Lade...';
 
   @override
-  String get errorOccurred => 'An error occurred. Please try again.';
+  String get errorOccurred =>
+      'Ein Fehler ist aufgetreten. Bitte versuche es erneut.';
 
   @override
-  String get profile => 'Profile';
+  String get profile => 'Profil';
 
   @override
   String get updateProfile => 'Update Profile';
@@ -99,110 +100,111 @@ class AppLocalizationsDe extends AppLocalizations {
   String get update => 'Update';
 
   @override
-  String get cancel => 'Cancel';
+  String get cancel => 'Abbrechen';
 
   @override
-  String get language => 'Language';
+  String get language => 'Sprache';
 
   @override
-  String get selectLanguage => 'Select Language';
+  String get selectLanguage => 'Sprache auswählen';
 
   @override
-  String get darkMode => 'Dark Mode';
+  String get darkMode => 'Dunkelmodus';
 
   @override
-  String get enableDarkMode => 'Enable Dark Mode';
+  String get enableDarkMode => 'Dunkelmodus aktivieren';
 
   @override
-  String get addRecipe => 'Add Recipe';
+  String get addRecipe => 'Hinzufügen';
 
   @override
-  String get editRecipe => 'Edit Recipe';
+  String get editRecipe => 'Rezept bearbeiten';
 
   @override
-  String get deleteRecipe => 'Delete Recipe';
+  String get deleteRecipe => 'Rezept löschen';
 
   @override
   String get confirmDeleteRecipe =>
-      'Are you sure you want to delete this recipe?';
+      'Bist du sicher, dass du dieses Rezept löschen möchtest?';
 
   @override
-  String get yes => 'Yes';
+  String get yes => 'Ja';
 
   @override
-  String get no => 'No';
+  String get no => 'Nein';
 
   @override
-  String get shoppingList => 'Shopping List';
+  String get shoppingList => 'Einkaufsliste';
 
   @override
-  String get addToShoppingList => 'Add to Shopping List';
+  String get addToShoppingList => 'Hinzufügen zur Einkaufsliste';
 
   @override
-  String get removeFromShoppingList => 'Remove from Shopping List';
+  String get removeFromShoppingList => 'Entfernen von der Einkaufsliste';
 
   @override
-  String get clearShoppingList => 'Clear Shopping List';
+  String get clearShoppingList => 'Einkaufsliste löschen';
 
   @override
-  String get shoppingListCleared => 'Shopping list cleared.';
+  String get shoppingListCleared => 'Einkaufsliste gelöscht.';
 
   @override
-  String get notifications => 'Notifications';
+  String get notifications => 'Benachrichtigungen';
 
   @override
-  String get enableNotifications => 'Enable Notifications';
+  String get enableNotifications => 'Benachrichtigungen aktivieren';
 
   @override
-  String get disableNotifications => 'Disable Notifications';
+  String get disableNotifications => 'Benachrichtigungen deaktivieren';
 
   @override
-  String get notificationSettings => 'Notification Settings';
+  String get notificationSettings => 'Benachrichtigungseinstellungen';
 
   @override
-  String get save => 'Save';
+  String get save => 'Speichern';
 
   @override
-  String get changesSaved => 'Changes saved successfully.';
+  String get changesSaved => 'Änderungen erfolgreich gespeichert.';
 
   @override
-  String get about => 'About';
+  String get about => 'Über';
 
   @override
   String get version => 'Version';
 
   @override
-  String get termsOfService => 'Terms of Service';
+  String get termsOfService => 'Nutzungsbedingungen';
 
   @override
-  String get privacyPolicy => 'Privacy Policy';
+  String get privacyPolicy => 'Datenschutz-Bestimmungen';
 
   @override
-  String get mealPlanner => 'Meal Planner';
+  String get mealPlanner => 'Mahlzeitenplaner';
 
   @override
-  String get planYourMeals => 'Plan your meals for the week.';
+  String get planYourMeals => 'Plane deine Mahlzeiten für die Woche.';
 
   @override
-  String get addMeal => 'Add Meal';
+  String get addMeal => 'Mahlzeit hinzufügen';
 
   @override
-  String get editMeal => 'Edit Meal';
+  String get editMeal => 'Mahlzeit bearbeiten';
 
   @override
-  String get deleteMeal => 'Delete Meal';
+  String get deleteMeal => 'Mahlzeit löschen';
 
   @override
-  String get confirmDeleteMeal => 'Are you sure you want to delete this meal?';
+  String get confirmDeleteMeal =>
+      'Bist du sicher, dass du diese Mahlzeit löschen möchtest?';
 
   @override
-  String get noMealsPlanned => 'No meals planned.';
+  String get noMealsPlanned => 'Keine Mahlzeiten geplant.';
 
   @override
-  String get noToken => 'No token found. Please log in again.';
+  String get noToken => 'Kein Token gefunden. Bitte melde dich erneut an.';
 
   @override
   String loginError(String error) {
-    return 'Login error: $error';
+    return 'Login Fehler: $error';
   }
 }
