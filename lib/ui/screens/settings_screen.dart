@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mealique/l10n/app_localizations.dart';
 import '../../providers/locale_provider.dart';
+import '../../data/local/token_storage.dart'; // Import für TokenStorage
+import 'login_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -35,7 +37,7 @@ class SettingsScreen extends StatelessWidget {
         ),
         const Divider(),
 
-        // Benachrichtigungen
+        // Notifications
         ListTile(
           leading: const Icon(Icons.notifications),
           title: Text(l10n.notifications),
@@ -55,6 +57,27 @@ class SettingsScreen extends StatelessWidget {
             // TODO: Dialog oder Lizenzseite anzeigen
           },
         ),
+        const Divider(),
+
+        // Logout
+        ListTile(
+          leading: const Icon(Icons.logout, color: Colors.red),
+          title: Text(
+            'Logout', // TODO: l10n.logout verwenden, wenn verfügbar
+            style: const TextStyle(color: Colors.red),
+          ),
+          onTap: () async {
+            // Delete token on logout
+            await TokenStorage().deleteToken();
+
+            if (context.mounted) {
+              Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      (route) => false,
+              );
+            }
+          },
+        ),
       ],
     );
   }
@@ -68,10 +91,7 @@ class SettingsScreen extends StatelessWidget {
           children: AppLocalizations.supportedLocales.map((Locale locale) {
             return SimpleDialogOption(
               onPressed: () {
-                // Hier wird die Sprache global über den Provider geändert
                 context.read<LocaleProvider>().setLocale(locale);
-
-                // Dialog schließen
                 Navigator.pop(dialogContext);
               },
               child: Text(_getLanguageName(locale.languageCode)),
