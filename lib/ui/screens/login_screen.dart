@@ -83,52 +83,56 @@ class _LoginScreenState extends State<LoginScreen> {
       appBar: AppBar(
         title: Text(l10n.welcome),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/mealique.png',
-              height: 120,
+      body: Center(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/mealique.png',
+                  height: 120,
+                ),
+                const SizedBox(height: 32),
+                TextField(
+                  controller: _serverController,
+                  decoration: InputDecoration(
+                    labelText: l10n.serverAddress,
+                    hintText: l10n.serverHint,
+                  ),
+                  keyboardType: TextInputType.url,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _emailController,
+                  decoration: InputDecoration(labelText: l10n.email),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _passwordController,
+                  decoration: InputDecoration(labelText: l10n.password),
+                  obscureText: true,
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _login,
+                    child: _isLoading
+                        ? const SizedBox(
+                      height: 16,
+                      width: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                        : Text(l10n.login),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 32),
-            TextField(
-              controller: _serverController,
-              decoration: InputDecoration(
-                labelText: l10n.serverAddress,
-                hintText: l10n.serverHint,
-              ),
-              keyboardType: TextInputType.url,
-              autocorrect: false,
-              enableSuggestions: false,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _emailController,
-              decoration: InputDecoration(labelText: l10n.email),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _passwordController,
-              decoration: InputDecoration(labelText: l10n.password),
-              obscureText: true,
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _login,
-                child: _isLoading
-                    ? const SizedBox(
-                  height: 16,
-                  width: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-                    : Text(l10n.login),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
