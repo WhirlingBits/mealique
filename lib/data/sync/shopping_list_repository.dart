@@ -33,6 +33,18 @@ class ShoppingListRepository {
     await api.createList(name);
   }
 
+  // Method to update an existing shopping list
+  Future<void> updateList(String listId, String name) async {
+    final api = await _getApi();
+    await api.updateList(listId, name);
+  }
+
+  // Method to delete a shopping list
+  Future<void> deleteList(String listId) async {
+    final api = await _getApi();
+    await api.deleteList(listId);
+  }
+
   Future<void> addItem(String listId, String name) async {
     final api = await _getApi();
     await api.addItem(listId, name);
