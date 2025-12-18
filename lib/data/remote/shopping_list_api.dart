@@ -70,10 +70,22 @@ class ShoppingListApi {
     await _dio.delete('/api/households/shopping/items/$id');
   }
 
-  // NEU: Neue Liste erstellen
+  // Neue Liste erstellen
   Future<void> createList(String name) async {
     await _dio.post('/api/households/shopping/lists', data: {
       'name': name,
     });
+  }
+
+  // Liste aktualisieren (Name ändern)
+  Future<void> updateList(String listId, String name) async {
+    await _dio.put('/api/households/shopping/lists/$listId', data: {
+      'name': name,
+    });
+  }
+
+  // Liste löschen
+  Future<void> deleteList(String listId) async {
+    await _dio.delete('/api/households/shopping/lists/$listId');
   }
 }
