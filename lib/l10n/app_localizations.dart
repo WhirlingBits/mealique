@@ -344,6 +344,18 @@ abstract class AppLocalizations {
   /// **'No'**
   String get no;
 
+  /// No description provided for @edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get edit;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
   /// No description provided for @shoppingList.
   ///
   /// In en, this message translates to:
@@ -481,6 +493,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No token found. Please log in again.'**
   String get noToken;
+
+  /// No description provided for @addList.
+  ///
+  /// In en, this message translates to:
+  /// **'Add List'**
+  String get addList;
+
+  /// No description provided for @editList.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit List'**
+  String get editList;
+
+  /// No description provided for @deleteList.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete List'**
+  String get deleteList;
+
+  /// No description provided for @confirmDeleteList.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this list?'**
+  String get confirmDeleteList;
+
+  /// No description provided for @noListsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No lists found.'**
+  String get noListsFound;
 
   /// Error message shown when login fails
   ///

@@ -133,6 +133,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get no => 'No';
 
   @override
+  String get edit => 'Edit';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
   String get shoppingList => 'Shopping List';
 
   @override
@@ -200,6 +206,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noToken => 'No token found. Please log in again.';
+
+  @override
+  String get addList => 'Add List';
+
+  @override
+  String get editList => 'Edit List';
+
+  @override
+  String get deleteList => 'Delete List';
+
+  @override
+  String get confirmDeleteList => 'Are you sure you want to delete this list?';
+
+  @override
+  String get noListsFound => 'No lists found.';
 
   @override
   String loginError(String error) {

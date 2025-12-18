@@ -134,6 +134,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get no => 'Nein';
 
   @override
+  String get edit => 'Bearbeiten';
+
+  @override
+  String get delete => 'Löschen';
+
+  @override
   String get shoppingList => 'Einkaufsliste';
 
   @override
@@ -202,6 +208,22 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get noToken => 'Kein Token gefunden. Bitte melde dich erneut an.';
+
+  @override
+  String get addList => 'Liste hinzufügen';
+
+  @override
+  String get editList => 'Liste bearbeiten';
+
+  @override
+  String get deleteList => 'Liste löschen';
+
+  @override
+  String get confirmDeleteList =>
+      'Sind Sie sicher, dass Sie diese Liste löschen möchten?';
+
+  @override
+  String get noListsFound => 'Keine Listen gefunden.';
 
   @override
   String loginError(String error) {
