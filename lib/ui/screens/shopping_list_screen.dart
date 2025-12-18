@@ -164,7 +164,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                   child: ListTile(
                     leading: const Icon(Icons.list_alt),
                     title: Text(list.name),
-                    // Subtitle entfernt: Die API liefert hier keine Items, daher wäre "0 Elemente" irreführend.
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () async {
                       await Navigator.push(
