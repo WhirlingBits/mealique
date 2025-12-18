@@ -18,6 +18,10 @@ Mealique is an unofficial Flutter client for Mealie, the self-hosted recipe mana
 - **Intuitive Interface**: Designed for a seamless mobile experience with smooth navigation and gestures.
 - **Open Source**: Built with Flutter, ensuring transparency and community-driven improvements.
 
+## Screenshots
+
+<img src="images/login_screen.png" alt="Login Screen" width="300" />
+
 ## Installation
 
 Currently, installation is only possible manually. You can build the app from source or install the APK directly if available.
