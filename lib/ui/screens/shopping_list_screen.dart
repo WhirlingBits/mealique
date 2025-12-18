@@ -133,17 +133,15 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
           final lists = snapshot.data!;
 
-          // SlidableAutoCloseBehavior ensures clean closing of other lines
           return SlidableAutoCloseBehavior(
             child: ListView.builder(
               itemCount: lists.length,
               itemBuilder: (context, index) {
                 final list = lists[index];
-                final itemCount = list.items.length;
+                // itemCount entfernt, da API keine Daten liefert
 
                 return Slidable(
                   key: ValueKey(list.id),
-                  // startActionPane = Swipe from left to right
                   startActionPane: ActionPane(
                     motion: const ScrollMotion(),
                     children: [
@@ -166,7 +164,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                   child: ListTile(
                     leading: const Icon(Icons.list_alt),
                     title: Text(list.name),
-                    subtitle: Text('$itemCount Elemente'),
+                    // Subtitle entfernt: Die API liefert hier keine Items, daher wäre "0 Elemente" irreführend.
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () async {
                       await Navigator.push(
