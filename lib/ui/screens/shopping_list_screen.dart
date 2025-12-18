@@ -138,8 +138,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               itemCount: lists.length,
               itemBuilder: (context, index) {
                 final list = lists[index];
-                // itemCount entfernt, da API keine Daten liefert
-
                 return Slidable(
                   key: ValueKey(list.id),
                   startActionPane: ActionPane(
