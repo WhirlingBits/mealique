@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../data/sync/shopping_list_repository.dart';
 import '../../models/shopping_item.dart';
 import '../../l10n/app_localizations.dart';
