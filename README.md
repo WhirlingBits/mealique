@@ -6,6 +6,9 @@
 
 Mealique is an unofficial Flutter client for Mealie, the self-hosted recipe manager and meal planner. It connects to your Mealie server to organize meals, sync and discover recipes, and create shopping lists. With an intuitive interface and powerful features, Mealique makes planning and managing meals from Mealie easy and enjoyable on mobile devices.
 
+> [!WARNING]
+> **This project is in an early development stage.** Features may be incomplete, and bugs are to be expected. Use with caution in production environments.
+
 ## Features
 
 - **Recipe Management**: Browse, search, and view your entire recipe collection synced from your Mealie server.
