@@ -20,7 +20,9 @@ Mealique is an unofficial Flutter client for Mealie, the self-hosted recipe mana
 
 ## Screenshots
 
-<img src="images/login_screen.png" alt="Login Screen" width="300" />
+| <img src="images/login_screen.png" width="300" /> | <img src="images/shopping_list.png" width="300" /> |
+|:--:|:--:|
+| *Login Screen* | *Shopping List* |
 
 ## Installation
 
