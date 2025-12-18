@@ -124,9 +124,9 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Icon(Icons.cloud_off, color: Colors.white),
             ),
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.more_vert),
             onPressed: () {
-              // Logout Logik hier
+              // Menu actions can be added here
             },
           )
         ],
