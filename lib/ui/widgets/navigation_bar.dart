@@ -17,18 +17,15 @@ class AppNavigationBar extends StatelessWidget {
 
     return NavigationBarTheme(
       data: NavigationBarThemeData(
-        // Setzt die Textfarbe für alle Zustände auf Weiß
         labelTextStyle: WidgetStateProperty.all(
           const TextStyle(color: Colors.white),
         ),
-        // Setzt die Icon-Farbe für alle Zustände auf Weiß
         iconTheme: WidgetStateProperty.all(
           const IconThemeData(color: Colors.white),
         ),
       ),
       child: NavigationBar(
         backgroundColor: const Color(0xFFE58325),
-        // Halbtransparenter weißer Indikator für guten Kontrast
         indicatorColor: Colors.white.withOpacity(0.2),
         onDestinationSelected: onDestinationSelected,
         selectedIndex: selectedIndex,
@@ -44,9 +41,19 @@ class AppNavigationBar extends StatelessWidget {
             label: l10n.recipes,
           ),
           NavigationDestination(
+            icon: const Icon(Icons.calendar_month_outlined),
+            selectedIcon: const Icon(Icons.calendar_month),
+            label: l10n.planner,
+          ),
+          NavigationDestination(
             icon: const Icon(Icons.shopping_cart_outlined),
             selectedIcon: const Icon(Icons.shopping_cart),
-            label: l10n.shoppingList,
+            label: l10n.shopping,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.settings_outlined),
+            selectedIcon: const Icon(Icons.settings),
+            label: l10n.settings,
           ),
         ],
       ),
