@@ -45,4 +45,29 @@ Currently, installation is only possible manually. You can build the app from so
     flutter run
     ```
 
+## Roadmap
+
+- [x] **Core Features**
+  - [x] User Authentication with Mealie API
+  - [x] Browse, search, and view recipes
+  - [x] Basic offline support for recipes
+- [ ] **Shopping List**
+  - [x] View and manage multiple shopping lists
+  - [ ] Add recipes to a shopping list
+  - [ ] Mark items as completed
+- [ ] **Meal Planner**
+  - [ ] View the weekly meal plan
+  - [ ] Add/remove recipes from the meal plan
+  - [ ] Automatically generate shopping list from the plan
+- [ ] **User Experience**
+  - [x] Implement localization (EN, DE)
+  - [ ] Full Dark Mode
+  - [ ] Tablet-optimized UI
+  - [ ] Advanced recipe filtering (by category, tag, etc.)
+- [ ] **Advanced Features**
+  - [ ] Create and edit recipes within the app
+  - [ ] Manage Mealie user settings and preferences
+  - [ ] Pantry management
+  - [ ] Notifications
+
 Alternatively, check the [Releases](https://github.com/matti122/mealique/releases) page for the latest APK to install on your Android device.
