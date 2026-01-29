@@ -33,7 +33,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get home => 'Startseite';
 
   @override
+  String get planner => 'Planer';
+
+  @override
   String get settings => 'Einstellungen';
+
+  @override
+  String get shopping => 'Einkaufen';
 
   @override
   String get logout => 'Logout';
@@ -76,28 +82,28 @@ class AppLocalizationsDe extends AppLocalizations {
   String get profile => 'Profil';
 
   @override
-  String get updateProfile => 'Update Profile';
+  String get updateProfile => 'Profil aktualisieren';
 
   @override
-  String get changePassword => 'Change Password';
+  String get changePassword => 'Passwort ändern';
 
   @override
-  String get oldPassword => 'Old Password';
+  String get oldPassword => 'Altes Passwort';
 
   @override
-  String get newPassword => 'New Password';
+  String get newPassword => 'Neues Passwort';
 
   @override
-  String get confirmNewPassword => 'Confirm New Password';
+  String get confirmNewPassword => 'Neues Passwort bestätigen';
 
   @override
-  String get passwordsDoNotMatch => 'Passwords do not match.';
+  String get passwordsDoNotMatch => 'Passwörter stimmen nicht überein.';
 
   @override
-  String get passwordUpdated => 'Password updated successfully.';
+  String get passwordUpdated => 'Passwort erfolgreich aktualisiert.';
 
   @override
-  String get update => 'Update';
+  String get update => 'Aktualisieren';
 
   @override
   String get cancel => 'Abbrechen';
@@ -115,7 +121,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get enableDarkMode => 'Dunkelmodus aktivieren';
 
   @override
-  String get addRecipe => 'Hinzufügen';
+  String get addRecipe => 'Rezept hinzufügen';
 
   @override
   String get editRecipe => 'Rezept bearbeiten';
@@ -143,16 +149,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String get shoppingList => 'Einkaufsliste';
 
   @override
-  String get addToShoppingList => 'Hinzufügen zur Einkaufsliste';
+  String get addToShoppingList => 'Zur Einkaufsliste hinzufügen';
 
   @override
-  String get removeFromShoppingList => 'Entfernen von der Einkaufsliste';
+  String get removeFromShoppingList => 'Von der Einkaufsliste entfernen';
 
   @override
-  String get clearShoppingList => 'Einkaufsliste löschen';
+  String get clearShoppingList => 'Einkaufsliste leeren';
 
   @override
-  String get shoppingListCleared => 'Einkaufsliste gelöscht.';
+  String get shoppingListCleared => 'Einkaufsliste geleert.';
 
   @override
   String get notifications => 'Benachrichtigungen';
@@ -194,6 +200,22 @@ class AppLocalizationsDe extends AppLocalizations {
   String get addMeal => 'Mahlzeit hinzufügen';
 
   @override
+  String get addItem => 'Element hinzufügen';
+
+  @override
+  String get editItem => 'Element bearbeiten';
+
+  @override
+  String get deleteItem => 'Element löschen';
+
+  @override
+  String get confirmDeleteItem =>
+      'Bist du sicher, dass du dieses Element löschen möchtest?';
+
+  @override
+  String get noItemsPlanned => 'Keine Elemente geplant.';
+
+  @override
   String get editMeal => 'Mahlzeit bearbeiten';
 
   @override
@@ -226,7 +248,78 @@ class AppLocalizationsDe extends AppLocalizations {
   String get noListsFound => 'Keine Listen gefunden.';
 
   @override
+  String get searchList => 'Liste suchen...';
+
+  @override
+  String get addListItem => 'Listenelement hinzufügen';
+
+  @override
+  String get editListItem => 'Listenelement bearbeiten';
+
+  @override
+  String get deleteListItem => 'Listenelement löschen';
+
+  @override
+  String get confirmDeleteListItem =>
+      'Bist du sicher, dass du dieses Listenelement löschen möchtest?';
+
+  @override
+  String greetingGoodMorning(Object name) {
+    return 'Guten Morgen, $name!';
+  }
+
+  @override
+  String greetingGoodDay(Object name) {
+    return 'Guten Tag, $name!';
+  }
+
+  @override
+  String greetingGoodEvening(Object name) {
+    return 'Guten Abend, $name!';
+  }
+
+  @override
+  String greetingGoodNight(Object name) {
+    return 'Gute Nacht, $name!';
+  }
+
+  @override
+  String get whatDoYouWantToCook => 'Was möchtest du heute kochen?';
+
+  @override
+  String get recipeSearch => 'Suche nach einem Rezept...';
+
+  @override
+  String get today => 'Heute';
+
+  @override
+  String get tomorrow => 'Morgen';
+
+  @override
+  String get popularRecipes => 'Beliebte Rezepte';
+
+  @override
+  String get quickActions => 'Schnellaktionen';
+
+  @override
+  String get list => 'Liste';
+
+  @override
+  String get item => 'Element';
+
+  @override
+  String greeting(Object name) {
+    return 'Hallo, $name!';
+  }
+
+  @override
+  String get add => 'Hinzufügen';
+
+  @override
+  String get loginSuccess => 'Anmeldung erfolgreich.';
+
+  @override
   String loginError(String error) {
-    return 'Login Fehler: $error';
+    return 'Anmeldefehler: $error';
   }
 }

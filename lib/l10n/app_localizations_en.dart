@@ -33,7 +33,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get home => 'Home';
 
   @override
+  String get planner => 'Planner';
+
+  @override
   String get settings => 'Settings';
+
+  @override
+  String get shopping => 'Shopping';
 
   @override
   String get logout => 'Logout';
@@ -193,6 +199,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addMeal => 'Add Meal';
 
   @override
+  String get addItem => 'Add Item';
+
+  @override
+  String get editItem => 'Edit Item';
+
+  @override
+  String get deleteItem => 'Delete Item';
+
+  @override
+  String get confirmDeleteItem => 'Are you sure you want to delete this item?';
+
+  @override
+  String get noItemsPlanned => 'No items planned.';
+
+  @override
   String get editMeal => 'Edit Meal';
 
   @override
@@ -221,6 +242,77 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noListsFound => 'No lists found.';
+
+  @override
+  String get searchList => 'Search list...';
+
+  @override
+  String get addListItem => 'Add List Item';
+
+  @override
+  String get editListItem => 'Edit List Item';
+
+  @override
+  String get deleteListItem => 'Delete List Item';
+
+  @override
+  String get confirmDeleteListItem =>
+      'Are you sure you want to delete this list item?';
+
+  @override
+  String greetingGoodMorning(Object name) {
+    return 'Good morning, $name!';
+  }
+
+  @override
+  String greetingGoodDay(Object name) {
+    return 'Good day, $name!';
+  }
+
+  @override
+  String greetingGoodEvening(Object name) {
+    return 'Good evening, $name!';
+  }
+
+  @override
+  String greetingGoodNight(Object name) {
+    return 'Good night, $name!';
+  }
+
+  @override
+  String get whatDoYouWantToCook => 'What do you want to cook today?';
+
+  @override
+  String get recipeSearch => 'Search for a recipe...';
+
+  @override
+  String get today => 'Today';
+
+  @override
+  String get tomorrow => 'Tomorrow';
+
+  @override
+  String get popularRecipes => 'Popular Recipes';
+
+  @override
+  String get quickActions => 'Quick Actions';
+
+  @override
+  String get list => 'List';
+
+  @override
+  String get item => 'Item';
+
+  @override
+  String greeting(Object name) {
+    return 'Hello, $name!';
+  }
+
+  @override
+  String get add => 'Add';
+
+  @override
+  String get loginSuccess => 'Login successful.';
 
   @override
   String loginError(String error) {

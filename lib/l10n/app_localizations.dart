@@ -146,11 +146,23 @@ abstract class AppLocalizations {
   /// **'Home'**
   String get home;
 
+  /// No description provided for @planner.
+  ///
+  /// In en, this message translates to:
+  /// **'Planner'**
+  String get planner;
+
   /// No description provided for @settings.
   ///
   /// In en, this message translates to:
   /// **'Settings'**
   String get settings;
+
+  /// No description provided for @shopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping'**
+  String get shopping;
 
   /// No description provided for @logout.
   ///
@@ -464,6 +476,36 @@ abstract class AppLocalizations {
   /// **'Add Meal'**
   String get addMeal;
 
+  /// No description provided for @addItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Item'**
+  String get addItem;
+
+  /// No description provided for @editItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Item'**
+  String get editItem;
+
+  /// No description provided for @deleteItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Item'**
+  String get deleteItem;
+
+  /// No description provided for @confirmDeleteItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this item?'**
+  String get confirmDeleteItem;
+
+  /// No description provided for @noItemsPlanned.
+  ///
+  /// In en, this message translates to:
+  /// **'No items planned.'**
+  String get noItemsPlanned;
+
   /// No description provided for @editMeal.
   ///
   /// In en, this message translates to:
@@ -523,6 +565,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No lists found.'**
   String get noListsFound;
+
+  /// No description provided for @searchList.
+  ///
+  /// In en, this message translates to:
+  /// **'Search list...'**
+  String get searchList;
+
+  /// No description provided for @addListItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Add List Item'**
+  String get addListItem;
+
+  /// No description provided for @editListItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit List Item'**
+  String get editListItem;
+
+  /// No description provided for @deleteListItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete List Item'**
+  String get deleteListItem;
+
+  /// No description provided for @confirmDeleteListItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this list item?'**
+  String get confirmDeleteListItem;
+
+  /// No description provided for @greetingGoodMorning.
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning, {name}!'**
+  String greetingGoodMorning(Object name);
+
+  /// No description provided for @greetingGoodDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Good day, {name}!'**
+  String greetingGoodDay(Object name);
+
+  /// No description provided for @greetingGoodEvening.
+  ///
+  /// In en, this message translates to:
+  /// **'Good evening, {name}!'**
+  String greetingGoodEvening(Object name);
+
+  /// No description provided for @greetingGoodNight.
+  ///
+  /// In en, this message translates to:
+  /// **'Good night, {name}!'**
+  String greetingGoodNight(Object name);
+
+  /// No description provided for @whatDoYouWantToCook.
+  ///
+  /// In en, this message translates to:
+  /// **'What do you want to cook today?'**
+  String get whatDoYouWantToCook;
+
+  /// No description provided for @recipeSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for a recipe...'**
+  String get recipeSearch;
+
+  /// No description provided for @today.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get today;
+
+  /// No description provided for @tomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow'**
+  String get tomorrow;
+
+  /// No description provided for @popularRecipes.
+  ///
+  /// In en, this message translates to:
+  /// **'Popular Recipes'**
+  String get popularRecipes;
+
+  /// No description provided for @quickActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Actions'**
+  String get quickActions;
+
+  /// No description provided for @list.
+  ///
+  /// In en, this message translates to:
+  /// **'List'**
+  String get list;
+
+  /// No description provided for @item.
+  ///
+  /// In en, this message translates to:
+  /// **'Item'**
+  String get item;
+
+  /// No description provided for @greeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Hello, {name}!'**
+  String greeting(Object name);
+
+  /// No description provided for @add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get add;
+
+  /// No description provided for @loginSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Login successful.'**
+  String get loginSuccess;
 
   /// Error message shown when login fails
   ///
