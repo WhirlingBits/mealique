@@ -50,11 +50,11 @@ Currently, installation is only possible manually. You can build the app from so
 - [x] **Core Features**
   - [x] User Authentication with Mealie API
   - [x] Browse, search, and view recipes
-  - [x] Basic offline support for recipes
 - [ ] **Shopping List**
   - [x] View and manage multiple shopping lists
   - [ ] Add recipes to a shopping list
   - [ ] Mark items as completed
+  - [ ] Add and edit Shopping List items
 - [ ] **Meal Planner**
   - [ ] View the weekly meal plan
   - [ ] Add/remove recipes from the meal plan
@@ -69,5 +69,13 @@ Currently, installation is only possible manually. You can build the app from so
   - [ ] Manage Mealie user settings and preferences
   - [ ] Pantry management
   - [ ] Notifications
+  - [ ] Cookbooks
+- [ ] **Offline Support**
+  - [ ] Shopping List
+  - [ ] Shopping List items
+  - [ ] Meal Planner
+  - [ ] Recipes
+  - [ ] Cookbooks
+
 
 Alternatively, check the [Releases](https://github.com/matti122/mealique/releases) page for the latest APK to install on your Android device.
