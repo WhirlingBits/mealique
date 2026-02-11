@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../l10n/app_localizations.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import '../../data/sync/shopping_list_repository.dart';
-import '../../models/shopping_list.dart';
+import '../../data/sync/household_repository.dart';
+import '../../models/shopping_list_model.dart';
+import '../../l10n/app_localizations.dart';
+import '../widgets/add_shopping_list_form.dart';
 import 'shopping_list_detail_screen.dart';
 
 class ShoppingListScreen extends StatefulWidget {
@@ -13,8 +14,9 @@ class ShoppingListScreen extends StatefulWidget {
 }
 
 class _ShoppingListScreenState extends State<ShoppingListScreen> {
-  final ShoppingListRepository _repository = ShoppingListRepository();
-  late Future<List<ShoppingList>> _listsFuture;
+  final HouseholdRepository _repository = HouseholdRepository();
+
+  late Future<List<ShoppingList>?> _listsFuture;
 
   @override
   void initState() {
@@ -24,167 +26,155 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   void _loadLists() {
     setState(() {
-      _listsFuture = _repository.getAllLists();
+      _listsFuture = _repository.getShoppingLists();
     });
   }
 
-  void _showCreateListDialog() {
-    _showListDialog(title: 'Neue Einkaufsliste', isEdit: false);
+  Future<void> _handleRefresh() async {
+    // Force a sync with the remote server
+    await _repository.syncShoppingLists();
+    // Re-trigger the future to rebuild the UI with fresh data
+    _loadLists();
   }
 
-  void _showEditListDialog(ShoppingList list) {
-    _showListDialog(
-        title: AppLocalizations.of(context)!.editList,
-        initialName: list.name,
-        isEdit: true,
-        listId: list.id);
-  }
-
-  void _showListDialog({
-    required String title,
-    String? initialName,
-    required bool isEdit,
-    String? listId,
-  }) {
-    showDialog(
+  void _showAddListSheet() {
+    showModalBottomSheet(
       context: context,
-      builder: (context) {
-        final l10n = AppLocalizations.of(context)!;
-        final controller = TextEditingController(text: initialName);
-        return AlertDialog(
-          title: Text(title),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(
-              labelText: 'Name',
-              hintText: 'z.B. Wocheneinkauf',
-            ),
-            autofocus: true,
-            textCapitalization: TextCapitalization.sentences,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(l10n.cancel),
-            ),
-            TextButton(
-              onPressed: () async {
-                final name = controller.text.trim();
-                if (name.isNotEmpty) {
-                  try {
-                    if (isEdit && listId != null) {
-                      await _repository.updateList(listId, name);
-                    } else {
-                      await _repository.createList(name);
-                    }
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                      _loadLists();
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Fehler: $e')),
-                      );
-                    }
-                  }
-                }
-              },
-              child: Text(isEdit ? 'Speichern' : 'Erstellen'),
-            ),
-          ],
-        );
-      },
+      isScrollControlled: true,
+      builder: (context) => Padding(
+        padding:
+        EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: AddShoppingListForm(
+          onAddList: (name) async {
+            await _repository.createShoppingList(name);
+            _loadLists();
+            if (mounted) Navigator.pop(context);
+          },
+        ),
+      ),
     );
   }
 
-  Future<void> _deleteList(ShoppingList list) async {
-    try {
-      await _repository.deleteList(list.id);
-      _loadLists();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${list.name} gelöscht')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fehler beim Löschen: $e')),
-        );
-      }
-    }
+  void _deleteList(String listId) async {
+    await _repository.deleteShoppingList(listId);
+    _loadLists();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
-      body: FutureBuilder<List<ShoppingList>>(
+      body: FutureBuilder<List<ShoppingList>?>(
         future: _listsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
+          }
+          if (snapshot.hasError) {
             return Center(child: Text('Fehler: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('Keine Einkaufslisten gefunden.'));
           }
 
-          final lists = snapshot.data!;
+          final lists = snapshot.data ?? [];
 
-          return SlidableAutoCloseBehavior(
-            child: ListView.builder(
-              itemCount: lists.length,
-              itemBuilder: (context, index) {
-                final list = lists[index];
-                return Slidable(
-                  key: ValueKey(list.id),
-                  startActionPane: ActionPane(
-                    motion: const ScrollMotion(),
+          if (lists.isEmpty) {
+            return Center(
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      SlidableAction(
-                        onPressed: (context) => _showEditListDialog(list),
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                        icon: Icons.edit,
-                        label: l10n.edit,
-                      ),
-                      SlidableAction(
-                        onPressed: (context) => _deleteList(list),
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                        icon: Icons.delete,
-                        label: l10n.delete,
-                      ),
-                    ],
-                  ),
-                  child: ListTile(
-                    leading: const Icon(Icons.list_alt),
-                    title: Text(list.name),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ShoppingListDetailScreen(
-                            listId: list.id,
-                            listName: list.name,
+                      const Text('Keine Listen vorhanden'),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _showAddListSheet,
+                        child: const Text('Liste erstellen'),
+                      )
+                    ]));
+          }
+
+          return RefreshIndicator(
+            onRefresh: _handleRefresh,
+            child: SlidableAutoCloseBehavior(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: lists.length,
+                itemBuilder: (context, index) {
+                  final list = lists[index];
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Slidable(
+                        key: ValueKey(list.id),
+                        startActionPane: ActionPane(
+                          motion: const ScrollMotion(),
+                          extentRatio: 0.5,
+                          children: [
+                            SlidableAction(
+                              flex: 1,
+                              onPressed: (context) {
+                                // TODO: Liste bearbeiten Logik implementieren
+                              },
+                              backgroundColor: const Color(0xFFE58325),
+                              foregroundColor: Colors.white,
+                              icon: Icons.edit,
+                            ),
+                            SlidableAction(
+                              flex: 1,
+                              onPressed: (context) => _deleteList(list.id),
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                              icon: Icons.delete,
+                            ),
+                          ],
+                        ),
+                        child: Card(
+                          margin: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 4),
+                            title: Text(
+                              list.name,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text('${list.listItems.length} Elemente'),
+                            onTap: () {
+                              final screenHeight = MediaQuery.of(context).size.height;
+                              final topPadding = MediaQuery.of(context).padding.top;
+                              const appBarHeight = kToolbarHeight;
+
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                constraints: BoxConstraints(
+                                  maxHeight: screenHeight - (topPadding + appBarHeight),
+                                ),
+                                builder: (context) => ShoppingListDetailScreen(
+                                  listId: list.id,
+                                  listName: list.name,
+                                ),
+                              ).then((_) => _loadLists());
+                            },
+                            trailing: const Icon(Icons.chevron_right, color: Colors.grey),
                           ),
                         ),
-                      );
-                      _loadLists();
-                    },
-                  ),
-                );
-              },
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _showCreateListDialog,
-        tooltip: l10n.addList,
+        onPressed: _showAddListSheet,
+        tooltip: 'Liste erstellen',
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
         shape: const CircleBorder(),
