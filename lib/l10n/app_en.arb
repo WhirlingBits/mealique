@@ -45,6 +45,7 @@
     "edit": "Edit",
     "delete": "Delete",
     "shoppingList": "Shopping List",
+    "shoppingLists": "Shopping Lists",
     "addToShoppingList": "Add to Shopping List",
     "removeFromShoppingList": "Remove from Shopping List",
     "clearShoppingList": "Clear Shopping List",
@@ -73,6 +74,7 @@
     "noMealsPlanned": "No meals planned.",
     "noToken": "No token found. Please log in again.",
     "addList": "Add List",
+    "createList": "Create List",
     "editList": "Edit List",
     "deleteList": "Delete List",
     "confirmDeleteList": "Are you sure you want to delete this list?",
@@ -96,14 +98,15 @@
     "item": "Item",
     "greeting": "Hello, {name}!",
     "add": "Add",
+    "unnamedMeal": "Unnamed Meal",
     "loginSuccess": "Login successful.",
     "loginError": "Login error: {error}",
     "@loginError": {
-    "description": "Error message shown when login fails",
-    "placeholders": {
-      "error": {
-        "type": "String"
+      "description": "Error message shown when login fails",
+      "placeholders": {
+          "error": {
+          "type": "String"
+        }
       }
-    }
   }
 }

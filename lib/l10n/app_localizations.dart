@@ -374,6 +374,12 @@ abstract class AppLocalizations {
   /// **'Shopping List'**
   String get shoppingList;
 
+  /// No description provided for @shoppingLists.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping Lists'**
+  String get shoppingLists;
+
   /// No description provided for @addToShoppingList.
   ///
   /// In en, this message translates to:
@@ -542,6 +548,12 @@ abstract class AppLocalizations {
   /// **'Add List'**
   String get addList;
 
+  /// No description provided for @createList.
+  ///
+  /// In en, this message translates to:
+  /// **'Create List'**
+  String get createList;
+
   /// No description provided for @editList.
   ///
   /// In en, this message translates to:
@@ -679,6 +691,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add'**
   String get add;
+
+  /// No description provided for @unnamedMeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Unnamed Meal'**
+  String get unnamedMeal;
 
   /// No description provided for @loginSuccess.
   ///

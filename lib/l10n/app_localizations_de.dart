@@ -149,6 +149,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get shoppingList => 'Einkaufsliste';
 
   @override
+  String get shoppingLists => 'Einkaufslisten';
+
+  @override
   String get addToShoppingList => 'Zur Einkaufsliste hinzufügen';
 
   @override
@@ -235,6 +238,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get addList => 'Liste hinzufügen';
 
   @override
+  String get createList => 'Liste erstellen';
+
+  @override
   String get editList => 'Liste bearbeiten';
 
   @override
@@ -314,6 +320,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get add => 'Hinzufügen';
+
+  @override
+  String get unnamedMeal => 'Unbenannte Mahlzeit';
 
   @override
   String get loginSuccess => 'Anmeldung erfolgreich.';

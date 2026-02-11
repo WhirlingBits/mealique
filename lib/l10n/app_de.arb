@@ -98,6 +98,8 @@
     "item": "Element",
     "greeting": "Hallo, {name}!",
     "add": "Hinzufügen",
+    "unnamedMeal": "Unbenannte Mahlzeit",
+    "meal": "Mahlzeit",
     "loginSuccess": "Anmeldung erfolgreich.",
     "loginError": "Anmeldefehler: {error}",
     "@loginError": {
