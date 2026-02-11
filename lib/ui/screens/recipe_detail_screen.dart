@@ -14,7 +14,6 @@ class RecipeDetailScreen extends StatelessWidget {
             expandedHeight: 250.0,
             pinned: true,
             backgroundColor: accentColor,
-            // UX UPDATE: Kein Zurück-Button mehr, da Sheet einen Drag-Handle hat
             automaticallyImplyLeading: false,
             actions: [
               IconButton(
