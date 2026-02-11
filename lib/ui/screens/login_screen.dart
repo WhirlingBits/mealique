@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
+import 'main_screen.dart';
 import '../../l10n/app_localizations.dart';
 import '../../data/remote/mealie_api.dart';
 import '../../data/local/token_storage.dart';
@@ -51,7 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(builder: (context) => const MainScreen()),
       );
     } catch (e) {
       // Error handling simplified, as MealieApi throws readable exceptions
@@ -147,4 +147,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-
