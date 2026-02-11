@@ -18,14 +18,23 @@ dependencies:
   flutter_slidable: ^4.0.3
 
   # Networking
-  dio: ^5.5.0+1
+  dio: ^5.9.1
+
+  # Navigation and routing
+  go_router: ^17.0.1
+
+  # Cached imaging
+  cached_network_image: ^3.4.1
+
+  # State Management
+  flutter_riverpod: ^3.2.0
 
   # Database (Drift & SQLite)
-  drift: ^2.18.0
+  drift: ^2.30.1
   sqlite3_flutter_libs: ^0.5.22
   path_provider: ^2.1.3
   path: ^1.9.0
-  connectivity_plus: ^6.0.3
+  connectivity_plus: ^7.0.0
   provider: ^6.1.2
   shared_preferences: ^2.2.3
   calendar_date_picker2: ^2.0.1
@@ -35,8 +44,9 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^4.0.0
 
-  # Code Generation für Drift
+  # Code Generation
   build_runner: ^2.4.9
+  #custom_lint: ^0.6.4
   drift_dev: ^2.18.0
 
 flutter_launcher_icons:
