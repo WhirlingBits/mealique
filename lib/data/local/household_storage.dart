@@ -353,7 +353,7 @@ extension on MealplanEntry {
     return MealplansCompanion(
       id: Value(id),
       date: Value(date),
-      entryType: Value(entryType),
+      entryType: Value(entryType.name),
       title: Value(title),
       contentText: Value(text),
       recipeId: Value(recipeId),
@@ -362,15 +362,14 @@ extension on MealplanEntry {
   }
 }
 
-// Fix: Verwendung von MealplanDbEntry (Drift Class)
 extension on MealplanDbEntry {
   MealplanEntry toDomainModel() {
     return MealplanEntry(
       id: id,
       date: date,
-      entryType: entryType,
+      entryType: PlanEntryType.fromString(entryType),
       title: title,
-      text: contentText, // 'contentText' kommt aus DB, wird zu 'text' im Model
+      text: contentText,
       recipeId: recipeId,
       recipe: recipe,
     );
