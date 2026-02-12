@@ -1,9 +1,5 @@
-import 'package:dio/dio.dart';
 import 'package:mealique/data/local/household_storage.dart';
 import 'package:mealique/data/remote/household_api.dart';
-import 'package:mealique/models/cookbook_model.dart';
-import 'package:mealique/models/mealplan_model.dart';
-import 'package:mealique/models/mealplan_rule_model.dart';
 import 'package:mealique/models/shopping_item_model.dart';
 import 'package:mealique/models/shopping_list_model.dart';
 
@@ -37,6 +33,20 @@ class HouseholdRepository {
     } catch (e) {
       return null;
     }
+  }
+
+  Future<List<ShoppingList>> getShoppingListsWithItemCount() async {
+    final response = await _api.getShoppingLists(1, 100);
+    final lists = response.items;
+    final listsWithCount = <ShoppingList>[];
+
+    for (var list in lists) {
+      final items = await getItemsForList(list.id);
+      final uncheckedItemsCount = items.where((item) => !item.checked).length;
+      listsWithCount.add(list.copyWith(itemCount: uncheckedItemsCount));
+    }
+
+    return listsWithCount;
   }
 
   Future<void> createShoppingList(String name) async {
@@ -112,8 +122,8 @@ class HouseholdRepository {
 
   Future<void> updateItem(ShoppingItem item) async {
     try {
-      if (item.id != null && item.id!.isNotEmpty) {
-        await _api.updateShoppingItem(item.id!, item);
+      if (item.id.isNotEmpty) {
+        await _api.updateShoppingItem(item.id, item);
       }
     } catch (e) {
       rethrow;
