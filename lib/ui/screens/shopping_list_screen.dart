@@ -16,7 +16,7 @@ class ShoppingListScreen extends StatefulWidget {
 class _ShoppingListScreenState extends State<ShoppingListScreen> {
   final HouseholdRepository _repository = HouseholdRepository();
 
-  late Future<List<ShoppingList>?> _listsFuture;
+  late Future<List<ShoppingList>> _listsFuture;
 
   @override
   void initState() {
@@ -26,13 +26,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   void _loadLists() {
     setState(() {
-      _listsFuture = _repository.getShoppingLists();
+      _listsFuture = _repository.getShoppingListsWithItemCount();
     });
   }
 
   Future<void> _handleRefresh() async {
-    // Force a sync with the remote server
-    await _repository.syncShoppingLists();
     // Re-trigger the future to rebuild the UI with fresh data
     _loadLists();
   }
@@ -65,7 +63,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      body: FutureBuilder<List<ShoppingList>?>(
+      body: FutureBuilder<List<ShoppingList>>(
         future: _listsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -141,7 +139,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                               list.name,
                               style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
-                            subtitle: Text('${list.listItems.length} Elemente'),
+                            subtitle: Text('${list.itemCount} Elemente'),
                             onTap: () {
                               final screenHeight = MediaQuery.of(context).size.height;
                               final topPadding = MediaQuery.of(context).padding.top;
