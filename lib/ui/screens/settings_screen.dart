@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mealique/l10n/app_localizations.dart';
-import 'package:mealique/providers/settings_provider.dart';
+import 'package:mealique/ui/screens/appearance_settings_screen.dart';
+import 'package:mealique/ui/screens/notification_settings_screen.dart';
 import 'package:mealique/ui/screens/server_api_settings_screen.dart';
-import 'package:provider/provider.dart';
 import '../../data/sync/user_repository.dart';
 import '../../models/user_self_model.dart';
 
@@ -33,39 +32,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  void _showLanguageDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        final provider = Provider.of<SettingsProvider>(context, listen: false);
-        return AlertDialog(
-          title: const Text('Sprache auswählen'), // TODO: l10n
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: AppLocalizations.supportedLocales.map((locale) {
-              return RadioListTile<Locale>(
-                title: Text(locale.languageCode == 'de' ? 'Deutsch' : 'English'),
-                value: locale,
-                groupValue: provider.locale,
-                onChanged: (newLocale) {
-                  if (newLocale != null) {
-                    provider.setLocale(newLocale);
-                    Navigator.pop(context);
-                  }
-                },
-              );
-            }).toList(),
-          ),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final settings = Provider.of<SettingsProvider>(context);
-
     return Scaffold(
       body: SafeArea(
         child: ListView(
@@ -110,32 +78,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
 
-            // Menüpunkt: Sprache
+            // Menüpunkt: Darstellung & Sprache
             ListTile(
-              leading: const Icon(Icons.language),
-              title: const Text('Sprache'), // TODO: l10n
-              trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-              onTap: _showLanguageDialog,
-            ),
-
-            // Menüpunkt: Favoriten
-            ListTile(
-              leading: const Icon(Icons.star),
-              title: const Text('Favoriten'),
+              leading: const Icon(Icons.palette),
+              title: const Text('Darstellung & Sprache'), // TODO: l10n
               trailing: const Icon(Icons.chevron_right, color: Colors.grey),
               onTap: () {
-                // TODO: Navigation zu Favoriten
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AppearanceSettingsScreen(),
+                  ),
+                );
               },
             ),
 
-            // Menüpunkt: Dark Mode
-            SwitchListTile(
-              secondary: const Icon(Icons.dark_mode),
-              title: Text(l10n.darkMode),
-              value: settings.themeMode == ThemeMode.dark,
-              onChanged: (bool value) {
-                final newMode = value ? ThemeMode.dark : ThemeMode.light;
-                settings.setThemeMode(newMode);
+            // Menüpunkt: Benachrichtigungen
+            ListTile(
+              leading: const Icon(Icons.notifications),
+              title: const Text('Benachrichtigungen'), // TODO: l10n
+              trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationSettingsScreen(),
+                  ),
+                );
               },
             ),
 

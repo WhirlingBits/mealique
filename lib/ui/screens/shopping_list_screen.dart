@@ -103,9 +103,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.shoppingLists), // TODO: Add to l10n
-      ),
       body: FutureBuilder<List<ShoppingList>>(
         future: _listsFuture,
         builder: (context, snapshot) {
