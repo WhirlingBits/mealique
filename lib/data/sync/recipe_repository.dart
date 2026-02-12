@@ -1,4 +1,3 @@
-
 import 'package:dio/dio.dart';
 
 import '../../models/recipes_model.dart';
@@ -10,9 +9,13 @@ class RecipeRepository {
   RecipeRepository() : _api = RecipesApi();
 
   Future<List<Recipe>> getRecipes(
-      {int page = 1, int perPage = 15, String? sort}) async {
+      {int page = 1,
+      int perPage = 15,
+      String? sort,
+      String? searchQuery}) async {
     try {
-      final response = await _api.getRecipes(page: page, perPage: perPage, sort: sort);
+      final response = await _api.getRecipes(
+          page: page, perPage: perPage, sort: sort, searchQuery: searchQuery);
       if (response.statusCode == 200) {
         final data = response.data;
         if (data != null && data['items'] is List) {
