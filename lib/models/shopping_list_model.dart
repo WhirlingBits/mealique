@@ -119,6 +119,7 @@ class ShoppingList {
   final List<ShoppingListRecipeReference> recipeReferences;
   final List<ShoppingListLabelSetting> labelSettings;
   final List<ShoppingItem> listItems;
+  final int itemCount; // Added field
 
   ShoppingList({
     required this.name,
@@ -132,6 +133,7 @@ class ShoppingList {
     required this.recipeReferences,
     required this.labelSettings,
     required this.listItems,
+    this.itemCount = 0, // Default value
   });
 
   factory ShoppingList.fromJson(Map<String, dynamic> json) {
@@ -153,6 +155,7 @@ class ShoppingList {
       listItems: (json['listItems'] as List? ?? [])
           .map((i) => ShoppingItem.fromJson(i))
           .toList(),
+      // Item count is not from JSON, will be set manually
     );
   }
 
@@ -181,6 +184,7 @@ class ShoppingList {
     List<ShoppingListRecipeReference>? recipeReferences,
     List<ShoppingListLabelSetting>? labelSettings,
     List<ShoppingItem>? listItems,
+    int? itemCount,
   }) {
     return ShoppingList(
       name: name ?? this.name,
@@ -194,6 +198,7 @@ class ShoppingList {
       recipeReferences: recipeReferences ?? this.recipeReferences,
       labelSettings: labelSettings ?? this.labelSettings,
       listItems: listItems ?? this.listItems,
+      itemCount: itemCount ?? this.itemCount,
     );
   }
 }
