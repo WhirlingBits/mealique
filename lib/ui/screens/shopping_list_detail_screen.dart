@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:mealique/ui/screens/shopping_list_item_detail_screen.dart';
 import '../../l10n/app_localizations.dart';
 import '../../data/sync/household_repository.dart';
 import '../../models/shopping_item_model.dart';
@@ -296,17 +297,29 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
                                                   value: item.checked,
                                                   onChanged: (val) =>
                                                       _toggleItem(item),
-                                                  title: Text(item.display,
-                                                      style: TextStyle(
-                                                        decoration: item.checked
-                                                            ? TextDecoration
-                                                            .lineThrough
-                                                            : TextDecoration
-                                                            .none,
-                                                        color: item.checked
-                                                            ? Colors.grey
-                                                            : null,
-                                                      )),
+                                                  title: GestureDetector(
+                                                    onTap: () {
+                                                      Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              ShoppingListItemDetailScreen(
+                                                                  item: item),
+                                                        ),
+                                                      );
+                                                    },
+                                                    child: Text(item.display,
+                                                        style: TextStyle(
+                                                          decoration: item.checked
+                                                              ? TextDecoration
+                                                              .lineThrough
+                                                              : TextDecoration
+                                                              .none,
+                                                          color: item.checked
+                                                              ? Colors.grey
+                                                              : null,
+                                                        )),
+                                                  ),
                                                 ),
                                               ),
                                             ),
