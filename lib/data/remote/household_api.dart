@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:intl/intl.dart';
 import '../../models/add_recipe_to_list_payload.dart';
 import '../../models/cookbook_model.dart';
 import '../../models/create_shopping_item_response_model.dart';
@@ -654,11 +655,24 @@ class HouseholdApi {
     }
   }
 
-  Future<MealplanResponse> getMealplans(int page, int perPage) async {
+  Future<MealplanResponse> getMealplans(
+    int page, int perPage, {DateTime? startDate, DateTime? endDate}) async {
     try {
+      final queryParameters = <String, dynamic>{
+        'page': page,
+        'per_page': perPage,
+      };
+
+      if (startDate != null) {
+        queryParameters['start_date'] = DateFormat('yyyy-MM-dd').format(startDate);
+      }
+      if (endDate != null) {
+        queryParameters['end_date'] = DateFormat('yyyy-MM-dd').format(endDate);
+      }
+
       final response = await _dio.get(
         'api/households/mealplans',
-        queryParameters: {'page': page, 'per_page': perPage},
+        queryParameters: queryParameters,
       );
       return MealplanResponse.fromJson(response.data);
     } on DioException catch (e) {
