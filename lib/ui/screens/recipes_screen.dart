@@ -1,5 +1,7 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:mealique/data/remote/api_exceptions.dart';
 import '../../data/sync/recipe_repository.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/recipes_model.dart';
@@ -35,6 +37,43 @@ class _RecipesScreenState extends State<RecipesScreen> {
             print('Recipe to add: $recipeName');
             Navigator.pop(ctx);
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget(Object error, VoidCallback onRetry) {
+    //final l10n = AppLocalizations.of(context)!;
+    String errorMessage;
+
+    if (error is DioException && error.error is ApiException) {
+      final apiError = error.error as ApiException;
+      if (apiError is NetworkException) {
+        errorMessage = 'Bitte prüfe deine Internetverbindung.'; // TODO: l10n
+      } else if (apiError is ServerException) {
+        errorMessage = 'Ein Serverfehler ist aufgetreten. Bitte versuche es später erneut.'; // TODO: l10n
+      } else {
+        errorMessage = apiError.message;
+      }
+    } else {
+      errorMessage = 'Ein unerwarteter Fehler ist aufgetreten.'; // TODO: l10n
+    }
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, color: Colors.red, size: 48),
+            const SizedBox(height: 16),
+            Text(errorMessage, textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: onRetry,
+              child: const Text('Erneut versuchen'), // TODO: l10n
+            ),
+          ],
         ),
       ),
     );
@@ -89,7 +128,11 @@ class _RecipesScreenState extends State<RecipesScreen> {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
+                    return _buildErrorWidget(snapshot.error!, () {
+                      setState(() {
+                        _recipesFuture = _recipeRepository.getRecipes();
+                      });
+                    });
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return const Center(child: Text('No recipes found.'));
                   }

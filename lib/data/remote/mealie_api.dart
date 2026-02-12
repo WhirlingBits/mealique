@@ -1,70 +1,57 @@
 import 'package:dio/dio.dart';
-import '../../models/recipe.dart';
-import '../local/token_storage.dart';
+import 'package:mealique/data/local/token_storage.dart';
 
 class MealieApi {
-  final Dio _dio;
-  final TokenStorage _tokenStorage;
+  final Dio dio;
+  final TokenStorage _tokenStorage = TokenStorage();
 
   MealieApi({required String baseUrl})
-      : _tokenStorage = TokenStorage(),
-        _dio = Dio(BaseOptions(
-          baseUrl: baseUrl,
-          headers: {'Content-Type': 'application/json'},
-        )) {
-    // Interceptor: Fügt bei jedem Request den Token hinzu, falls vorhanden
-    _dio.interceptors.add(InterceptorsWrapper(
+      : dio = Dio(BaseOptions(baseUrl: baseUrl)) {
+    dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         final token = await _tokenStorage.getToken();
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
-        handler.next(options);
+        return handler.next(options);
       },
     ));
   }
 
-  // Login: Holt Token und speichert ihn
-  Future<void> login(String username, String password) async {
+  Future<bool> login(String email, String password) async {
     try {
-      final response = await _dio.post(
+      final response = await dio.post(
         '/api/auth/token',
-        data: {'username': username, 'password': password},
+        data: {
+          'username': email,
+          'password': password,
+        },
+        // Mealie API expects form data for token authentication
         options: Options(contentType: Headers.formUrlEncodedContentType),
       );
 
-      final token = response.data['access_token'];
-      if (token != null) {
+      if (response.statusCode == 200 && response.data != null) {
+        final token = response.data['access_token'] as String;
         await _tokenStorage.saveToken(token);
-      } else {
-        throw Exception('Kein Token erhalten');
+        // Also save the server url for future sessions
+        await _tokenStorage.saveServerUrl(dio.options.baseUrl);
+        return true;
       }
-    } on DioException catch (e) {
-      throw Exception(e.response?.data['detail'] ?? e.message);
+      return false;
+    } catch (e) {
+      print('Login failed: $e');
+      return false;
     }
   }
 
-  // Rezepte abrufen
-  Future<List<Recipe>> getRecipes({int page = 1, int perPage = 50}) async {
+  Future<Map<String, dynamic>?> getSelf() async {
     try {
-      final response = await _dio.get(
-        '/api/recipes',
-        queryParameters: {
-          'page': page,
-          'perPage': perPage,
-        },
-      );
-
-      final data = response.data;
-      // Mealie gibt oft ein Objekt mit 'items' zurück oder direkt eine Liste,
-      // je nach Version und Endpoint-Konfiguration.
-      final List<dynamic> items = (data is Map && data.containsKey('items'))
-          ? data['items']
-          : data;
-
-      return items.map((json) => Recipe.fromJson(json)).toList();
+      final response = await dio.get('/api/users/me');
+      return response.data as Map<String, dynamic>;
     } catch (e) {
-      rethrow;
+      // Handle DioError or other exceptions
+      print('Failed to get self: $e');
+      return null;
     }
   }
 }

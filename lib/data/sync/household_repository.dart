@@ -1,4 +1,6 @@
+import 'package:dio/dio.dart';
 import 'package:mealique/data/local/household_storage.dart';
+import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/data/remote/household_api.dart';
 import 'package:mealique/models/shopping_item_model.dart';
 import 'package:mealique/models/shopping_list_model.dart';
@@ -50,119 +52,67 @@ class HouseholdRepository {
   }
 
   Future<void> createShoppingList(String name) async {
-    try {
-      final newList = await _api.createShoppingList(name: name);
-      await _storage.saveShoppingLists([newList]);
-    } catch (e) {
-      rethrow;
-    }
+    await _api.createShoppingList(name: name);
+    await syncShoppingLists(); // Sync after creation
   }
 
   Future<void> deleteShoppingList(String id) async {
-    try {
-      await _api.deleteShoppingList(id);
-      syncShoppingLists();
-    } catch (e) {
-      rethrow;
-    }
+    await _api.deleteShoppingList(id);
+    await syncShoppingLists(); // Sync after deletion
   }
 
   // --- UI Helper Methods (Shopping Items) ---
 
-  /// Loads all items belonging to a specific list.
   Future<List<ShoppingItem>> getItemsForList(String listId) async {
-    // 1. First, try to retrieve the specific list directly from the API to obtain the latest data.
-    // This ensures that we see current items when opening the detail screen (e.g. if someone else has added something).
     try {
       final list = await _api.getShoppingList(listId);
-
-      // Save update in cache (important!)
-      // We retrieve the complete lists, but only update this one in memory.
-      await _storage.saveShoppingLists([list]);
-
+      await _storage.saveShoppingLists([list]); // Update cache
       return list.listItems;
-    } catch (e) {
-      // If the network fails (offline), we fall back on local storage.
-      print('Network fetch failed, trying local storage: $e');
+    } on DioException catch (e) {
+      // Only fall back to cache on specific network errors
+      if (e.error is NetworkException) {
+        final lists = await _storage.getShoppingLists();
+        if (lists != null) {
+          final list = lists.firstWhere((l) => l.id == listId, orElse: () => throw Exception('List not found in cache'));
+          return list.listItems;
+        }
+      } 
+      // Re-throw other errors to be displayed in the UI
+      rethrow;
     }
-
-    // 2. Fallback: Lokal suchen
-    final lists = await _storage.getShoppingLists();
-    if (lists != null) {
-      try {
-        final list = lists.firstWhere((l) => l.id == listId);
-        return list.listItems;
-      } catch (_) {
-        // List not found locally either
-      }
-    }
-
-    return [];
   }
 
   Future<void> addItem(String listId, String name) async {
     final item = ShoppingItem(
-      id: '',
+      id: '', // ID is set by the server
       shoppingListId: listId,
       display: name,
       note: '',
       quantity: 1.0,
-      unit: null,
       checked: false,
       position: 0,
     );
-
-    try {
-      // API call
-      await _api.createShoppingItem(item);
-    } catch (e) {
-      rethrow;
-    }
+    await _api.createShoppingItem(item);
   }
 
   Future<void> updateItem(ShoppingItem item) async {
-    try {
-      if (item.id.isNotEmpty) {
-        await _api.updateShoppingItem(item.id, item);
-      }
-    } catch (e) {
-      rethrow;
+    if (item.id.isNotEmpty) {
+      await _api.updateShoppingItem(item.id, item);
     }
   }
 
   Future<void> deleteItem(String itemId) async {
-    try {
-      await _api.deleteShoppingItem(itemId);
-    } catch (e) {
-      rethrow;
-    }
+    await _api.deleteShoppingItem(itemId);
   }
-
 
   // --- Sync Logic ---
 
   Future<void> syncAll() async {
     await Future.wait([
-      syncCookbooks(),
       syncShoppingLists(),
-      syncMealplanRules(),
-      syncMealplans(),
+      // Add other sync methods here if needed
     ]);
   }
-
-  // --- Cookbooks ---
-
-  Future<void> syncCookbooks() async {
-    try {
-      final response = await _api.getCookbooks(1, 100);
-      final remoteCookbooks = response.items;
-      await _storage.saveCookbooks(remoteCookbooks);
-    } catch (e) {
-      print('Sync error cookbooks: $e');
-    }
-  }
-
-  // --- Shopping Lists ---
 
   Future<void> syncShoppingLists() async {
     try {
@@ -170,31 +120,7 @@ class HouseholdRepository {
       final remoteListsRaw = listResponse.items;
       await _storage.saveShoppingLists(remoteListsRaw);
     } catch (e) {
-      print('Sync error shopping lists: $e');
-    }
-  }
-
-  // --- Mealplan Rules ---
-
-  Future<void> syncMealplanRules() async {
-    try {
-      final response = await _api.getMealplanRules(1, 100);
-      final remoteRules = response.items;
-      await _storage.saveMealplanRules(remoteRules);
-    } catch (e) {
-      print('Sync error mealplan rules: $e');
-    }
-  }
-
-  // --- Mealplans ---
-
-  Future<void> syncMealplans() async {
-    try {
-      final response = await _api.getMealplans(1, 100);
-      final remotePlans = response.items;
-      await _storage.saveMealplans(remotePlans);
-    } catch (e) {
-      print('Sync error mealplans: $e');
+      // Silently fail sync, as UI might be showing cached data
     }
   }
 }

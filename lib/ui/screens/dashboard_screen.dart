@@ -1,5 +1,7 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/data/sync/mealplan_repository.dart';
 import 'package:mealique/data/sync/recipe_repository.dart';
 import 'package:mealique/data/sync/user_repository.dart';
@@ -119,6 +121,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  Widget _buildErrorWidget(Object error, VoidCallback onRetry) {
+    //final l10n = AppLocalizations.of(context)!;
+    String errorMessage;
+
+    if (error is DioException && error.error is ApiException) {
+      final apiError = error.error as ApiException;
+      if (apiError is NetworkException) {
+        errorMessage = 'Bitte prüfe deine Internetverbindung.'; // TODO: l10n
+      } else if (apiError is ServerException) {
+        errorMessage = 'Ein Serverfehler ist aufgetreten. Bitte versuche es später erneut.'; // TODO: l10n
+      } else {
+        errorMessage = apiError.message;
+      }
+    } else {
+      errorMessage = 'Ein unerwarteter Fehler ist aufgetreten.'; // TODO: l10n
+    }
+
+    return Center(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, color: Colors.red, size: 48),
+              const SizedBox(height: 16),
+              Text(errorMessage, textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: onRetry,
+                child: const Text('Erneut versuchen'), // TODO: l10n
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -188,7 +229,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
+                    return _buildErrorWidget(snapshot.error!, () {
+                      setState(() {
+                        _todaysMealsFuture = _fetchTodaysMeals();
+                      });
+                    });
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return Center(child: Text(l10n.noMealsPlanned));
                   }
@@ -237,7 +282,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     } else if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
+                      return _buildErrorWidget(snapshot.error!, () {
+                        setState(() {
+                          _popularRecipesFuture = _fetchPopularRecipes();
+                        });
+                      });
                     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                       return const Center(
                           child: Text('No popular recipes found.'));
@@ -270,6 +319,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       icon: const Icon(Icons.post_add),
                       label: Text(l10n.recipe),
                       style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.cardColor,
+                        foregroundColor: theme.textTheme.bodyLarge?.color,
+                        elevation: 1,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:mealique/data/remote/dio_client.dart';
 import '../../models/user_self_model.dart';
 import '../local/token_storage.dart';
 
@@ -8,10 +9,7 @@ class UsersApi {
 
   UsersApi({String? baseUrl})
       : _tokenStorage = TokenStorage(),
-        _dio = Dio(BaseOptions(
-          baseUrl: baseUrl ?? '',
-          headers: {'Content-Type': 'application/json'},
-        )) {
+        _dio = DioClient.createDio() {
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         if (options.baseUrl.isEmpty) {
@@ -32,11 +30,7 @@ class UsersApi {
   }
 
   Future<UserSelf> getSelfUser() async {
-    try {
-      final response = await _dio.get('api/users/self');
-      return UserSelf.fromJson(response.data);
-    } on DioException catch (e) {
-      throw Exception('Failed to get self user: ${e.response?.data ?? e.message}');
-    }
+    final response = await _dio.get('api/users/self');
+    return UserSelf.fromJson(response.data);
   }
 }
