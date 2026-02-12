@@ -3,20 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 import 'package:calendar_date_picker2/calendar_date_picker2.dart';
+import '../../data/sync/mealplan_repository.dart';
 import '../../l10n/app_localizations.dart';
+import '../../models/mealplan_model.dart';
 import '../widgets/horizontal_date_picker.dart';
 import '../widgets/add_meal_form.dart';
-
-// Ein einfaches Datenmodell für eine geplante Mahlzeit.
-class Meal {
-  final String type;
-  final String name;
-
-  Meal({required this.type, required this.name});
-
-  @override
-  String toString() => name;
-}
 
 bool isSameDay(DateTime a, DateTime b) {
   return a.year == b.year && a.month == b.month && a.day == b.day;
@@ -32,9 +23,14 @@ class PlannerScreen extends StatefulWidget {
 class _PlannerScreenState extends State<PlannerScreen> {
   late DateTimeRange _dateRange;
   late DateTime _selectedDay;
-  late final ValueNotifier<List<Meal>> _selectedMeals;
+  late final ValueNotifier<List<MealplanEntry>> _selectedMeals;
+  late Future<void> _mealplansFuture;
 
-  final LinkedHashMap<DateTime, List<Meal>> _mealsByDay = LinkedHashMap(
+  // New state for entry type filtering
+  PlanEntryType? _selectedEntryType;
+
+  final MealplanRepository _mealplanRepository = MealplanRepository();
+  final LinkedHashMap<DateTime, List<MealplanEntry>> _mealsByDay = LinkedHashMap(
     equals: isSameDay,
     hashCode: (key) => key.day * 1000000 + key.month * 10000 + key.year,
   );
@@ -44,26 +40,27 @@ class _PlannerScreenState extends State<PlannerScreen> {
     super.initState();
     final now = DateTime.now();
     final today = DateTime.utc(now.year, now.month, now.day);
-
     _selectedDay = today;
-    _dateRange = DateTimeRange(start: today, end: today.add(const Duration(days: 6)));
 
-    _populateDummyData();
+    final startOfWeek = today.subtract(Duration(days: today.weekday - 1));
+    final endOfWeek = startOfWeek.add(const Duration(days: 6));
+    _dateRange = DateTimeRange(start: startOfWeek, end: endOfWeek);
+
+    _mealplansFuture = _fetchMealplans();
     _selectedMeals = ValueNotifier(_getMealsForDay(_selectedDay));
   }
 
-  void _populateDummyData() {
-    final today = DateTime.now();
-    final day1 = DateTime.utc(today.year, today.month, today.day);
-    final day2 = DateTime.utc(today.year, today.month, today.day + 2);
-
-    _mealsByDay[day1] = [
-      Meal(type: 'Frühstück', name: 'Müsli'),
-      Meal(type: 'Abendessen', name: 'Pizza'),
-    ];
-    _mealsByDay[day2] = [
-      Meal(type: 'Mittagessen', name: 'Großer Salat'),
-    ];
+  Future<void> _fetchMealplans() async {
+    _mealsByDay.clear();
+    final mealplans =
+        await _mealplanRepository.getMealplans(_dateRange.start, _dateRange.end);
+    if (mounted) {
+      setState(() {
+        _mealsByDay.addAll(mealplans);
+        _selectedMeals.value = _getMealsForDay(_selectedDay);
+        _selectedEntryType = null; // Reset filter
+      });
+    }
   }
 
   @override
@@ -72,15 +69,16 @@ class _PlannerScreenState extends State<PlannerScreen> {
     super.dispose();
   }
 
-  List<Meal> _getMealsForDay(DateTime day) {
+  List<MealplanEntry> _getMealsForDay(DateTime day) {
     return _mealsByDay[day] ?? [];
   }
 
   void _onDateChanged(DateTime date) {
     setState(() {
       _selectedDay = date;
+      _selectedMeals.value = _getMealsForDay(date);
+      _selectedEntryType = null; // Reset filter on day change
     });
-    _selectedMeals.value = _getMealsForDay(date);
   }
 
   Future<void> _showDateRangePicker() async {
@@ -93,7 +91,8 @@ class _PlannerScreenState extends State<PlannerScreen> {
       dayTextStyle: const TextStyle(),
       selectedDayTextStyle:
           const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-      todayTextStyle: const TextStyle(color: accentColor, fontWeight: FontWeight.bold),
+      todayTextStyle:
+          const TextStyle(color: accentColor, fontWeight: FontWeight.bold),
     );
 
     final values = await showCalendarDatePicker2Dialog(
@@ -104,7 +103,10 @@ class _PlannerScreenState extends State<PlannerScreen> {
       borderRadius: BorderRadius.circular(15),
     );
 
-    if (values != null && values.length == 2 && values[0] != null && values[1] != null) {
+    if (values != null &&
+        values.length == 2 &&
+        values[0] != null &&
+        values[1] != null) {
       final newRange = DateTimeRange(start: values[0]!, end: values[1]!);
       setState(() {
         _dateRange = newRange;
@@ -112,8 +114,8 @@ class _PlannerScreenState extends State<PlannerScreen> {
             _selectedDay.isAfter(newRange.end)) {
           _selectedDay = newRange.start;
         }
+        _mealplansFuture = _fetchMealplans();
       });
-      _selectedMeals.value = _getMealsForDay(_selectedDay);
     }
   }
 
@@ -126,35 +128,82 @@ class _PlannerScreenState extends State<PlannerScreen> {
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: AddMealForm(
           onAddMeal: (mealType, recipe) {
-            final newMeal = Meal(type: mealType, name: recipe.name);
-            setState(() {
-              if (_mealsByDay[_selectedDay] != null) {
-                _mealsByDay[_selectedDay]!.add(newMeal);
-              } else {
-                _mealsByDay[_selectedDay] = [newMeal];
-              }
-            });
-            _selectedMeals.value = _getMealsForDay(_selectedDay);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                  content: Text('Add functionality is not implemented yet.')),
+            );
           },
         ),
       ),
     );
   }
 
-  void _showEditMealDialog(Meal meal) {
-    // TODO: Implement a proper edit dialog/sheet, potentially reusing AddMealForm
+  void _showEditMealDialog(MealplanEntry meal) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Bearbeiten-Funktion ist noch nicht implementiert.')),
+      const SnackBar(content: Text('Edit functionality is not implemented yet.')),
     );
   }
 
+  // Widget to build the filter chips
+  Widget _buildEntryTypeFilters() {
+    return ValueListenableBuilder<List<MealplanEntry>>(
+      valueListenable: _selectedMeals,
+      builder: (context, meals, _) {
+        final availableTypes = meals.map((m) => m.entryType).toSet().toList();
+        availableTypes.sort((a, b) => a.index.compareTo(b.index));
+
+        if (availableTypes.length < 2) {
+          return const SizedBox.shrink();
+        }
+
+        List<Widget> chips = [
+          ChoiceChip(
+            label: const Text('All'),
+            selected: _selectedEntryType == null,
+            onSelected: (selected) {
+              if (selected) {
+                setState(() {
+                  _selectedEntryType = null;
+                });
+              }
+            },
+          ),
+        ];
+
+        chips.addAll(availableTypes.map((type) {
+          return ChoiceChip(
+            label: Text(toBeginningOfSentenceCase(type.name) ?? type.name),
+            selected: _selectedEntryType == type,
+            onSelected: (selected) {
+              setState(() {
+                _selectedEntryType = selected ? type : null;
+              });
+            },
+          );
+        }));
+
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            children: chips
+                .map((c) => Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: c,
+                    ))
+                .toList(),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final f = DateFormat.MMMd(l10n.localeName);
     final headerTitle =
-        '${f.format(_dateRange.start)} - ${f.format(_dateRange.end)}';
+        '${f.format(_dateRange.start)} - ${f.format(_dateRange.end)} ';
     const accentColor = Color(0xFFE58325);
 
     return Scaffold(
@@ -186,98 +235,137 @@ class _PlannerScreenState extends State<PlannerScreen> {
         centerTitle: false,
         elevation: 0,
       ),
-      body: Column(
-        children: [
-          HorizontalDatePicker(
-            dateRange: _dateRange,
-            selectedDate: _selectedDay,
-            onDateChanged: _onDateChanged,
-            selectedColor: accentColor,
-            locale: l10n.localeName,
-            mealsByDay: _mealsByDay,
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      body: FutureBuilder(
+        future: _mealplansFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(
+                child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  child: Text(
-                    DateFormat.yMMMEd(l10n.localeName).format(_selectedDay),
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Expanded(
-                  child: ValueListenableBuilder<List<Meal>>(
-                    valueListenable: _selectedMeals,
-                    builder: (context, meals, _) {
-                      if (meals.isEmpty) {
-                        return Center(
-                          child: Text(
-                            l10n.noMealsPlanned,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(color: Colors.grey),
-                          ),
-                        );
-                      }
-                      return SlidableAutoCloseBehavior(
-                        child: ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                          itemCount: meals.length,
-                          itemBuilder: (context, index) {
-                            final meal = meals[index];
-                            return Slidable(
-                              key: ObjectKey(meal),
-                              startActionPane: ActionPane(
-                                motion: const ScrollMotion(),
-                                children: [
-                                  SlidableAction(
-                                    onPressed: (context) => _showEditMealDialog(meal),
-                                    backgroundColor: accentColor,
-                                    foregroundColor: Colors.white,
-                                    icon: Icons.edit,
-                                    label: 'Bearbeiten',
-                                  ),
-                                  SlidableAction(
-                                    onPressed: (context) {
-                                      setState(() {
-                                        _mealsByDay[_selectedDay]?.remove(meal);
-                                        _selectedMeals.value = _getMealsForDay(_selectedDay);
-                                      });
-                                    },
-                                    backgroundColor: Colors.redAccent,
-                                    foregroundColor: Colors.white,
-                                    icon: Icons.delete,
-                                    label: 'Löschen',
-                                  ),
-                                ],
-                              ),
-                              child: Card(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                child: ListTile(
-                                  title: Text(meal.name),
-                                  leading: Text(meal.type,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold)),
-                                ),
+                Text('Error: ${snapshot.error}'),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _mealplansFuture = _fetchMealplans();
+                    });
+                  },
+                  child: const Text('Retry'),
+                )
+              ],
+            ));
+          }
+
+          return Column(
+            children: [
+              HorizontalDatePicker(
+                dateRange: _dateRange,
+                selectedDate: _selectedDay,
+                onDateChanged: _onDateChanged,
+                selectedColor: accentColor,
+                locale: l10n.localeName,
+                mealsByDay: _mealsByDay,
+              ),
+              _buildEntryTypeFilters(), // Filter chips are added here
+              const Divider(height: 1),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: Text(
+                        DateFormat.yMMMEd(l10n.localeName).format(_selectedDay),
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Expanded(
+                      child: ValueListenableBuilder<List<MealplanEntry>>(
+                        valueListenable: _selectedMeals,
+                        builder: (context, meals, _) {
+                          // Apply the filter
+                          final filteredMeals = _selectedEntryType == null
+                              ? meals
+                              : meals
+                                  .where((m) => m.entryType == _selectedEntryType)
+                                  .toList();
+
+                          if (filteredMeals.isEmpty) {
+                            return Center(
+                              child: Text(
+                                l10n.noMealsPlanned,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(color: Colors.grey),
                               ),
                             );
-                          },
-                        ),
-                      );
-                    },
-                  ),
+                          }
+                          return SlidableAutoCloseBehavior(
+                            child: ListView.builder(
+                              padding:
+                                  const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                              itemCount: filteredMeals.length,
+                              itemBuilder: (context, index) {
+                                final meal = filteredMeals[index];
+                                return Slidable(
+                                  key: ObjectKey(meal.id),
+                                  startActionPane: ActionPane(
+                                    motion: const ScrollMotion(),
+                                    children: [
+                                      SlidableAction(
+                                        onPressed: (context) =>
+                                            _showEditMealDialog(meal),
+                                        backgroundColor: accentColor,
+                                        foregroundColor: Colors.white,
+                                        icon: Icons.edit,
+                                        label: 'Edit',
+                                      ),
+                                      SlidableAction(
+                                        onPressed: (context) {
+                                          // TODO: Implement deletion
+                                        },
+                                        backgroundColor: Colors.redAccent,
+                                        foregroundColor: Colors.white,
+                                        icon: Icons.delete,
+                                        label: 'Delete',
+                                      ),
+                                    ],
+                                  ),
+                                  child: Card(
+                                    margin:
+                                        const EdgeInsets.only(bottom: 12),
+                                    child: ListTile(
+                                      title: Text(meal.recipe?.name ??
+                                          meal.title ??
+                                          'Untitled Meal'),
+                                      leading: Text(
+                                          toBeginningOfSentenceCase(
+                                                  meal.entryType.name) ??
+                                              '',
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold)),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-        ],
+              ),
+            ],
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddMealSheet,
