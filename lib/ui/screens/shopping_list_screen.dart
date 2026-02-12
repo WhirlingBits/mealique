@@ -61,6 +61,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
 
     return Scaffold(
       body: FutureBuilder<List<ShoppingList>>(
@@ -80,11 +81,25 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text('Keine Listen vorhanden'),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
+                      Icon(Icons.shopping_cart_outlined, size: 80, color: Colors.grey[400]),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Keine Einkaufslisten',
+                        style: theme.textTheme.headlineSmall?.copyWith(color: Colors.grey[600]),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Lege deine erste Liste an, um loszulegen.',
+                        style: theme.textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.add),
                         onPressed: _showAddListSheet,
-                        child: const Text('Liste erstellen'),
+                        label: const Text('Erste Liste erstellen'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        ),
                       )
                     ]));
           }
@@ -97,70 +112,81 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 itemCount: lists.length,
                 itemBuilder: (context, index) {
                   final list = lists[index];
+                  final String subtitle;
+                  if (list.itemCount == 0) {
+                    subtitle = 'Alle erledigt'; // TODO: l10n
+                  } else if (list.itemCount == 1) {
+                    subtitle = '1 offenes Element'; // TODO: l10n
+                  } else {
+                    subtitle = '${list.itemCount} offene Elemente'; // TODO: l10n
+                  }
 
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: ClipRRect(
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
-                      child: Slidable(
-                        key: ValueKey(list.id),
-                        startActionPane: ActionPane(
-                          motion: const ScrollMotion(),
-                          extentRatio: 0.5,
-                          children: [
-                            SlidableAction(
-                              flex: 1,
-                              onPressed: (context) {
-                                // TODO: Liste bearbeiten Logik implementieren
-                              },
-                              backgroundColor: const Color(0xFFE58325),
-                              foregroundColor: Colors.white,
-                              icon: Icons.edit,
-                            ),
-                            SlidableAction(
-                              flex: 1,
-                              onPressed: (context) => _deleteList(list.id),
-                              backgroundColor: Colors.red,
-                              foregroundColor: Colors.white,
-                              icon: Icons.delete,
-                            ),
-                          ],
-                        ),
-                        child: Card(
-                          margin: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 4),
-                            title: Text(
-                              list.name,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            subtitle: Text('${list.itemCount} Elemente'),
-                            onTap: () {
-                              final screenHeight = MediaQuery.of(context).size.height;
-                              final topPadding = MediaQuery.of(context).padding.top;
-                              const appBarHeight = kToolbarHeight;
-
-                              showModalBottomSheet(
-                                context: context,
-                                isScrollControlled: true,
-                                backgroundColor: Colors.transparent,
-                                constraints: BoxConstraints(
-                                  maxHeight: screenHeight - (topPadding + appBarHeight),
-                                ),
-                                builder: (context) => ShoppingListDetailScreen(
-                                  listId: list.id,
-                                  listName: list.name,
-                                ),
-                              ).then((_) => _loadLists());
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Slidable(
+                      key: ValueKey(list.id),
+                      startActionPane: ActionPane(
+                        motion: const ScrollMotion(),
+                        extentRatio: 0.5,
+                        children: [
+                          SlidableAction(
+                            flex: 1,
+                            onPressed: (context) {
+                              // TODO: Liste bearbeiten Logik implementieren
                             },
-                            trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                            backgroundColor: const Color(0xFFE58325),
+                            foregroundColor: Colors.white,
+                            icon: Icons.edit,
+                            label: 'Bearbeiten',
+                          ),
+                          SlidableAction(
+                            flex: 1,
+                            onPressed: (context) => _deleteList(list.id),
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                            icon: Icons.delete,
+                            label: 'Löschen',
+                          ),
+                        ],
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        leading: CircleAvatar(
+                          backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                          child: Icon(
+                            Icons.list_alt_rounded,
+                            color: theme.colorScheme.primary,
                           ),
                         ),
+                        title: Text(
+                          list.name,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(subtitle),
+                        onTap: () {
+                          final screenHeight = MediaQuery.of(context).size.height;
+                          final topPadding = MediaQuery.of(context).padding.top;
+                          const appBarHeight = kToolbarHeight;
+
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            constraints: BoxConstraints(
+                              maxHeight: screenHeight - (topPadding + appBarHeight),
+                            ),
+                            builder: (context) => ShoppingListDetailScreen(
+                              listId: list.id,
+                              listName: list.name,
+                            ),
+                          ).then((_) => _loadLists());
+                        },
+                        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
                       ),
                     ),
                   );
