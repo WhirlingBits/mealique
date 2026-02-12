@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mealique/l10n/app_localizations.dart';
+import 'package:mealique/providers/settings_provider.dart';
+import 'package:provider/provider.dart';
 import '../../data/local/token_storage.dart';
 import '../../data/sync/user_repository.dart';
 import '../../models/user_self_model.dart';
@@ -43,9 +45,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  void _showLanguageDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final provider = Provider.of<SettingsProvider>(context, listen: false);
+        return AlertDialog(
+          title: const Text('Sprache auswählen'), // TODO: l10n
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: AppLocalizations.supportedLocales.map((locale) {
+              return RadioListTile<Locale>(
+                title: Text(locale.languageCode == 'de' ? 'Deutsch' : 'English'),
+                value: locale,
+                groupValue: provider.locale,
+                onChanged: (newLocale) {
+                  if (newLocale != null) {
+                    provider.setLocale(newLocale);
+                    Navigator.pop(context);
+                  }
+                },
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final settings = Provider.of<SettingsProvider>(context);
 
     return Scaffold(
       body: SafeArea(
@@ -91,18 +122,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               leading: const Icon(Icons.language),
               title: const Text('Sprache'), // TODO: l10n
               trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-              onTap: () {
-                // TODO: Navigation zu Sprachauswahl-Dialog/Screen
-              },
+              onTap: _showLanguageDialog,
             ),
 
-            // Menüpunkt: Notifications
+            // Menüpunkt: Favoriten
             ListTile(
               leading: const Icon(Icons.star),
-              title: const Text('Notifications'),
+              title: const Text('Favoriten'),
               trailing: const Icon(Icons.chevron_right, color: Colors.grey),
               onTap: () {
-                // TODO: Navigation zu Notifications
+                // TODO: Navigation zu Favoriten
               },
             ),
 
@@ -110,9 +139,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             SwitchListTile(
               secondary: const Icon(Icons.dark_mode),
               title: Text(l10n.darkMode),
-              value: false, // TODO: Mit echtem State verbinden (z.B. ThemeProvider)
+              value: settings.themeMode == ThemeMode.dark,
               onChanged: (bool value) {
-                // TODO: Logik zum Umschalten des Themes
+                final newMode = value ? ThemeMode.dark : ThemeMode.light;
+                settings.setThemeMode(newMode);
               },
             ),
 

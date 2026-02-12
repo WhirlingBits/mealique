@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:mealique/l10n/app_localizations.dart';
+import 'package:mealique/providers/settings_provider.dart';
+import 'package:mealique/ui/screens/login_screen.dart';
 import 'package:provider/provider.dart';
-import 'l10n/app_localizations.dart';
-import 'ui/screens/auth_check_screen.dart';
-import 'providers/locale_provider.dart';
 
 void main() {
-  runApp(
-    // The ChangeNotifierProvider encapsulates the app so that the state is available everywhere.
-    ChangeNotifierProvider(
-      create: (context) => LocaleProvider(),
-      child: const MyApp(),
-    ),
-  );
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -19,22 +14,27 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Here we access the provider to obtain the current language.
-    final provider = Provider.of<LocaleProvider>(context);
-
-    return MaterialApp(
-      title: 'Mealique',
-      // The locale is set dynamically from the provider.
-      locale: provider.locale,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+    return ChangeNotifierProvider(
+      create: (_) => SettingsProvider(),
+      child: Consumer<SettingsProvider>(
+        builder: (context, settings, child) {
+          return MaterialApp(
+            title: 'Mealie',
+            theme: ThemeData.light(),
+            darkTheme: ThemeData.dark(),
+            themeMode: settings.themeMode,
+            locale: settings.locale,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const LoginScreen(),
+          );
+        },
       ),
-      // Start with the AuthCheckScreen to check the login status.
-      home: const AuthCheckScreen(),
     );
   }
 }

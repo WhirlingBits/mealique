@@ -1,41 +1,25 @@
-import 'package:drift/drift.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-part 'app_settings_storage.g.dart';
+class AppSettingsStorage {
+  final _storage = const FlutterSecureStorage();
+  static const _keyLocale = 'app_locale';
+  static const _keyThemeMode = 'theme_mode';
 
-// Definition der Tabelle
-class AppSettings extends Table {
-  TextColumn get key => text()();
-  TextColumn get value => text().nullable()();
+  // --- Locale --- //
+  Future<void> saveLocale(String locale) => _storage.write(key: _keyLocale, value: locale);
+  Future<String?> getLocale() => _storage.read(key: _keyLocale);
 
-  @override
-  Set<Column> get primaryKey => {key};
-}
+  // --- Theme Mode --- //
+  Future<void> saveThemeMode(ThemeMode mode) => _storage.write(key: _keyThemeMode, value: mode.name);
 
-// DAO for accessing the settings
-@DriftAccessor(tables: [AppSettings])
-// Ersetzen Sie 'GeneratedDatabase' unten durch Ihre konkrete Datenbankklasse (z.B. AppDatabase)
-class AppSettingsDao extends DatabaseAccessor<GeneratedDatabase> with _$AppSettingsDaoMixin {
-  AppSettingsDao(super.db);
-
-  // Retrieve setting
-  Future<String?> getSetting(String key) async {
-    final query = select(appSettings)..where((tbl) => tbl.key.equals(key));
-    final result = await query.getSingleOrNull();
-    return result?.value;
-  }
-
-  // Save settings and update existing ones
-  Future<void> saveSetting(String key, String value) async {
-    await into(appSettings).insertOnConflictUpdate(
-      AppSettingsCompanion(
-        key: Value(key),
-        value: Value(value),
-      ),
-    );
-  }
-
-  // Delete settings
-  Future<void> deleteSetting(String key) async {
-    await (delete(appSettings)..where((tbl) => tbl.key.equals(key))).go();
+  Future<ThemeMode?> getThemeMode() async {
+    final themeName = await _storage.read(key: _keyThemeMode);
+    if (themeName == null) return null;
+    try {
+      return ThemeMode.values.byName(themeName);
+    } catch (_) {
+      return null;
+    }
   }
 }
