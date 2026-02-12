@@ -1,3 +1,34 @@
+enum PlanEntryType {
+  breakfast,
+  lunch,
+  dinner,
+  side,
+  snack,
+  drink,
+  dessert;
+
+  static PlanEntryType fromString(String? value) {
+    switch (value) {
+      case 'breakfast':
+        return PlanEntryType.breakfast;
+      case 'lunch':
+        return PlanEntryType.lunch;
+      case 'dinner':
+        return PlanEntryType.dinner;
+      case 'side':
+        return PlanEntryType.side;
+      case 'snack':
+        return PlanEntryType.snack;
+      case 'drink':
+        return PlanEntryType.drink;
+      case 'dessert':
+        return PlanEntryType.dessert;
+      default:
+        return PlanEntryType.breakfast; // Fallback default
+    }
+  }
+}
+
 class MealplanRecipe {
   final String id;
   final String name;
@@ -16,7 +47,7 @@ class MealplanRecipe {
 
 class MealplanEntry {
   final String date;
-  final String entryType;
+  final PlanEntryType entryType;
   final String? title;
   final String? text;
   final String? recipeId;
@@ -40,7 +71,7 @@ class MealplanEntry {
   factory MealplanEntry.fromJson(Map<String, dynamic> json) {
     return MealplanEntry(
       date: json['date'],
-      entryType: json['entryType'],
+      entryType: PlanEntryType.fromString(json['entryType']),
       title: json['title'],
       text: json['text'],
       recipeId: json['recipeId'],
@@ -54,7 +85,7 @@ class MealplanEntry {
   Map<String, dynamic> toJson() {
     return {
       'date': date,
-      'entryType': entryType,
+      'entryType': entryType.name,
       'title': title,
       'text': text,
       'recipeId': recipeId,
