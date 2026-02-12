@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mealique/l10n/app_localizations.dart';
 import 'package:mealique/providers/settings_provider.dart';
+import 'package:mealique/ui/screens/server_api_settings_screen.dart';
 import 'package:provider/provider.dart';
-import '../../data/local/token_storage.dart';
 import '../../data/sync/user_repository.dart';
 import '../../models/user_self_model.dart';
-import 'login_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -15,31 +14,20 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final TokenStorage _tokenStorage = TokenStorage();
   final UserRepository _userRepository = UserRepository();
 
   UserSelf? _user;
-  String? _serverUrl;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _loadUser();
   }
 
-  Future<void> _loadData() async {
-    // Parallel data fetching
-    final results = await Future.wait<dynamic>([
-      _tokenStorage.getServerUrl(),
-      _userRepository.getSelfUser(),
-    ]);
-
-    final serverUrl = results[0] as String?;
-    final user = results[1] as UserSelf?;
-
+  Future<void> _loadUser() async {
+    final user = await _userRepository.getSelfUser();
     if (mounted) {
       setState(() {
-        _serverUrl = serverUrl?.replaceAll(RegExp(r'^https?://'), '');
         _user = user;
       });
     }
@@ -99,7 +87,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _serverUrl ?? 'Lade Server...',
+                    _user?.email ?? '',
                     style: TextStyle(color: Colors.grey[600], fontSize: 14),
                   ),
                 ],
@@ -113,7 +101,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: const Text('Server & API'),
               trailing: const Icon(Icons.chevron_right, color: Colors.grey),
               onTap: () {
-                // TODO: Navigation zu Server Einstellungen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ServerApiSettingsScreen(),
+                  ),
+                );
               },
             ),
 
@@ -155,29 +148,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Synchronisierung gestartet...')),
                 );
-              },
-            ),
-
-            const Divider(),
-
-            // Menüpunkt: Logout
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text(
-                'Logout', // TODO: l10n.logout verwenden
-                style: TextStyle(color: Colors.red),
-              ),
-              onTap: () async {
-                // Delete token on logout
-                await _tokenStorage.deleteToken();
-
-                if (context.mounted) {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                        builder: (context) => const LoginScreen()),
-                    (route) => false,
-                  );
-                }
               },
             ),
           ],
