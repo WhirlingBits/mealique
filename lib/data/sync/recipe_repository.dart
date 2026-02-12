@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
-
-import '../../models/recipes_model.dart';
+import 'package:mealique/models/recipes_model.dart';
 import '../remote/recipes_api.dart';
 
 class RecipeRepository {
@@ -25,11 +24,14 @@ class RecipeRepository {
       }
       return [];
     } on DioException catch (e) {
-      // Handle Dio-specific errors, e.g., for auth checks.
       if (e.response?.statusCode == 401) {
         // Handle unauthorized access
       }
       rethrow;
     }
+  }
+
+  Future<Recipe> getRecipe(String slug) {
+    return _api.getRecipe(slug);
   }
 }

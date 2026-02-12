@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:mealique/data/remote/dio_client.dart';
+import 'package:mealique/models/recipes_model.dart';
 import '../local/token_storage.dart';
 
 class RecipesApi {
@@ -28,7 +29,6 @@ class RecipesApi {
     ));
   }
 
-  /// Fetches a paginated list of recipes from the Mealie API.
   Future<Response> getRecipes(
       {int page = 1,
       int perPage = 15,
@@ -51,5 +51,10 @@ class RecipesApi {
       queryParameters: queryParameters,
     );
     return response;
+  }
+
+  Future<Recipe> getRecipe(String slug) async {
+    final response = await _dio.get('api/recipes/$slug');
+    return Recipe.fromJson(response.data);
   }
 }

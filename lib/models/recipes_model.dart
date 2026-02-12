@@ -1,3 +1,38 @@
+class RecipeIngredient {
+  final String note;
+  final double quantity;
+  final String? unit;
+  final String? food;
+
+  RecipeIngredient({
+    required this.note,
+    required this.quantity,
+    this.unit,
+    this.food,
+  });
+
+  factory RecipeIngredient.fromJson(Map<String, dynamic> json) {
+    return RecipeIngredient(
+      note: json['note'] ?? '',
+      quantity: (json['quantity'] as num?)?.toDouble() ?? 0.0,
+      unit: json['unit']?['name'] as String?,
+      food: json['food']?['name'] as String?,
+    );
+  }
+}
+
+class RecipeInstruction {
+  final String text;
+
+  RecipeInstruction({required this.text});
+
+  factory RecipeInstruction.fromJson(Map<String, dynamic> json) {
+    return RecipeInstruction(
+      text: json['text'] ?? '',
+    );
+  }
+}
+
 class Recipe {
   final String id;
   final String name;
@@ -7,6 +42,9 @@ class Recipe {
   final String? totalTime;
   final String? prepTime;
   final String? performTime;
+  final int servings;
+  final List<RecipeIngredient> ingredients;
+  final List<RecipeInstruction> instructions;
 
   Recipe({
     required this.id,
@@ -17,6 +55,9 @@ class Recipe {
     this.totalTime,
     this.prepTime,
     this.performTime,
+    required this.servings,
+    required this.ingredients,
+    required this.instructions,
   });
 
   factory Recipe.fromJson(Map<String, dynamic> json) {
@@ -29,6 +70,13 @@ class Recipe {
       totalTime: json['totalTime'],
       prepTime: json['prepTime'],
       performTime: json['performTime'],
+      servings: json['recipeYield'] ?? 0,
+      ingredients: (json['recipeIngredient'] as List? ?? [])
+          .map((i) => RecipeIngredient.fromJson(i))
+          .toList(),
+      instructions: (json['recipeInstructions'] as List? ?? [])
+          .map((i) => RecipeInstruction.fromJson(i))
+          .toList(),
     );
   }
 }

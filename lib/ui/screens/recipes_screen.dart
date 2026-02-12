@@ -2,11 +2,11 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
+import 'package:mealique/ui/screens/recipe_detail_screen.dart';
 import '../../data/sync/recipe_repository.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/recipes_model.dart';
 import '../widgets/add_recipe_form.dart';
-import 'recipe_detail_screen.dart';
 
 class RecipesScreen extends StatefulWidget {
   const RecipesScreen({super.key});
@@ -210,13 +210,8 @@ class _RecipesScreenState extends State<RecipesScreen> {
                 context: context,
                 isScrollControlled: true,
                 useSafeArea: true,
-                enableDrag: true,
-                showDragHandle: true,
-                clipBehavior: Clip.antiAlias,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                ),
-                builder: (context) => const RecipeDetailScreen(),
+                backgroundColor: Colors.transparent,
+                builder: (context) => RecipeDetailScreen(recipeSlug: recipe.slug),
               );
             },
             child: Column(
