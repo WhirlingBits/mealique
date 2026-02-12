@@ -2,26 +2,26 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:mealique/l10n/app_localizations.dart';
-import '../widgets/app_drawer.dart';
 import '../widgets/navigation_bar.dart';
 import 'dashboard_screen.dart';
 import 'recipes_screen.dart';
 import 'shopping_list_screen.dart';
 import 'settings_screen.dart';
+import 'planner_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+class MainScreen extends StatefulWidget {
   final bool isOffline;
 
-  const HomeScreen({
+  const MainScreen({
     super.key,
     this.isOffline = false,
   });
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<MainScreen> createState() => _MainScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   late bool _isOffline;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
@@ -29,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   static const List<Widget> _widgetOptions = <Widget>[
     DashboardScreen(),
     RecipesScreen(),
+    PlannerScreen(),
     ShoppingListScreen(),
     SettingsScreen(),
   ];
@@ -99,8 +100,10 @@ class _HomeScreenState extends State<HomeScreen> {
       case 1:
         return l10n.recipes;
       case 2:
-        return l10n.shoppingList;
+        return l10n.planner;
       case 3:
+        return l10n.shoppingList;
+      case 4:
         return l10n.settings;
       default:
         return l10n.home;
@@ -131,14 +134,8 @@ class _HomeScreenState extends State<HomeScreen> {
           )
         ],
       ),
-      drawer: AppDrawer(
-        onDestinationSelected: _onItemTapped,
-      ),
       body: _widgetOptions.elementAt(_selectedIndex),
-      // Hide navigation bar when Settings (index 3) is selected
-      bottomNavigationBar: _selectedIndex == 3
-          ? null
-          : AppNavigationBar(
+      bottomNavigationBar: AppNavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: _onItemTapped,
       ),
