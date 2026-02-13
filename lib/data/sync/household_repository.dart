@@ -15,25 +15,20 @@ class HouseholdRepository {
 
   // --- UI Helper Methods (Shopping Lists) ---
 
-  Future<List<ShoppingList>?> getShoppingLists() async {
-    // Try loading locally first
-    final localLists = await _storage.getShoppingLists();
-
-    // Sync in the background
-    syncShoppingLists();
-
-    if (localLists != null && localLists.isNotEmpty) {
-      return localLists;
-    }
-
-    // If locally empty, explicitly wait for network
+  Future<List<ShoppingList>> getShoppingLists() async {
     try {
       final response = await _api.getShoppingLists(1, 100);
       final remoteLists = response.items;
       await _storage.saveShoppingLists(remoteLists);
       return remoteLists;
-    } catch (e) {
-      return null;
+    } on DioException catch (e) {
+      if (e.error is NetworkException) {
+        final localLists = await _storage.getShoppingLists();
+        if (localLists != null && localLists.isNotEmpty) {
+          return localLists;
+        }
+      }
+      rethrow;
     }
   }
 
@@ -43,9 +38,15 @@ class HouseholdRepository {
     final listsWithCount = <ShoppingList>[];
 
     for (var list in lists) {
-      final items = await getItemsForList(list.id);
-      final uncheckedItemsCount = items.where((item) => !item.checked).length;
-      listsWithCount.add(list.copyWith(itemCount: uncheckedItemsCount));
+      try {
+        final items = await getItemsForList(list.id);
+        final uncheckedItemsCount = items.where((item) => !item.checked).length;
+        listsWithCount.add(list.copyWith(itemCount: uncheckedItemsCount));
+      } catch (e) {
+        // If fetching items for one list fails, add it with a count of 0
+        // so the main list still loads.
+        listsWithCount.add(list.copyWith(itemCount: 0));
+      }
     }
 
     return listsWithCount;
@@ -69,15 +70,13 @@ class HouseholdRepository {
       await _storage.saveShoppingLists([list]); // Update cache
       return list.listItems;
     } on DioException catch (e) {
-      // Only fall back to cache on specific network errors
       if (e.error is NetworkException) {
         final lists = await _storage.getShoppingLists();
         if (lists != null) {
           final list = lists.firstWhere((l) => l.id == listId, orElse: () => throw Exception('List not found in cache'));
           return list.listItems;
         }
-      } 
-      // Re-throw other errors to be displayed in the UI
+      }
       rethrow;
     }
   }
