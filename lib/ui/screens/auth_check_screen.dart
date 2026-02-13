@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../data/local/token_storage.dart';
-import '../../data/remote/recipes_api.dart'; // Changed from mealie_api.dart
+import '../../data/remote/recipes_api.dart'; 
 import 'main_screen.dart';
 import 'login_screen.dart';
 
@@ -34,21 +34,23 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
     }
 
     try {
-      final api = RecipesApi(baseUrl: serverUrl);
+      final api = RecipesApi();
+      // Make a lightweight test call to validate the token
       await api.getRecipes(page: 1, perPage: 1);
 
       if (!mounted) return;
-      // Online: We pass false
-      _navigateToHome(isOffline: false);
+      _navigateToHome();
 
     } on DioException catch (e) {
       if (!mounted) return;
 
+      // If token is expired or invalid, force login
       if (e.response?.statusCode == 401) {
         _navigateToLogin();
       } else {
-        // Offline/Error: We pass true
-        _navigateToHome(isOffline: true);
+        // For other errors (e.g., network issues), we can still open the app
+        // The user will see error messages within the app itself.
+        _navigateToHome();
       }
     } catch (e) {
       if (!mounted) return;
@@ -56,11 +58,10 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
     }
   }
 
-  void _navigateToHome({required bool isOffline}) {
+  void _navigateToHome() {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        // This is where state passing takes place:
-        builder: (context) => MainScreen(isOffline: isOffline),
+        builder: (context) => const MainScreen(),
       ),
     );
   }
