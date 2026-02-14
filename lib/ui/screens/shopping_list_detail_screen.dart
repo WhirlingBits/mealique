@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/ui/screens/shopping_list_item_detail_screen.dart';
+import 'package:mealique/ui/widgets/shopping_list_detail_actions_menu.dart';
 import '../../l10n/app_localizations.dart';
 import '../../data/sync/household_repository.dart';
 import '../../models/shopping_item_model.dart';
@@ -309,22 +310,20 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
           ),
           const SizedBox(height: 8),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Spacer(),
-                Text(
-                  widget.listName,
-                  style: Theme.of(context).textTheme.headlineSmall,
+                const SizedBox(width: 48), // Placeholder for alignment
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      widget.listName,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                  ),
                 ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.more_vert),
-                  onPressed: () {
-                    // TODO: Menü Logik
-                  },
-                ),
+                const ShoppingListDetailActionsMenu(),
               ],
             ),
           ),
