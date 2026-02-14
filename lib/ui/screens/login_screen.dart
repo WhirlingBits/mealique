@@ -21,6 +21,11 @@ class _LoginScreenState extends State<LoginScreen> {
   final _authApi = AuthApi();
   bool _isLoading = false;
 
+  // --- DEMO ACCOUNT CONSTANTS ---
+  static const String demoEmail = 'demo@mealique.app';
+  static const String demoServerUrl = 'http://demo.mode';
+  static const String demoToken = 'DEMO_TOKEN';
+
   Future<void> _login() async {
     final l10n = AppLocalizations.of(context)!;
 
@@ -28,8 +33,25 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
+    // --- DEMO ACCOUNT LOGIC ---
+    if (email == demoEmail) {
+      setState(() => _isLoading = true);
+
+      await _tokenStorage.saveToken(demoToken);
+      await _tokenStorage.saveServerUrl(demoServerUrl);
+
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+        );
+      }
+      setState(() => _isLoading = false);
+      return; // Stop the regular login flow
+    }
+    // --- END DEMO ACCOUNT LOGIC ---
+
     if (rawServer.isEmpty || email.isEmpty || password.isEmpty) {
-      _showMessage(l10n.fillAllFields);
+      _showMessage(l10n.fillAllFields, isError: true);
       return;
     }
 
@@ -54,29 +76,29 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       } else {
-        _showMessage(l10n.loginError('No token received')); // TODO: l10n
+        _showMessage(l10n.loginError('No token received'), isError: true);
       }
     } on DioException catch (e) {
       String errorMessage;
       if (e.error is ApiException) {
         errorMessage = (e.error as ApiException).message;
       } else {
-        errorMessage = 'An unknown error occurred.'; // TODO: l10n
+        errorMessage = 'An unknown error occurred.';
       }
-      _showMessage(l10n.loginError(errorMessage));
+      _showMessage(l10n.loginError(errorMessage), isError: true);
     } catch (e) {
-      _showMessage(l10n.loginError(e.toString()));
+      _showMessage(l10n.loginError(e.toString()), isError: true);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  void _showMessage(String msg) {
+  void _showMessage(String msg, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: Colors.red,
+        backgroundColor: isError ? Colors.red : Theme.of(context).colorScheme.error,
       ),
     );
   }
