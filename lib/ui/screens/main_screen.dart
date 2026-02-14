@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:mealique/l10n/app_localizations.dart';
 import 'package:mealique/ui/widgets/dashboard_actions_menu.dart';
 import 'package:mealique/ui/widgets/recipe_actions_menu.dart';
-import 'package:mealique/ui/widgets/shopping_list_detail_actions_menu.dart';
+import 'package:mealique/ui/widgets/shopping_list_actions_menu.dart';
 import '../widgets/navigation_bar.dart';
 import 'dashboard_screen.dart';
 import 'recipes_screen.dart';
@@ -135,7 +135,7 @@ class _MainScreenState extends State<MainScreen> {
         menu = const RecipeActionsMenu();
         break;
       case 3: // Shopping Lists
-        menu = const ShoppingListDetailActionsMenu();
+        menu = const ShoppingListActionsMenu();
         break;
       default: // Dashboard, Planner
         menu = const DashboardActionsMenu();
