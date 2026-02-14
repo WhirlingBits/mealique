@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/data/sync/recipe_repository.dart';
 import 'package:mealique/models/recipes_model.dart';
+import 'package:mealique/ui/widgets/recipe_detail_actions_menu.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final String recipeSlug;
@@ -101,12 +102,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                             // TODO: Favoriten Logik
                           },
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.more_vert),
-                          onPressed: () {
-                            // TODO: Menü Logik
-                          },
-                        ),
+                        RecipeDetailActionsMenu(recipe: recipe),
                       ],
                       flexibleSpace: FlexibleSpaceBar(
                         title: Text(
