@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:mealique/config/app_constants.dart';
 import 'package:mealique/data/local/token_storage.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/data/remote/auth_api.dart';
@@ -21,11 +22,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _authApi = AuthApi();
   bool _isLoading = false;
 
-  // --- DEMO ACCOUNT CONSTANTS ---
-  static const String demoEmail = 'demo@mealique.app';
-  static const String demoServerUrl = 'http://demo.mode';
-  static const String demoToken = 'DEMO_TOKEN';
-
   Future<void> _login() async {
     final l10n = AppLocalizations.of(context)!;
 
@@ -34,11 +30,11 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _passwordController.text;
 
     // --- DEMO ACCOUNT LOGIC ---
-    if (email == demoEmail) {
+    if (email == AppConstants.demoEmail) {
       setState(() => _isLoading = true);
 
-      await _tokenStorage.saveToken(demoToken);
-      await _tokenStorage.saveServerUrl(demoServerUrl);
+      await _tokenStorage.saveToken(AppConstants.demoToken);
+      await _tokenStorage.saveServerUrl(AppConstants.demoServerUrl);
 
       if (mounted) {
         Navigator.of(context).pushReplacement(

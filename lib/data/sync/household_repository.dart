@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
+import 'package:mealique/config/app_constants.dart';
 import 'package:mealique/data/local/household_storage.dart';
+import 'package:mealique/data/local/token_storage.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/data/remote/household_api.dart';
 import 'package:mealique/models/shopping_item_model.dart';
@@ -8,14 +10,21 @@ import 'package:mealique/models/shopping_list_model.dart';
 class HouseholdRepository {
   final HouseholdApi _api;
   final HouseholdStorage _storage;
+  final TokenStorage _tokenStorage;
 
   HouseholdRepository({HouseholdApi? api, HouseholdStorage? storage})
       : _api = api ?? HouseholdApi(),
-        _storage = storage ?? HouseholdStorage();
+        _storage = storage ?? HouseholdStorage(),
+        _tokenStorage = TokenStorage();
 
   // --- UI Helper Methods (Shopping Lists) ---
 
   Future<List<ShoppingList>> getShoppingLists() async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      return _getDemoShoppingLists();
+    }
+
     try {
       final response = await _api.getShoppingLists(1, 100);
       final remoteLists = response.items;
@@ -33,6 +42,11 @@ class HouseholdRepository {
   }
 
   Future<List<ShoppingList>> getShoppingListsWithItemCount() async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      return _getDemoShoppingLists();
+    }
+
     final response = await _api.getShoppingLists(1, 100);
     final lists = response.items;
     final listsWithCount = <ShoppingList>[];
@@ -43,8 +57,6 @@ class HouseholdRepository {
         final uncheckedItemsCount = items.where((item) => !item.checked).length;
         listsWithCount.add(list.copyWith(itemCount: uncheckedItemsCount));
       } catch (e) {
-        // If fetching items for one list fails, add it with a count of 0
-        // so the main list still loads.
         listsWithCount.add(list.copyWith(itemCount: 0));
       }
     }
@@ -53,11 +65,19 @@ class HouseholdRepository {
   }
 
   Future<void> createShoppingList(String name) async {
+    // No-op in demo mode
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) return;
+
     await _api.createShoppingList(name: name);
     await syncShoppingLists(); // Sync after creation
   }
 
   Future<void> deleteShoppingList(String id) async {
+    // No-op in demo mode
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) return;
+
     await _api.deleteShoppingList(id);
     await syncShoppingLists(); // Sync after deletion
   }
@@ -65,6 +85,11 @@ class HouseholdRepository {
   // --- UI Helper Methods (Shopping Items) ---
 
   Future<List<ShoppingItem>> getItemsForList(String listId) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      return _getDemoShoppingItemsForList(listId);
+    }
+
     try {
       final list = await _api.getShoppingList(listId);
       await _storage.saveShoppingLists([list]); // Update cache
@@ -82,44 +107,69 @@ class HouseholdRepository {
   }
 
   Future<void> addItem(String listId, String name) async {
-    final item = ShoppingItem(
-      id: '', // ID is set by the server
-      shoppingListId: listId,
-      display: name,
-      note: '',
-      quantity: 1.0,
-      checked: false,
-      position: 0,
-    );
-    await _api.createShoppingItem(item);
+    // No-op in demo mode
   }
 
   Future<void> updateItem(ShoppingItem item) async {
-    if (item.id.isNotEmpty) {
-      await _api.updateShoppingItem(item.id, item);
-    }
+     // No-op in demo mode
   }
 
   Future<void> deleteItem(String itemId) async {
-    await _api.deleteShoppingItem(itemId);
+     // No-op in demo mode
   }
+
 
   // --- Sync Logic ---
 
   Future<void> syncAll() async {
-    await Future.wait([
-      syncShoppingLists(),
-      // Add other sync methods here if needed
-    ]);
+     // No-op in demo mode
   }
 
   Future<void> syncShoppingLists() async {
-    try {
-      final listResponse = await _api.getShoppingLists(1, 100);
-      final remoteListsRaw = listResponse.items;
-      await _storage.saveShoppingLists(remoteListsRaw);
-    } catch (e) {
-      // Silently fail sync, as UI might be showing cached data
-    }
+     // No-op in demo mode
+  }
+
+  // --- DEMO DATA HELPERS ---
+
+  List<ShoppingList> _getDemoShoppingLists() {
+    return [
+      ShoppingList(
+        id: '1',
+        name: 'Weekly Groceries',
+        itemCount: 2, 
+        extras: {},
+        createdAt: DateTime.now().toIso8601String(),
+        updatedAt: DateTime.now().toIso8601String(),
+        recipeReferences: [],
+        labelSettings: [],
+        listItems: [],
+      ),
+      ShoppingList(
+        id: '2',
+        name: 'BBQ Party',
+        itemCount: 1,
+        extras: {},
+        createdAt: DateTime.now().toIso8601String(),
+        updatedAt: DateTime.now().toIso8601String(),
+        recipeReferences: [],
+        labelSettings: [],
+        listItems: [],
+      ),
+    ];
+  }
+
+  List<ShoppingItem> _getDemoShoppingItemsForList(String listId) {
+    final allItems = {
+      '1': [ 
+        ShoppingItem(id: '101', shoppingListId: '1', display: 'Milk', note: 'Fresh whole milk', quantity: 1, checked: false, position: 0),
+        ShoppingItem(id: '102', shoppingListId: '1', display: 'Bread', note: '', quantity: 1, checked: false, position: 1),
+        ShoppingItem(id: '103', shoppingListId: '1', display: 'Eggs', note: 'Organic, 10-pack', quantity: 10, checked: true, position: 2),
+      ],
+      '2': [ 
+        ShoppingItem(id: '201', shoppingListId: '2', display: 'Sausages', note: 'German style', quantity: 8, checked: false, position: 0),
+        ShoppingItem(id: '202', shoppingListId: '2', display: 'Ketchup', note: '', quantity: 1, checked: true, position: 1),
+      ],
+    };
+    return allItems[listId] ?? [];
   }
 }

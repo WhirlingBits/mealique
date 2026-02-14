@@ -1,16 +1,28 @@
 import 'dart:collection';
-
-import '../../models/mealplan_model.dart';
+import 'package:mealique/config/app_constants.dart';
+import 'package:mealique/data/local/token_storage.dart';
+import 'package:mealique/models/mealplan_model.dart';
+import 'package:mealique/models/recipes_model.dart';
 import '../remote/household_api.dart';
 
 class MealplanRepository {
   final HouseholdApi _api;
+  final TokenStorage _tokenStorage;
 
-  MealplanRepository() : _api = HouseholdApi();
+  MealplanRepository() 
+      : _api = HouseholdApi(),
+        _tokenStorage = TokenStorage();
 
   Future<LinkedHashMap<DateTime, List<MealplanEntry>>> getMealplans(
       DateTime start, DateTime end) async {
-    // API call now filters by date, and perPage: -1 fetches all entries in the range.
+    final token = await _tokenStorage.getToken();
+
+    // --- DEMO DATA LOGIC ---
+    if (token == AppConstants.demoToken) {
+      return _getDemoMealplans(start, end);
+    }
+    // --- END DEMO DATA LOGIC ---
+
     final mealplanResponse = await _api.getMealplans(1, -1, startDate: start, endDate: end);
     final items = mealplanResponse.items;
 
@@ -20,9 +32,7 @@ class MealplanRepository {
     );
 
     for (var item in items) {
-      // Use DateTime.parse for robust ISO 8601 date parsing.
       final localDate = DateTime.parse(item.date).toLocal();
-      // Normalize to UTC midnight to use as a key for the map.
       final dayKey = DateTime.utc(localDate.year, localDate.month, localDate.day);
       
       if (mealsByDay.containsKey(dayKey)) {
@@ -32,5 +42,44 @@ class MealplanRepository {
       }
     }
     return mealsByDay;
+  }
+
+  // Helper for demo data
+  LinkedHashMap<DateTime, List<MealplanEntry>> _getDemoMealplans(DateTime start, DateTime end) {
+    final today = DateTime.now();
+    final dayKey = DateTime.utc(today.year, today.month, today.day);
+    final demoData = LinkedHashMap<DateTime, List<MealplanEntry>>(
+      equals: (a, b) => a.year == b.year && a.month == b.month && a.day == b.day,
+      hashCode: (key) => key.day * 1000000 + key.month * 10000 + key.year,
+    );
+
+    // Only add data if 'today' is within the requested range
+    if (!today.isBefore(start) && !today.isAfter(end)) {
+        demoData[dayKey] = [
+        MealplanEntry(
+          id: 1,
+          date: today.toIso8601String(),
+          entryType: PlanEntryType.breakfast,
+          title: 'Pancakes',
+          recipe: MealplanRecipe(id: '3', name: 'Fluffy Pancakes', slug: 'fluffy-pancakes'),
+        ),
+        MealplanEntry(
+          id: 2,
+          date: today.toIso8601String(),
+          entryType: PlanEntryType.lunch,
+          title: 'Chicken Salad',
+          recipe: MealplanRecipe(id: '4', name: 'Classic Chicken Salad', slug: 'classic-chicken-salad'),
+        ),
+         MealplanEntry(
+          id: 3,
+          date: today.toIso8601String(),
+          entryType: PlanEntryType.dinner,
+          title: 'Pasta Bolognese',
+          recipe: MealplanRecipe(id: '1', name: 'Pasta Bolognese', slug: 'pasta-bolognese'),
+        ),
+      ];
+    }
+    
+    return demoData;
   }
 }
