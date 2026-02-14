@@ -46,8 +46,9 @@ dev_dependencies:
 
   # Code Generation
   build_runner: ^2.4.9
-  #custom_lint: ^0.6.4
   drift_dev: ^2.18.0
+  flutter_launcher_icons: ^0.13.1
+
 
 flutter_launcher_icons:
   android: true
