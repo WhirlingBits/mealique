@@ -13,7 +13,10 @@ class DashboardActionsMenu extends StatelessWidget {
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
         const PopupMenuItem<String>(
           value: 'refresh',
-          child: Text('Aktualisieren'), // TODO: l10n
+          child: ListTile(
+            leading: Icon(Icons.refresh),
+            title: Text('Aktualisieren'), // TODO: l10n
+          ),
         ),
       ],
     );
