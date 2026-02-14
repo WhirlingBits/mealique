@@ -310,9 +310,22 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Text(
-              widget.listName,
-              style: Theme.of(context).textTheme.headlineSmall,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Spacer(),
+                Text(
+                  widget.listName,
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.more_vert),
+                  onPressed: () {
+                    // TODO: Menü Logik
+                  },
+                ),
+              ],
             ),
           ),
           Expanded(

@@ -101,6 +101,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                             // TODO: Favoriten Logik
                           },
                         ),
+                        IconButton(
+                          icon: const Icon(Icons.more_vert),
+                          onPressed: () {
+                            // TODO: Menü Logik
+                          },
+                        ),
                       ],
                       flexibleSpace: FlexibleSpaceBar(
                         title: Text(
