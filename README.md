@@ -70,6 +70,7 @@ Currently, installation is only possible manually. You can build the app from so
   - [ ] Pantry management
   - [ ] Notifications
   - [ ] Cookbooks
+  - [ ] Wear OS companion APP
 - [ ] **Offline Support**
   - [ ] Shopping List
   - [ ] Shopping List items
