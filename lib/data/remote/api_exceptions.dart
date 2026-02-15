@@ -22,24 +22,22 @@ class NetworkException extends ApiException {
 
 /// Exception for unauthorized access (401).
 class UnauthorizedException extends ApiException {
-  UnauthorizedException({String message = "Unauthorized"})
-      : super(message: message, statusCode: 401);
+  UnauthorizedException({super.message = "Unauthorized"})
+      : super(statusCode: 401);
 }
 
 /// Exception for server-side errors (5xx).
 class ServerException extends ApiException {
-  ServerException({String message = "Server Error", int? statusCode})
-      : super(message: message, statusCode: statusCode);
+  ServerException({super.message = "Server Error", super.statusCode});
 }
 
 /// Exception for not found errors (404).
 class NotFoundException extends ApiException {
-  NotFoundException({String message = "Not Found"})
-      : super(message: message, statusCode: 404);
+  NotFoundException({super.message = "Not Found"})
+      : super(statusCode: 404);
 }
 
 /// General-purpose exception for other client-side errors (4xx).
 class BadRequestException extends ApiException {
-  BadRequestException({String message = "Bad Request", int? statusCode})
-      : super(message: message, statusCode: statusCode);
+  BadRequestException({super.message = "Bad Request", super.statusCode});
 }

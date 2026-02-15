@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:mealique/data/remote/dio_client.dart';
 
 class AuthApi {
   final Dio _dio;

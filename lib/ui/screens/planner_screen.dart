@@ -169,7 +169,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, color: Colors.red, size: 48),
+            const Icon(Icons.error_outline, color: Colors.red, size: 48),
             const SizedBox(height: 16),
             Text(errorMessage, textAlign: TextAlign.center),
             const SizedBox(height: 16),
