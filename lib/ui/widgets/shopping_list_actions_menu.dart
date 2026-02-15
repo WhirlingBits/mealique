@@ -1,14 +1,27 @@
 import 'package:flutter/material.dart';
 
 class ShoppingListActionsMenu extends StatelessWidget {
-  const ShoppingListActionsMenu({super.key});
+  final VoidCallback onAddList;
+  final VoidCallback onRefresh;
+
+  const ShoppingListActionsMenu({
+    super.key,
+    required this.onAddList,
+    required this.onRefresh,
+  });
 
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
       onSelected: (value) {
-        // TODO: Implement menu actions
-        print('Selected: $value');
+        switch (value) {
+          case 'add_list':
+            onAddList();
+            break;
+          case 'refresh':
+            onRefresh();
+            break;
+        }
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
         const PopupMenuItem<String>(

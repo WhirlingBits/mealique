@@ -10,6 +10,7 @@ import 'package:mealique/models/mealplan_model.dart';
 import 'package:mealique/models/recipes_model.dart';
 import 'package:mealique/models/user_self_model.dart';
 import 'package:mealique/ui/screens/recipe_search_screen.dart';
+import 'package:mealique/ui/widgets/dashboard_actions_menu.dart';
 import '../widgets/add_recipe_form.dart';
 import '../widgets/add_shopping_list_form.dart';
 import '../widgets/add_shopping_list_item_form.dart';
@@ -166,6 +167,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
+       appBar: AppBar(
+        backgroundColor: const Color(0xFFE58325),
+        foregroundColor: Colors.white,
+        title: Text(l10n.home),
+        actions: const [
+          DashboardActionsMenu(),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/ui/screens/recipe_detail_screen.dart';
+import 'package:mealique/ui/widgets/recipe_actions_menu.dart';
 import '../../data/sync/recipe_repository.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/recipes_model.dart';
@@ -84,6 +85,14 @@ class _RecipesScreenState extends State<RecipesScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFE58325),
+        foregroundColor: Colors.white,
+        title: Text(l10n.recipes),
+        actions: const [
+          RecipeActionsMenu(),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -230,19 +239,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
                       Positioned(
                         top: 8,
                         right: 8,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.8),
-                            shape: BoxShape.circle,
-                          ),
-                          child: IconButton(
-                            icon: const Icon(Icons.favorite_border, size: 20),
-                            color: Colors.red,
-                            constraints: const BoxConstraints(),
-                            padding: const EdgeInsets.all(8),
-                            onPressed: () {},
-                          ),
-                        ),
+                        child: RecipeActionsMenu(),
                       ),
                     ],
                   ),

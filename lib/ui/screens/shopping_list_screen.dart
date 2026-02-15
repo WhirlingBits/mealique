@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
+import 'package:mealique/ui/widgets/shopping_list_actions_menu.dart';
 import '../../data/sync/household_repository.dart';
 import '../../models/shopping_list_model.dart';
 import '../../l10n/app_localizations.dart';
@@ -103,6 +104,17 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFE58325),
+        foregroundColor: Colors.white,
+        title: Text(l10n.shoppingLists), // TODO: Add to l10n
+        actions: [
+          ShoppingListActionsMenu(
+            onAddList: _showAddListSheet,
+            onRefresh: _handleRefresh,
+          ),
+        ],
+      ),
       body: FutureBuilder<List<ShoppingList>>(
         future: _listsFuture,
         builder: (context, snapshot) {

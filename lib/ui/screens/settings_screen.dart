@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mealique/l10n/app_localizations.dart';
 import 'package:mealique/ui/screens/appearance_settings_screen.dart';
 import 'package:mealique/ui/screens/notification_settings_screen.dart';
 import 'package:mealique/ui/screens/server_api_settings_screen.dart';
@@ -34,7 +35,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFE58325),
+        foregroundColor: Colors.white,
+        title: Text(l10n.settings),
+      ),
       body: SafeArea(
         child: ListView(
           children: [

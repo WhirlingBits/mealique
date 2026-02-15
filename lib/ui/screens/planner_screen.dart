@@ -5,6 +5,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
+import '../widgets/planner_actions_menu.dart';
 import '../../data/sync/mealplan_repository.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/mealplan_model.dart';
@@ -28,7 +29,6 @@ class _PlannerScreenState extends State<PlannerScreen> {
   late final ValueNotifier<List<MealplanEntry>> _selectedMeals;
   late Future<void> _mealplansFuture;
 
-  // New state for entry type filtering
   PlanEntryType? _selectedEntryType;
 
   final MealplanRepository _mealplanRepository = MealplanRepository();
@@ -147,20 +147,12 @@ class _PlannerScreenState extends State<PlannerScreen> {
   }
 
   Widget _buildErrorWidget(Object error, VoidCallback onRetry) {
-    //final l10n = AppLocalizations.of(context)!;
     String errorMessage;
-
     if (error is DioException && error.error is ApiException) {
       final apiError = error.error as ApiException;
-      if (apiError is NetworkException) {
-        errorMessage = 'Bitte prüfe deine Internetverbindung.'; // TODO: l10n
-      } else if (apiError is ServerException) {
-        errorMessage = 'Ein Serverfehler ist aufgetreten. Bitte versuche es später erneut.'; // TODO: l10n
-      } else {
-        errorMessage = apiError.message;
-      }
+      errorMessage = apiError.message;
     } else {
-      errorMessage = 'Ein unerwarteter Fehler ist aufgetreten.'; // TODO: l10n
+      errorMessage = 'An unexpected error occurred.';
     }
 
     return Center(
@@ -175,7 +167,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: onRetry,
-              child: const Text('Erneut versuchen'), // TODO: l10n
+              child: const Text('Try Again'),
             ),
           ],
         ),
@@ -239,41 +231,25 @@ class _PlannerScreenState extends State<PlannerScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final f = DateFormat.MMMd(l10n.localeName);
-    final headerTitle =
-        '${f.format(_dateRange.start)} - ${f.format(_dateRange.end)} ';
     const accentColor = Color(0xFFE58325);
 
     return Scaffold(
       appBar: AppBar(
-        title: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: _showDateRangePicker,
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(headerTitle,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.white)),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.arrow_drop_down, color: Colors.white),
-                ],
-              ),
-            ),
+        backgroundColor: accentColor,
+        foregroundColor: Colors.white,
+        title: Text(l10n.planner),
+        actions: [
+          PlannerActionsMenu(
+            onAddMeal: () => _showAddMealSheet(),
+            onRefresh: () {
+              setState(() {
+                _mealplansFuture = _fetchMealplans();
+              });
+            },
           ),
-        ),
-        centerTitle: false,
-        elevation: 0,
+        ],
       ),
-      body: FutureBuilder(
+      body: FutureBuilder<void>(
         future: _mealplansFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -285,9 +261,27 @@ class _PlannerScreenState extends State<PlannerScreen> {
               });
             });
           }
+          final f = DateFormat.MMMd(l10n.localeName);
+          final headerTitle = '${f.format(_dateRange.start)} - ${f.format(_dateRange.end)} ';
 
           return Column(
             children: [
+              InkWell(
+                onTap: _showDateRangePicker,
+                child: Container(
+                  width: double.infinity,
+                  color: accentColor.withOpacity(0.1),
+                  padding: const EdgeInsets.symmetric(vertical: 12.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(headerTitle, style: const TextStyle(fontWeight: FontWeight.bold, color: accentColor)),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.arrow_drop_down, color: accentColor),
+                    ],
+                  ),
+                ),
+              ),
               HorizontalDatePicker(
                 dateRange: _dateRange,
                 selectedDate: _selectedDay,
@@ -296,7 +290,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
                 locale: l10n.localeName,
                 mealsByDay: _mealsByDay,
               ),
-              _buildEntryTypeFilters(), // Filter chips are added here
+              _buildEntryTypeFilters(),
               const Divider(height: 1),
               Expanded(
                 child: Column(
@@ -306,38 +300,28 @@ class _PlannerScreenState extends State<PlannerScreen> {
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                       child: Text(
                         DateFormat.yMMMEd(l10n.localeName).format(_selectedDay),
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleLarge
-                            ?.copyWith(fontWeight: FontWeight.bold),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
                     Expanded(
                       child: ValueListenableBuilder<List<MealplanEntry>>(
                         valueListenable: _selectedMeals,
                         builder: (context, meals, _) {
-                          // Apply the filter
                           final filteredMeals = _selectedEntryType == null
                               ? meals
-                              : meals
-                                  .where((m) => m.entryType == _selectedEntryType)
-                                  .toList();
+                              : meals.where((m) => m.entryType == _selectedEntryType).toList();
 
                           if (filteredMeals.isEmpty) {
                             return Center(
                               child: Text(
                                 l10n.noMealsPlanned,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(color: Colors.grey),
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
                               ),
                             );
                           }
                           return SlidableAutoCloseBehavior(
                             child: ListView.builder(
-                              padding:
-                                  const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                               itemCount: filteredMeals.length,
                               itemBuilder: (context, index) {
                                 final meal = filteredMeals[index];
@@ -347,17 +331,14 @@ class _PlannerScreenState extends State<PlannerScreen> {
                                     motion: const ScrollMotion(),
                                     children: [
                                       SlidableAction(
-                                        onPressed: (context) =>
-                                            _showEditMealDialog(meal),
+                                        onPressed: (context) => _showEditMealDialog(meal),
                                         backgroundColor: accentColor,
                                         foregroundColor: Colors.white,
                                         icon: Icons.edit,
                                         label: 'Edit',
                                       ),
                                       SlidableAction(
-                                        onPressed: (context) {
-                                          // TODO: Implement deletion
-                                        },
+                                        onPressed: (context) {},
                                         backgroundColor: Colors.redAccent,
                                         foregroundColor: Colors.white,
                                         icon: Icons.delete,
@@ -366,18 +347,12 @@ class _PlannerScreenState extends State<PlannerScreen> {
                                     ],
                                   ),
                                   child: Card(
-                                    margin:
-                                        const EdgeInsets.only(bottom: 12),
+                                    margin: const EdgeInsets.only(bottom: 12),
                                     child: ListTile(
-                                      title: Text(meal.recipe?.name ??
-                                          meal.title ??
-                                          'Untitled Meal'),
+                                      title: Text(meal.recipe?.name ?? meal.title ?? 'Untitled Meal'),
                                       leading: Text(
-                                          toBeginningOfSentenceCase(
-                                                  meal.entryType.name) ??
-                                              '',
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold)),
+                                          toBeginningOfSentenceCase(meal.entryType.name) ?? '',
+                                          style: const TextStyle(fontWeight: FontWeight.bold)),
                                     ),
                                   ),
                                 );
