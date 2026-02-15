@@ -16,7 +16,6 @@ class AppNavigationBar extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // More robust size adjustment for different device sizes.
     final double iconSize;
     final double labelFontSize;
 
@@ -25,7 +24,7 @@ class AppNavigationBar extends StatelessWidget {
       labelFontSize = 14.0;
     } else if (screenWidth < 360) { // Small phone
       iconSize = 22.0;
-      labelFontSize = 11.0;
+      labelFontSize = 10.0; // Further reduced for very narrow screens
     } else { // Regular phone
       iconSize = 24.0;
       labelFontSize = 12.0;
@@ -34,7 +33,11 @@ class AppNavigationBar extends StatelessWidget {
     return NavigationBarTheme(
       data: NavigationBarThemeData(
         labelTextStyle: WidgetStateProperty.all(
-          TextStyle(color: Colors.white, fontSize: labelFontSize),
+          TextStyle(
+            color: Colors.white,
+            fontSize: labelFontSize,
+            overflow: TextOverflow.ellipsis, // Prevent wrapping with an ellipsis
+          ),
         ),
         iconTheme: WidgetStateProperty.all(
           IconThemeData(color: Colors.white, size: iconSize),
@@ -45,6 +48,10 @@ class AppNavigationBar extends StatelessWidget {
         indicatorColor: Colors.white.withOpacity(0.2),
         onDestinationSelected: onDestinationSelected,
         selectedIndex: selectedIndex,
+        // On very small screens, only show the label for the selected item.
+        labelBehavior: screenWidth < 360
+            ? NavigationDestinationLabelBehavior.onlyShowSelected
+            : NavigationDestinationLabelBehavior.alwaysShow,
         destinations: <Widget>[
           NavigationDestination(
             icon: const Icon(Icons.home_outlined),
