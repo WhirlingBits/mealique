@@ -12,12 +12,25 @@ class RecipeActionsMenu extends StatelessWidget {
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
         const PopupMenuItem<String>(
-          value: 'sort_name',
-          child: Text('Nach Name sortieren'), // TODO: l10n
+          value: 'add_recipe',
+          child: ListTile(
+            leading: Icon(Icons.add),
+            title: Text('Rezept hinzufügen'), // TODO: l10n
+          ),
         ),
         const PopupMenuItem<String>(
-          value: 'sort_date',
-          child: Text('Nach Datum sortieren'), // TODO: l10n
+          value: 'sort',
+          child: ListTile(
+            leading: Icon(Icons.sort),
+            title: Text('Sortieren'), // TODO: l10n
+          ),
+        ),
+        const PopupMenuItem<String>(
+          value: 'refresh',
+          child: ListTile(
+            leading: Icon(Icons.refresh),
+            title: Text('Aktualisieren'), // TODO: l10n
+          ),
         ),
       ],
     );
