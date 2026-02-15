@@ -14,14 +14,30 @@ class AppNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // More robust size adjustment for different device sizes.
+    final double iconSize;
+    final double labelFontSize;
+
+    if (screenWidth > 600) { // Tablet
+      iconSize = 28.0;
+      labelFontSize = 14.0;
+    } else if (screenWidth < 360) { // Small phone
+      iconSize = 22.0;
+      labelFontSize = 11.0;
+    } else { // Regular phone
+      iconSize = 24.0;
+      labelFontSize = 12.0;
+    }
 
     return NavigationBarTheme(
       data: NavigationBarThemeData(
         labelTextStyle: WidgetStateProperty.all(
-          const TextStyle(color: Colors.white),
+          TextStyle(color: Colors.white, fontSize: labelFontSize),
         ),
         iconTheme: WidgetStateProperty.all(
-          const IconThemeData(color: Colors.white),
+          IconThemeData(color: Colors.white, size: iconSize),
         ),
       ),
       child: NavigationBar(
