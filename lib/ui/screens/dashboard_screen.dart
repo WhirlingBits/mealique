@@ -195,6 +195,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: 16),
               TextField(
+                readOnly: true, // Prevent keyboard from appearing
+                onTap: () {
+                  final screenHeight = MediaQuery.of(context).size.height;
+                  final topPadding = MediaQuery.of(context).padding.top;
+                  const appBarHeight = kToolbarHeight;
+
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    constraints: BoxConstraints(
+                      maxHeight: screenHeight - (topPadding + appBarHeight),
+                    ),
+                    builder: (context) => const RecipeSearchScreen(initialQuery: ''),
+                  );
+                },
                 decoration: InputDecoration(
                   hintText: l10n.recipeSearch,
                   prefixIcon: const Icon(Icons.search),
@@ -206,17 +222,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   fillColor: theme.cardColor,
                   contentPadding: const EdgeInsets.symmetric(vertical: 0),
                 ),
-                onSubmitted: (query) {
-                  if (query.isNotEmpty) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            RecipeSearchScreen(initialQuery: query),
-                      ),
-                    );
-                  }
-                },
               ),
               const SizedBox(height: 24),
 
