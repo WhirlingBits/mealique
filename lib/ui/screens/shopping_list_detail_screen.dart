@@ -2,8 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
+import 'package:mealique/providers/settings_provider.dart';
 import 'package:mealique/ui/screens/shopping_list_item_detail_screen.dart';
 import 'package:mealique/ui/widgets/shopping_list_detail_actions_menu.dart';
+import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../data/sync/household_repository.dart';
 import '../../models/shopping_item_model.dart';
@@ -30,9 +32,6 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
 
   final Color _accentColor = const Color(0xFFE58325);
 
-  bool _showCompleted = true;
-  bool _showCategories = true;
-
   @override
   void initState() {
     super.initState();
@@ -46,15 +45,13 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
   }
 
   void _handleToggleShowCompleted() {
-    setState(() {
-      _showCompleted = !_showCompleted;
-    });
+    final settings = Provider.of<SettingsProvider>(context, listen: false);
+    settings.setShowCompleted(!settings.showCompleted);
   }
 
   void _handleToggleShowCategories() {
-    setState(() {
-      _showCategories = !_showCategories;
-    });
+    final settings = Provider.of<SettingsProvider>(context, listen: false);
+    settings.setShowCategories(!settings.showCategories);
   }
 
   void _handleEditList() {
@@ -447,13 +444,16 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
           value: item.checked,
           onChanged: (val) => _toggleItem(item),
           title: GestureDetector(
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              final hasChanged = await Navigator.push<bool>(
                 context,
                 MaterialPageRoute(
                   builder: (context) => ShoppingListItemDetailScreen(item: item),
                 ),
               );
+              if (hasChanged == true) {
+                _loadItems();
+              }
             },
             // Make the whole tile tappable for navigation, not just the text
             child: Container(
@@ -476,6 +476,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final settings = Provider.of<SettingsProvider>(context);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFFE58325),
@@ -489,9 +490,9 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
             onDeleteCompleted: _handleDeleteCompleted,
             onDeleteList: _handleDeleteList,
             onSortItems: _handleSortItems,
-            showCompleted: _showCompleted,
+            showCompleted: settings.showCompleted,
             onToggleShowCompleted: _handleToggleShowCompleted,
-            showCategories: _showCategories,
+            showCategories: settings.showCategories,
             onToggleShowCategories: _handleToggleShowCategories,
           ),
         ],
@@ -509,7 +510,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
           var displayItems = items.toList();
 
           // Filter out completed items if toggle is off
-          if (!_showCompleted) {
+          if (!settings.showCompleted) {
             displayItems = displayItems.where((i) => !i.checked).toList();
           }
 
@@ -522,7 +523,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
           }
 
           // Group by category or show flat list
-          if (_showCategories) {
+          if (settings.showCategories) {
             final groupedItems = _groupItemsByCategory(displayItems);
             return SlidableAutoCloseBehavior(
               child: RefreshIndicator(

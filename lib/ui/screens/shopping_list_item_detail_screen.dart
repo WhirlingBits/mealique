@@ -19,6 +19,7 @@ class _ShoppingListItemDetailScreenState
   final _repository = HouseholdRepository();
   late ShoppingItem _item;
   bool _isSaving = false;
+  bool _hasChanged = false;
 
   static const Color _accentColor = Color(0xFFE58325);
 
@@ -39,6 +40,7 @@ class _ShoppingListItemDetailScreenState
         setState(() {
           _item = updatedItem;
           _isSaving = false;
+          _hasChanged = true;
         });
         ScaffoldMessenger.of(context)
           ..clearSnackBars()
@@ -194,7 +196,7 @@ class _ShoppingListItemDetailScreenState
       try {
         await _repository.deleteItem(_item.id);
         if (mounted) {
-          Navigator.pop(context);
+          Navigator.pop(context, true); // Signal that data changed
           ScaffoldMessenger.of(context)
             ..clearSnackBars()
             ..showSnackBar(
@@ -232,10 +234,21 @@ class _ShoppingListItemDetailScreenState
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          Navigator.of(context).pop(_hasChanged);
+        }
+      },
+      child: Scaffold(
       appBar: AppBar(
         backgroundColor: _accentColor,
         foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(_hasChanged),
+        ),
         title: Text(_item.display, overflow: TextOverflow.ellipsis),
         actions: [
           ShoppingListItemDetailActionsMenu(
@@ -264,6 +277,7 @@ class _ShoppingListItemDetailScreenState
                 ],
               ),
             ),
+      ),
     );
   }
 

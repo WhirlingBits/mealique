@@ -5,6 +5,8 @@ class AppSettingsStorage {
   final _storage = const FlutterSecureStorage();
   static const _keyLocale = 'app_locale';
   static const _keyThemeMode = 'theme_mode';
+  static const _keyShowCompleted = 'shopping_show_completed';
+  static const _keyShowCategories = 'shopping_show_categories';
 
   // --- Locale --- //
   Future<void> saveLocale(String locale) => _storage.write(key: _keyLocale, value: locale);
@@ -21,5 +23,23 @@ class AppSettingsStorage {
     } catch (_) {
       return null;
     }
+  }
+
+  // --- Shopping List: Show Completed Items --- //
+  Future<void> saveShowCompleted(bool value) =>
+      _storage.write(key: _keyShowCompleted, value: value.toString());
+
+  Future<bool> getShowCompleted() async {
+    final val = await _storage.read(key: _keyShowCompleted);
+    return val != 'false'; // default true
+  }
+
+  // --- Shopping List: Show Categories --- //
+  Future<void> saveShowCategories(bool value) =>
+      _storage.write(key: _keyShowCategories, value: value.toString());
+
+  Future<bool> getShowCategories() async {
+    final val = await _storage.read(key: _keyShowCategories);
+    return val != 'false'; // default true
   }
 }
