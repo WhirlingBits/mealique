@@ -48,7 +48,6 @@ class _AddMealFormState extends State<AddMealForm> {
   @override
   void initState() {
     super.initState();
-    _selectedMealType = _mealTypes.first;
     _focusScopeNode.addListener(_onFocusChange);
     _recipeController.addListener(() {
       if (_recipeText != _recipeController.text) {
@@ -57,6 +56,15 @@ class _AddMealFormState extends State<AddMealForm> {
         });
       }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Set default meal type here instead of initState,
+    // because _mealTypes depends on AppLocalizations.of(context)
+    // which is not available during initState().
+    _selectedMealType ??= _mealTypes.first;
   }
 
   void _onFocusChange() {
