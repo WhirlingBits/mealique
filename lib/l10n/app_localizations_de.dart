@@ -325,10 +325,381 @@ class AppLocalizationsDe extends AppLocalizations {
   String get unnamedMeal => 'Unbenannte Mahlzeit';
 
   @override
+  String get meal => 'Mahlzeit';
+
+  @override
   String get loginSuccess => 'Anmeldung erfolgreich.';
 
   @override
   String loginError(String error) {
     return 'Anmeldefehler: $error';
   }
+
+  @override
+  String get checkInternetConnection => 'Bitte prüfe deine Internetverbindung.';
+
+  @override
+  String get serverError =>
+      'Ein Serverfehler ist aufgetreten. Bitte versuche es später erneut.';
+
+  @override
+  String get unexpectedError => 'Ein unerwarteter Fehler ist aufgetreten.';
+
+  @override
+  String get tryAgain => 'Erneut versuchen';
+
+  @override
+  String get defaultUserName => 'dort';
+
+  @override
+  String get noPopularRecipesFound => 'Keine beliebten Rezepte gefunden.';
+
+  @override
+  String get unknownError => 'Ein unbekannter Fehler ist aufgetreten.';
+
+  @override
+  String get featureNotImplemented =>
+      'Diese Funktion ist noch nicht implementiert.';
+
+  @override
+  String get all => 'Alle';
+
+  @override
+  String get filter => 'Filter';
+
+  @override
+  String get noRecipesFound => 'Keine Rezepte gefunden.';
+
+  @override
+  String get recipeNotFound => 'Rezept nicht gefunden.';
+
+  @override
+  String servingsCount(int count) {
+    return '$count Portionen';
+  }
+
+  @override
+  String minutesShort(String count) {
+    return '$count Min';
+  }
+
+  @override
+  String get ingredients => 'Zutaten';
+
+  @override
+  String get instructions => 'Zubereitung';
+
+  @override
+  String get trySearchingSomethingElse => 'Versuche etwas anderes zu suchen.';
+
+  @override
+  String get favorite => 'Favorit';
+
+  @override
+  String get loadingUser => 'Lade Benutzer...';
+
+  @override
+  String get serverAndApi => 'Server & API';
+
+  @override
+  String get appearanceAndLanguage => 'Darstellung & Sprache';
+
+  @override
+  String get sync => 'Sync';
+
+  @override
+  String get syncStarted => 'Synchronisierung gestartet...';
+
+  @override
+  String listCreatedSuccess(String name) {
+    return '\"$name\" wurde erstellt';
+  }
+
+  @override
+  String errorCreating(String error) {
+    return 'Fehler beim Erstellen: $error';
+  }
+
+  @override
+  String get shoppingListDeleted => 'Einkaufsliste wurde gelöscht.';
+
+  @override
+  String errorDeleting(String error) {
+    return 'Fehler beim Löschen: $error';
+  }
+
+  @override
+  String get createFirstListHint => 'Lege deine erste Liste an, um loszulegen.';
+
+  @override
+  String get createFirstList => 'Erste Liste erstellen';
+
+  @override
+  String get allDone => 'Alle erledigt';
+
+  @override
+  String get openItemsSingular => '1 offenes Element';
+
+  @override
+  String openItemsPlural(int count) {
+    return '$count offene Elemente';
+  }
+
+  @override
+  String errorUpdating(String error) {
+    return 'Fehler beim Aktualisieren: $error';
+  }
+
+  @override
+  String itemAddedSuccess(String name) {
+    return '\"$name\" wurde hinzugefügt';
+  }
+
+  @override
+  String errorAdding(String error) {
+    return 'Fehler beim Hinzufügen: $error';
+  }
+
+  @override
+  String itemDeletedSuccess(String name) {
+    return '\"$name\" wurde gelöscht';
+  }
+
+  @override
+  String errorEditing(String error) {
+    return 'Fehler beim Bearbeiten: $error';
+  }
+
+  @override
+  String get general => 'Allgemein';
+
+  @override
+  String get listEmpty => 'Diese Liste ist leer';
+
+  @override
+  String get addFirstItemHint => 'Füge dein erstes Item hinzu.';
+
+  @override
+  String get itemDetailsPlaceholder => 'Details werden hier angezeigt.';
+
+  @override
+  String get offlineMode => 'Offline-Modus';
+
+  @override
+  String get ok => 'OK';
+
+  @override
+  String get appearance => 'Darstellung';
+
+  @override
+  String get lightMode => 'Heller Modus';
+
+  @override
+  String get useSystemSetting => 'Systemeinstellung verwenden';
+
+  @override
+  String get appLanguage => 'App-Sprache';
+
+  @override
+  String get german => 'Deutsch';
+
+  @override
+  String get english => 'English';
+
+  @override
+  String get notificationSettingsComingSoon =>
+      'Hier werden bald die Benachrichtigungseinstellungen zu finden sein.';
+
+  @override
+  String get serverUrl => 'Server URL';
+
+  @override
+  String get refresh => 'Aktualisieren';
+
+  @override
+  String get sort => 'Sortieren';
+
+  @override
+  String get share => 'Teilen';
+
+  @override
+  String get showCompletedItems => 'Abgeschlossene Items anzeigen';
+
+  @override
+  String get hideCategories => 'Kategorien ausblenden';
+
+  @override
+  String get uncheckAllItems => 'Markierung aller Elemente entfernen';
+
+  @override
+  String get deleteCompletedItems => 'Erledigte Elemente löschen';
+
+  @override
+  String get breakfast => 'Frühstück';
+
+  @override
+  String get lunch => 'Mittagessen';
+
+  @override
+  String get dinner => 'Abendessen';
+
+  @override
+  String get snack => 'Snack';
+
+  @override
+  String get searchOrEnterRecipeName =>
+      'Rezept suchen oder neuen Namen eingeben';
+
+  @override
+  String get newRecipeNameHint => 'Name des neuen Rezepts...';
+
+  @override
+  String get continueToDetails => 'Weiter zu Details';
+
+  @override
+  String get name => 'Name';
+
+  @override
+  String get descriptionOptional => 'Beschreibung (optional)';
+
+  @override
+  String get ingredientsPerLine => 'Zutaten (je Zeile ein Eintrag)';
+
+  @override
+  String get servings => 'Portionen';
+
+  @override
+  String get prepTimeMinutes => 'Zubereitungszeit (Min)';
+
+  @override
+  String get back => 'Zurück';
+
+  @override
+  String get done => 'Fertig';
+
+  @override
+  String get pleaseEnterName => 'Bitte einen Namen eingeben';
+
+  @override
+  String get newShoppingListNameHint => 'Name der neuen Einkaufsliste...';
+
+  @override
+  String foodCreatedSuccess(String name) {
+    return '\"$name\" wurde erstellt';
+  }
+
+  @override
+  String errorCreatingFood(String error) {
+    return 'Lebensmittel konnte nicht erstellt werden: $error';
+  }
+
+  @override
+  String get deleteFood => 'Lebensmittel löschen?';
+
+  @override
+  String confirmDeleteFood(String name) {
+    return 'Möchtest du \"$name\" wirklich löschen?';
+  }
+
+  @override
+  String foodStillInUse(String name) {
+    return '\"$name\" wird noch in einer Einkaufsliste oder einem Rezept verwendet und kann nicht gelöscht werden.';
+  }
+
+  @override
+  String deleteFailed(String error) {
+    return 'Löschen fehlgeschlagen: $error';
+  }
+
+  @override
+  String get pleaseEnterValidQuantity => 'Bitte eine gültige Menge eingeben';
+
+  @override
+  String get pleaseSelectShoppingList => 'Bitte eine Einkaufsliste auswählen';
+
+  @override
+  String get pleaseSelectOrEnterFood =>
+      'Bitte ein Lebensmittel auswählen oder eingeben';
+
+  @override
+  String get addNewItem => 'Neues Item hinzufügen';
+
+  @override
+  String get pleaseSelectList => 'Bitte eine Liste wählen';
+
+  @override
+  String get advanced => 'Erweitert';
+
+  @override
+  String get unit => 'Einheit';
+
+  @override
+  String get category => 'Kategorie';
+
+  @override
+  String get food => 'Lebensmittel';
+
+  @override
+  String get addNewFood => 'Neues Lebensmittel hinzufügen';
+
+  @override
+  String get quantity => 'Anzahl';
+
+  @override
+  String get notesOptional => 'Notizen (optional)';
+
+  @override
+  String get couldNotLoadFormData =>
+      'Formulardaten konnten nicht geladen werden.';
+
+  @override
+  String get createShoppingList => 'Einkaufsliste erstellen';
+
+  @override
+  String get searchRecipes => 'Rezepte suchen...';
+
+  @override
+  String get untitledMeal => 'Unbenannte Mahlzeit';
+
+  @override
+  String get addMealToPlanner => 'Mahlzeit hinzufügen';
+
+  @override
+  String get editNotImplemented =>
+      'Die Bearbeitung ist noch nicht implementiert.';
+
+  @override
+  String get addNotImplemented =>
+      'Das Hinzufügen ist noch nicht implementiert.';
+
+  @override
+  String get searchArticle => 'Artikel suchen...';
+
+  @override
+  String get lastModified => 'Zuletzt geändert';
+
+  @override
+  String doneItems(int count) {
+    return '$count erledigt';
+  }
+
+  @override
+  String openItems(int count) {
+    return '$count offen';
+  }
+
+  @override
+  String get renameList => 'Liste umbenennen';
+
+  @override
+  String get enterNewName => 'Neuen Namen eingeben';
+
+  @override
+  String get searchRecipesHint => 'Rezepte suchen...';
+
+  @override
+  String get noRecipesFoundSearch => 'Keine Rezepte gefunden';
+
+  @override
+  String get tryDifferentSearch => 'Versuche etwas anderes zu suchen.';
 }

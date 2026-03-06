@@ -321,10 +321,375 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unnamedMeal => 'Unnamed Meal';
 
   @override
+  String get meal => 'Meal';
+
+  @override
   String get loginSuccess => 'Login successful.';
 
   @override
   String loginError(String error) {
     return 'Login error: $error';
   }
+
+  @override
+  String get checkInternetConnection =>
+      'Please check your internet connection.';
+
+  @override
+  String get serverError => 'A server error occurred. Please try again later.';
+
+  @override
+  String get unexpectedError => 'An unexpected error occurred.';
+
+  @override
+  String get tryAgain => 'Try Again';
+
+  @override
+  String get defaultUserName => 'there';
+
+  @override
+  String get noPopularRecipesFound => 'No popular recipes found.';
+
+  @override
+  String get unknownError => 'An unknown error occurred.';
+
+  @override
+  String get featureNotImplemented => 'This feature is not implemented yet.';
+
+  @override
+  String get all => 'All';
+
+  @override
+  String get filter => 'Filter';
+
+  @override
+  String get noRecipesFound => 'No recipes found.';
+
+  @override
+  String get recipeNotFound => 'Recipe not found.';
+
+  @override
+  String servingsCount(int count) {
+    return '$count servings';
+  }
+
+  @override
+  String minutesShort(String count) {
+    return '$count min';
+  }
+
+  @override
+  String get ingredients => 'Ingredients';
+
+  @override
+  String get instructions => 'Instructions';
+
+  @override
+  String get trySearchingSomethingElse => 'Try searching for something else.';
+
+  @override
+  String get favorite => 'Favorite';
+
+  @override
+  String get loadingUser => 'Loading user...';
+
+  @override
+  String get serverAndApi => 'Server & API';
+
+  @override
+  String get appearanceAndLanguage => 'Appearance & Language';
+
+  @override
+  String get sync => 'Sync';
+
+  @override
+  String get syncStarted => 'Synchronization started...';
+
+  @override
+  String listCreatedSuccess(String name) {
+    return '\"$name\" was created';
+  }
+
+  @override
+  String errorCreating(String error) {
+    return 'Error creating: $error';
+  }
+
+  @override
+  String get shoppingListDeleted => 'Shopping list deleted.';
+
+  @override
+  String errorDeleting(String error) {
+    return 'Error deleting: $error';
+  }
+
+  @override
+  String get createFirstListHint => 'Create your first list to get started.';
+
+  @override
+  String get createFirstList => 'Create first list';
+
+  @override
+  String get allDone => 'All done';
+
+  @override
+  String get openItemsSingular => '1 open item';
+
+  @override
+  String openItemsPlural(int count) {
+    return '$count open items';
+  }
+
+  @override
+  String errorUpdating(String error) {
+    return 'Error updating: $error';
+  }
+
+  @override
+  String itemAddedSuccess(String name) {
+    return '\"$name\" was added';
+  }
+
+  @override
+  String errorAdding(String error) {
+    return 'Error adding: $error';
+  }
+
+  @override
+  String itemDeletedSuccess(String name) {
+    return '\"$name\" was deleted';
+  }
+
+  @override
+  String errorEditing(String error) {
+    return 'Error editing: $error';
+  }
+
+  @override
+  String get general => 'General';
+
+  @override
+  String get listEmpty => 'This list is empty';
+
+  @override
+  String get addFirstItemHint => 'Add your first item.';
+
+  @override
+  String get itemDetailsPlaceholder => 'Details will be displayed here.';
+
+  @override
+  String get offlineMode => 'Offline mode';
+
+  @override
+  String get ok => 'OK';
+
+  @override
+  String get appearance => 'Appearance';
+
+  @override
+  String get lightMode => 'Light Mode';
+
+  @override
+  String get useSystemSetting => 'Use system setting';
+
+  @override
+  String get appLanguage => 'App Language';
+
+  @override
+  String get german => 'German';
+
+  @override
+  String get english => 'English';
+
+  @override
+  String get notificationSettingsComingSoon =>
+      'Notification settings will be available soon.';
+
+  @override
+  String get serverUrl => 'Server URL';
+
+  @override
+  String get refresh => 'Refresh';
+
+  @override
+  String get sort => 'Sort';
+
+  @override
+  String get share => 'Share';
+
+  @override
+  String get showCompletedItems => 'Show completed items';
+
+  @override
+  String get hideCategories => 'Hide categories';
+
+  @override
+  String get uncheckAllItems => 'Uncheck all items';
+
+  @override
+  String get deleteCompletedItems => 'Delete completed items';
+
+  @override
+  String get breakfast => 'Breakfast';
+
+  @override
+  String get lunch => 'Lunch';
+
+  @override
+  String get dinner => 'Dinner';
+
+  @override
+  String get snack => 'Snack';
+
+  @override
+  String get searchOrEnterRecipeName => 'Search recipe or enter new name';
+
+  @override
+  String get newRecipeNameHint => 'Name of the new recipe...';
+
+  @override
+  String get continueToDetails => 'Continue to details';
+
+  @override
+  String get name => 'Name';
+
+  @override
+  String get descriptionOptional => 'Description (optional)';
+
+  @override
+  String get ingredientsPerLine => 'Ingredients (one per line)';
+
+  @override
+  String get servings => 'Servings';
+
+  @override
+  String get prepTimeMinutes => 'Prep time (min)';
+
+  @override
+  String get back => 'Back';
+
+  @override
+  String get done => 'Done';
+
+  @override
+  String get pleaseEnterName => 'Please enter a name';
+
+  @override
+  String get newShoppingListNameHint => 'Name of the new shopping list...';
+
+  @override
+  String foodCreatedSuccess(String name) {
+    return '\"$name\" was created';
+  }
+
+  @override
+  String errorCreatingFood(String error) {
+    return 'Could not create food: $error';
+  }
+
+  @override
+  String get deleteFood => 'Delete food?';
+
+  @override
+  String confirmDeleteFood(String name) {
+    return 'Do you really want to delete \"$name\"?';
+  }
+
+  @override
+  String foodStillInUse(String name) {
+    return '\"$name\" is still used in a shopping list or recipe and cannot be deleted.';
+  }
+
+  @override
+  String deleteFailed(String error) {
+    return 'Deletion failed: $error';
+  }
+
+  @override
+  String get pleaseEnterValidQuantity => 'Please enter a valid quantity';
+
+  @override
+  String get pleaseSelectShoppingList => 'Please select a shopping list';
+
+  @override
+  String get pleaseSelectOrEnterFood => 'Please select or enter a food';
+
+  @override
+  String get addNewItem => 'Add new item';
+
+  @override
+  String get pleaseSelectList => 'Please select a list';
+
+  @override
+  String get advanced => 'Advanced';
+
+  @override
+  String get unit => 'Unit';
+
+  @override
+  String get category => 'Category';
+
+  @override
+  String get food => 'Food';
+
+  @override
+  String get addNewFood => 'Add new food';
+
+  @override
+  String get quantity => 'Quantity';
+
+  @override
+  String get notesOptional => 'Notes (optional)';
+
+  @override
+  String get couldNotLoadFormData => 'Could not load form data.';
+
+  @override
+  String get createShoppingList => 'Create shopping list';
+
+  @override
+  String get searchRecipes => 'Search for recipes...';
+
+  @override
+  String get untitledMeal => 'Untitled Meal';
+
+  @override
+  String get addMealToPlanner => 'Add meal';
+
+  @override
+  String get editNotImplemented => 'Edit functionality is not implemented yet.';
+
+  @override
+  String get addNotImplemented => 'Add functionality is not implemented yet.';
+
+  @override
+  String get searchArticle => 'Search article...';
+
+  @override
+  String get lastModified => 'Last modified';
+
+  @override
+  String doneItems(int count) {
+    return '$count done';
+  }
+
+  @override
+  String openItems(int count) {
+    return '$count open';
+  }
+
+  @override
+  String get renameList => 'Rename list';
+
+  @override
+  String get enterNewName => 'Enter new name';
+
+  @override
+  String get searchRecipesHint => 'Search for recipes...';
+
+  @override
+  String get noRecipesFoundSearch => 'No Recipes Found';
+
+  @override
+  String get tryDifferentSearch => 'Try searching for something else.';
 }
