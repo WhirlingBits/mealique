@@ -26,14 +26,26 @@ class _MainScreenState extends State<MainScreen> {
   late bool _isOffline;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
-  // This list remains, but the screens themselves will now have Scaffolds.
-  static const List<Widget> _widgetOptions = <Widget>[
-    DashboardScreen(),
-    RecipesScreen(),
-    PlannerScreen(),
-    ShoppingListScreen(),
-    SettingsScreen(),
-  ];
+  // Track which tabs have been visited to enable lazy loading
+  final Set<int> _visitedTabs = {0};
+
+  // Build screens on demand instead of all at once
+  Widget _buildScreen(int index) {
+    switch (index) {
+      case 0:
+        return const DashboardScreen();
+      case 1:
+        return const RecipesScreen();
+      case 2:
+        return const PlannerScreen();
+      case 3:
+        return const ShoppingListScreen();
+      case 4:
+        return const SettingsScreen();
+      default:
+        return const DashboardScreen();
+    }
+  }
 
   @override
   void initState() {
@@ -89,6 +101,7 @@ class _MainScreenState extends State<MainScreen> {
 
   void _onItemTapped(int index) {
     setState(() {
+      _visitedTabs.add(index);
       _selectedIndex = index;
     });
   }
@@ -96,11 +109,18 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // The body now uses an IndexedStack to preserve the state of each screen,
-      // including scroll position and user input, when switching tabs.
+      // Lazy IndexedStack: only build screens that have been visited.
+      // This preserves state of visited tabs while avoiding the cost of
+      // building all tabs (and their API calls) on first startup.
       body: IndexedStack(
         index: _selectedIndex,
-        children: _widgetOptions,
+        children: List.generate(5, (index) {
+          if (_visitedTabs.contains(index)) {
+            return _buildScreen(index);
+          }
+          // Return a lightweight placeholder for tabs not yet visited
+          return const SizedBox.shrink();
+        }),
       ),
       bottomNavigationBar: AppNavigationBar(
         selectedIndex: _selectedIndex,
