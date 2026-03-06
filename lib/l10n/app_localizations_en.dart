@@ -524,6 +524,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hideCategories => 'Hide categories';
 
   @override
+  String get showCategories => 'Show categories';
+
+  @override
   String get uncheckAllItems => 'Uncheck all items';
 
   @override

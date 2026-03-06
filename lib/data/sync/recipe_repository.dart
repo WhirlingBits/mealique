@@ -89,6 +89,14 @@ class RecipeRepository {
     return _api.deleteFood(foodId);
   }
 
+  Future<void> deleteRecipe(String slug) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      return; // In demo mode, do nothing but return successfully.
+    }
+    return _api.deleteRecipe(slug);
+  }
+
   Future<List<ShoppingItemUnit>> getUnits() async {
     final token = await _tokenStorage.getToken();
     if (token == AppConstants.demoToken) {

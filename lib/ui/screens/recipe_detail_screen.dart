@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/data/sync/recipe_repository.dart';
+import 'package:mealique/data/local/token_storage.dart';
 import 'package:mealique/models/recipes_model.dart';
 import 'package:mealique/ui/widgets/recipe_detail_actions_menu.dart';
 import '../../l10n/app_localizations.dart';
@@ -23,6 +25,63 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   void initState() {
     super.initState();
     _recipeFuture = _recipeRepository.getRecipe(widget.recipeSlug);
+  }
+
+  Future<void> _confirmDeleteRecipe(Recipe recipe) async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.deleteRecipe),
+        content: Text(l10n.confirmDeleteRecipe),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        await _recipeRepository.deleteRecipe(recipe.slug);
+        if (mounted) {
+          Navigator.of(context).pop(); // Close detail screen
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.itemDeletedSuccess(recipe.name)),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.errorDeleting(e.toString())),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _shareRecipe(Recipe recipe) async {
+    final serverUrl = await TokenStorage().getServerUrl();
+    final recipeUrl = '$serverUrl/recipe/${recipe.slug}';
+    await Clipboard.setData(ClipboardData(text: recipeUrl));
+    if (mounted) {
+      final l10n = AppLocalizations.of(context)!;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${l10n.share}: URL kopiert')),
+      );
+    }
   }
 
   Widget _buildErrorWidget(Object error, VoidCallback onRetry) {
@@ -104,7 +163,16 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                             // TODO: Favoriten Logik
                           },
                         ),
-                        RecipeDetailActionsMenu(recipe: recipe),
+                        RecipeDetailActionsMenu(
+                          onEdit: () {
+                            final l10n = AppLocalizations.of(context)!;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(l10n.editNotImplemented)),
+                            );
+                          },
+                          onDelete: () => _confirmDeleteRecipe(recipe),
+                          onShare: () => _shareRecipe(recipe),
+                        ),
                       ],
                       flexibleSpace: FlexibleSpaceBar(
                         title: Text(
@@ -128,7 +196,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                   end: Alignment.bottomCenter,
                                   colors: [
                                     Colors.transparent,
-                                    accentColor.withOpacity(0.9),
+                                    accentColor.withValues(alpha: 0.9),
                                   ],
                                 ),
                               ),

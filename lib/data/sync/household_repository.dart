@@ -88,6 +88,24 @@ class HouseholdRepository {
     await _api.deleteShoppingList(id);
   }
 
+  Future<void> updateShoppingListName(String listId, String newName) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) return;
+    final list = await _api.getShoppingList(listId);
+    final updatedList = ShoppingList(
+      id: list.id,
+      name: newName,
+      extras: list.extras,
+      createdAt: list.createdAt,
+      updatedAt: list.updatedAt,
+      recipeReferences: list.recipeReferences,
+      labelSettings: list.labelSettings,
+      listItems: list.listItems,
+      itemCount: list.itemCount,
+    );
+    await _api.updateShoppingList(list.id, updatedList);
+  }
+
   Future<List<ShoppingItem>> getItemsForList(String listId) async {
     final token = await _tokenStorage.getToken();
     if (token == AppConstants.demoToken) {

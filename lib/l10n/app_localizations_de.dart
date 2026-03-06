@@ -529,6 +529,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get hideCategories => 'Kategorien ausblenden';
 
   @override
+  String get showCategories => 'Kategorien anzeigen';
+
+  @override
   String get uncheckAllItems => 'Markierung aller Elemente entfernen';
 
   @override

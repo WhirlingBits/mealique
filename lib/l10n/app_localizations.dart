@@ -1052,6 +1052,12 @@ abstract class AppLocalizations {
   /// **'Hide categories'**
   String get hideCategories;
 
+  /// No description provided for @showCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Show categories'**
+  String get showCategories;
+
   /// No description provided for @uncheckAllItems.
   ///
   /// In en, this message translates to:

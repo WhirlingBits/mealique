@@ -30,6 +30,9 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
 
   final Color _accentColor = const Color(0xFFE58325);
 
+  bool _showCompleted = true;
+  bool _showCategories = true;
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +43,154 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
     setState(() {
       _itemsFuture = _repository.getItemsForList(widget.listId);
     });
+  }
+
+  void _handleToggleShowCompleted() {
+    setState(() {
+      _showCompleted = !_showCompleted;
+    });
+  }
+
+  void _handleToggleShowCategories() {
+    setState(() {
+      _showCategories = !_showCategories;
+    });
+  }
+
+  void _handleEditList() {
+    final l10n = AppLocalizations.of(context)!;
+    final controller = TextEditingController(text: widget.listName);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.renameList),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: InputDecoration(hintText: l10n.enterNewName),
+          onSubmitted: (_) {
+            if (controller.text.trim().isNotEmpty) {
+              Navigator.pop(ctx, controller.text.trim());
+            }
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              if (controller.text.trim().isNotEmpty) {
+                Navigator.pop(ctx, controller.text.trim());
+              }
+            },
+            child: Text(l10n.save),
+          ),
+        ],
+      ),
+    ).then((newName) async {
+      if (newName != null && newName is String && mounted) {
+        try {
+          await _repository.updateShoppingListName(widget.listId, newName);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(l10n.listCreatedSuccess(newName)),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            _showError(l10n.errorUpdating(e.toString()));
+          }
+        }
+      }
+    });
+  }
+
+  Future<void> _handleUncheckAll() async {
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      final items = await _itemsFuture;
+      final checkedItems = items.where((i) => i.checked).toList();
+      for (final item in checkedItems) {
+        await _repository.updateItem(item.copyWith(checked: false));
+      }
+      _loadItems();
+    } catch (e) {
+      _showError(l10n.errorUpdating(e.toString()));
+    }
+  }
+
+  Future<void> _handleDeleteCompleted() async {
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      final items = await _itemsFuture;
+      final checkedItems = items.where((i) => i.checked).toList();
+      for (final item in checkedItems) {
+        await _repository.deleteItem(item.id);
+      }
+      _loadItems();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.deleteCompletedItems),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      _showError(l10n.errorDeleting(e.toString()));
+    }
+  }
+
+  Future<void> _handleDeleteList() async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.deleteList),
+        content: Text(l10n.confirmDeleteList),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        await _repository.deleteShoppingList(widget.listId);
+        if (mounted) {
+          Navigator.pop(context); // Go back to list overview
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.shoppingListDeleted),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          _showError(l10n.errorDeleting(e.toString()));
+        }
+      }
+    }
+  }
+
+  void _handleSortItems() {
+    final l10n = AppLocalizations.of(context)!;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.featureNotImplemented)),
+    );
   }
 
   Future<void> _toggleItem(ShoppingItem item) async {
@@ -330,8 +481,19 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
         backgroundColor: const Color(0xFFE58325),
         foregroundColor: Colors.white,
         title: Text(widget.listName),
-        actions: const [
-          ShoppingListDetailActionsMenu(),
+        actions: [
+          ShoppingListDetailActionsMenu(
+            onRefresh: _loadItems,
+            onEditList: _handleEditList,
+            onUncheckAll: _handleUncheckAll,
+            onDeleteCompleted: _handleDeleteCompleted,
+            onDeleteList: _handleDeleteList,
+            onSortItems: _handleSortItems,
+            showCompleted: _showCompleted,
+            onToggleShowCompleted: _handleToggleShowCompleted,
+            showCategories: _showCategories,
+            onToggleShowCategories: _handleToggleShowCategories,
+          ),
         ],
       ),
       body: FutureBuilder<List<ShoppingItem>>(
@@ -344,43 +506,70 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
             return _buildErrorWidget(snapshot.error!, _loadItems);
           }
           final items = snapshot.data ?? [];
-          final groupedItems = _groupItemsByCategory(items);
+          var displayItems = items.toList();
 
-          if (items.isEmpty) {
+          // Filter out completed items if toggle is off
+          if (!_showCompleted) {
+            displayItems = displayItems.where((i) => !i.checked).toList();
+          }
+
+          if (displayItems.isEmpty && items.isNotEmpty) {
+            // All items are completed and hidden
+            return _buildEmptyState();
+          }
+          if (displayItems.isEmpty) {
             return _buildEmptyState();
           }
 
-          return SlidableAutoCloseBehavior(
-            child: RefreshIndicator(
-              onRefresh: () async {
-                _loadItems();
-              },
-              child: CustomScrollView(
-                slivers: [
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final category = groupedItems.keys.elementAt(index);
-                          final categoryItems = groupedItems[category]!;
+          // Group by category or show flat list
+          if (_showCategories) {
+            final groupedItems = _groupItemsByCategory(displayItems);
+            return SlidableAutoCloseBehavior(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  _loadItems();
+                },
+                child: CustomScrollView(
+                  slivers: [
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final category = groupedItems.keys.elementAt(index);
+                            final categoryItems = groupedItems[category]!;
 
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildSectionTitle(category),
-                              ...categoryItems.map((item) => _buildItemTile(item))
-                            ],
-                          );
-                        },
-                        childCount: groupedItems.length,
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildSectionTitle(category),
+                                ...categoryItems.map((item) => _buildItemTile(item))
+                              ],
+                            );
+                          },
+                          childCount: groupedItems.length,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          );
+            );
+          } else {
+            // Flat list without categories
+            return SlidableAutoCloseBehavior(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  _loadItems();
+                },
+                child: ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                  itemCount: displayItems.length,
+                  itemBuilder: (context, index) => _buildItemTile(displayItems[index]),
+                ),
+              ),
+            );
+          }
         },
       ),
       floatingActionButton: FloatingActionButton(

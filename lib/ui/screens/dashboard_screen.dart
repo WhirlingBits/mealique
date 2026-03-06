@@ -247,8 +247,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: const Color(0xFFE58325),
         foregroundColor: Colors.white,
         title: Text(l10n.home),
-        actions: const [
-          DashboardActionsMenu(),
+        actions: [
+          DashboardActionsMenu(
+            onRefresh: () {
+              setState(() {
+                _todaysMealsFuture = _fetchTodaysMeals();
+                _popularRecipesFuture = _fetchPopularRecipes();
+                _userFuture = _userRepository.getSelfUser();
+              });
+            },
+          ),
         ],
       ),
       body: SafeArea(

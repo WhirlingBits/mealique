@@ -80,6 +80,10 @@ class RecipesApi {
     await _dio.delete('api/foods/$foodId');
   }
 
+  Future<void> deleteRecipe(String slug) async {
+    await _dio.delete('api/recipes/$slug');
+  }
+
   Future<List<ShoppingItemUnit>> getUnits() async {
     try {
       final response = await _dio.get('api/units');

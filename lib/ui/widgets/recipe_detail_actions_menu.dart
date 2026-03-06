@@ -1,32 +1,56 @@
 import 'package:flutter/material.dart';
-import 'package:mealique/models/recipes_model.dart';
 import '../../l10n/app_localizations.dart';
 
 class RecipeDetailActionsMenu extends StatelessWidget {
-  final Recipe recipe;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+  final VoidCallback? onShare;
 
-  const RecipeDetailActionsMenu({super.key, required this.recipe});
+  const RecipeDetailActionsMenu({
+    super.key,
+    this.onEdit,
+    this.onDelete,
+    this.onShare,
+  });
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return PopupMenuButton<String>(
       onSelected: (value) {
-        // TODO: Implement menu actions for edit, delete, etc.
-        print('Selected: $value for recipe ${recipe.id}');
+        switch (value) {
+          case 'edit':
+            onEdit?.call();
+            break;
+          case 'delete':
+            onDelete?.call();
+            break;
+          case 'share':
+            onShare?.call();
+            break;
+        }
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
         PopupMenuItem<String>(
           value: 'edit',
-          child: Text(l10n.edit),
+          child: ListTile(
+            leading: const Icon(Icons.edit),
+            title: Text(l10n.edit),
+          ),
         ),
         PopupMenuItem<String>(
           value: 'delete',
-          child: Text(l10n.delete),
+          child: ListTile(
+            leading: const Icon(Icons.delete, color: Colors.red),
+            title: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
+          ),
         ),
         PopupMenuItem<String>(
           value: 'share',
-          child: Text(l10n.share),
+          child: ListTile(
+            leading: const Icon(Icons.share),
+            title: Text(l10n.share),
+          ),
         ),
       ],
     );

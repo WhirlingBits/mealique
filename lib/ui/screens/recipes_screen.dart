@@ -89,8 +89,15 @@ class _RecipesScreenState extends State<RecipesScreen> {
         backgroundColor: const Color(0xFFE58325),
         foregroundColor: Colors.white,
         title: Text(l10n.recipes),
-        actions: const [
-          RecipeActionsMenu(),
+        actions: [
+          RecipeActionsMenu(
+            onAddRecipe: () => _showAddRecipeSheet(context),
+            onRefresh: () {
+              setState(() {
+                _recipesFuture = _recipeRepository.getRecipes();
+              });
+            },
+          ),
         ],
       ),
       body: SafeArea(
@@ -239,7 +246,12 @@ class _RecipesScreenState extends State<RecipesScreen> {
                       Positioned(
                         top: 8,
                         right: 8,
-                        child: RecipeActionsMenu(),
+                        child: IconButton(
+                          icon: const Icon(Icons.favorite_border, color: Colors.white),
+                          onPressed: () {
+                            // TODO: Toggle favorite
+                          },
+                        ),
                       ),
                     ],
                   ),
