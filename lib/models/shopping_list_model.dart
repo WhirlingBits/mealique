@@ -28,23 +28,23 @@ class ShoppingListLabelSetting {
   final String labelId;
   final int position;
   final String id;
-  final ShoppingListLabel label;
+  final ShoppingListLabel? label;
 
   ShoppingListLabelSetting({
     required this.shoppingListId,
     required this.labelId,
     required this.position,
     required this.id,
-    required this.label,
+    this.label,
   });
 
   factory ShoppingListLabelSetting.fromJson(Map<String, dynamic> json) {
     return ShoppingListLabelSetting(
-      shoppingListId: json['shoppingListId'],
-      labelId: json['labelId'],
+      shoppingListId: json['shoppingListId'] ?? '',
+      labelId: json['labelId'] ?? '',
       position: json['position'] ?? 0,
-      id: json['id'],
-      label: ShoppingListLabel.fromJson(json['label']),
+      id: json['id'] ?? '',
+      label: json['label'] != null ? ShoppingListLabel.fromJson(json['label']) : null,
     );
   }
 
@@ -164,7 +164,7 @@ class ShoppingList {
       'name': name,
       'extras': extras,
       'createdAt': createdAt,
-      'update_at': updatedAt,
+      'updatedAt': updatedAt,
       'groupId': groupId,
       'userId': userId,
       'id': id,

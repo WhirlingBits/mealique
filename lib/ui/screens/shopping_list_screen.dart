@@ -47,9 +47,39 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: AddShoppingListForm(
           onAddList: (name) async {
-            await _repository.createShoppingList(name);
-            _loadLists();
-            if (mounted) Navigator.pop(context);
+            final l10n = AppLocalizations.of(this.context)!;
+            try {
+              await _repository.createShoppingList(name);
+              _loadLists();
+              if (mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(this.context)
+                  ..clearSnackBars()
+                  ..showSnackBar(
+                    SnackBar(
+                      content: Text(l10n.listCreatedSuccess(name)),
+                      backgroundColor: Colors.green,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  );
+              }
+            } catch (e) {
+              if (mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(this.context)
+                  ..clearSnackBars()
+                  ..showSnackBar(
+                    SnackBar(
+                      content: Text(l10n.errorCreating(e.toString())),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      duration: const Duration(seconds: 4),
+                    ),
+                  );
+              }
+            }
           },
         ),
       ),
@@ -57,25 +87,54 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   }
 
   void _deleteList(String listId) async {
-    await _repository.deleteShoppingList(listId);
-    _loadLists();
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      await _repository.deleteShoppingList(listId);
+      _loadLists();
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(l10n.shoppingListDeleted),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(l10n.errorDeleting(e.toString())),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+      }
+    }
   }
 
   Widget _buildErrorWidget(Object error, VoidCallback onRetry) {
-    //final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context)!;
     String errorMessage;
 
     if (error is DioException && error.error is ApiException) {
       final apiError = error.error as ApiException;
       if (apiError is NetworkException) {
-        errorMessage = 'Bitte prüfe deine Internetverbindung.'; // TODO: l10n
+        errorMessage = l10n.checkInternetConnection;
       } else if (apiError is ServerException) {
-        errorMessage = 'Ein Serverfehler ist aufgetreten. Bitte versuche es später erneut.'; // TODO: l10n
+        errorMessage = l10n.serverError;
       } else {
         errorMessage = apiError.message;
       }
     } else {
-      errorMessage = 'Ein unerwarteter Fehler ist aufgetreten.'; // TODO: l10n
+      errorMessage = l10n.unexpectedError;
     }
 
     return Center(
@@ -90,7 +149,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: onRetry,
-              child: const Text('Erneut versuchen'), // TODO: l10n
+              child: Text(l10n.tryAgain),
             ),
           ],
         ),
@@ -107,7 +166,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFE58325),
         foregroundColor: Colors.white,
-        title: Text(l10n.shoppingLists), // TODO: Add to l10n
+        title: Text(l10n.shoppingLists),
         actions: [
           ShoppingListActionsMenu(
             onAddList: _showAddListSheet,
@@ -135,19 +194,19 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                       Icon(Icons.shopping_cart_outlined, size: 80, color: Colors.grey[400]),
                       const SizedBox(height: 24),
                       Text(
-                        'Keine Einkaufslisten',
+                        l10n.noListsFound,
                         style: theme.textTheme.headlineSmall?.copyWith(color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Lege deine erste Liste an, um loszulegen.',
+                        l10n.createFirstListHint,
                         style: theme.textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 24),
                       ElevatedButton.icon(
                         icon: const Icon(Icons.add),
                         onPressed: _showAddListSheet,
-                        label: const Text('Erste Liste erstellen'),
+                        label: Text(l10n.createFirstList),
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         ),
@@ -165,11 +224,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                   final list = lists[index];
                   final String subtitle;
                   if (list.itemCount == 0) {
-                    subtitle = 'Alle erledigt'; // TODO: l10n
+                    subtitle = l10n.allDone;
                   } else if (list.itemCount == 1) {
-                    subtitle = '1 offenes Element'; // TODO: l10n
+                    subtitle = l10n.openItemsSingular;
                   } else {
-                    subtitle = '${list.itemCount} offene Elemente'; // TODO: l10n
+                    subtitle = l10n.openItemsPlural(list.itemCount);
                   }
 
                   return Card(
@@ -192,7 +251,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                             backgroundColor: const Color(0xFFE58325),
                             foregroundColor: Colors.white,
                             icon: Icons.edit,
-                            label: 'Bearbeiten',
+                            label: l10n.edit,
                           ),
                           SlidableAction(
                             flex: 1,
@@ -200,7 +259,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                             backgroundColor: Colors.red,
                             foregroundColor: Colors.white,
                             icon: Icons.delete,
-                            label: 'Löschen',
+                            label: l10n.delete,
                           ),
                         ],
                       ),
@@ -220,20 +279,13 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                         ),
                         subtitle: Text(subtitle),
                         onTap: () {
-                          final screenHeight = MediaQuery.of(context).size.height;
-                          final topPadding = MediaQuery.of(context).padding.top;
-                          const appBarHeight = kToolbarHeight;
-
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            constraints: BoxConstraints(
-                              maxHeight: screenHeight - (topPadding + appBarHeight),
-                            ),
-                            builder: (context) => ShoppingListDetailScreen(
-                              listId: list.id,
-                              listName: list.name,
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ShoppingListDetailScreen(
+                                listId: list.id,
+                                listName: list.name,
+                              ),
                             ),
                           ).then((_) => _loadLists());
                         },
@@ -249,7 +301,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddListSheet,
-        tooltip: 'Liste erstellen',
+        tooltip: l10n.createList,
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
         shape: const CircleBorder(),
