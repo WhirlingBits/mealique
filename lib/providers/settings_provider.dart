@@ -5,15 +5,18 @@ class SettingsProvider with ChangeNotifier {
   final AppSettingsStorage _storage;
   Locale? _locale;
   ThemeMode _themeMode = ThemeMode.system;
+  bool _isInitialized = false;
 
-  SettingsProvider() : _storage = AppSettingsStorage() {
-    _loadSettings();
-  }
+  SettingsProvider() : _storage = AppSettingsStorage();
 
   Locale? get locale => _locale;
   ThemeMode get themeMode => _themeMode;
+  bool get isInitialized => _isInitialized;
 
-  void _loadSettings() async {
+  /// Call once at app startup before building the widget tree.
+  Future<void> init() async {
+    if (_isInitialized) return;
+
     // Load Locale
     final localeString = await _storage.getLocale();
     if (localeString != null) {
@@ -26,6 +29,7 @@ class SettingsProvider with ChangeNotifier {
       _themeMode = savedThemeMode;
     }
 
+    _isInitialized = true;
     notifyListeners();
   }
 

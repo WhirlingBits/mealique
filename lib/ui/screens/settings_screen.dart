@@ -58,7 +58,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    _user?.fullName ?? 'Lade Benutzer...',
+                    _user?.fullName ?? l10n.loadingUser,
                     style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
@@ -74,7 +74,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             // Menüpunkt: Server & API
             ListTile(
               leading: const Icon(Icons.settings),
-              title: const Text('Server & API'),
+              title: Text(l10n.serverAndApi),
               trailing: const Icon(Icons.chevron_right, color: Colors.grey),
               onTap: () {
                 Navigator.push(
@@ -89,7 +89,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             // Menüpunkt: Darstellung & Sprache
             ListTile(
               leading: const Icon(Icons.palette),
-              title: const Text('Darstellung & Sprache'), // TODO: l10n
+              title: Text(l10n.appearanceAndLanguage),
               trailing: const Icon(Icons.chevron_right, color: Colors.grey),
               onTap: () {
                 Navigator.push(
@@ -104,7 +104,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             // Menüpunkt: Benachrichtigungen
             ListTile(
               leading: const Icon(Icons.notifications),
-              title: const Text('Benachrichtigungen'), // TODO: l10n
+              title: Text(l10n.notifications),
               trailing: const Icon(Icons.chevron_right, color: Colors.grey),
               onTap: () {
                 Navigator.push(
@@ -119,11 +119,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             // Menüpunkt: Sync
             ListTile(
               leading: const Icon(Icons.sync),
-              title: const Text('Sync'),
+              title: Text(l10n.sync),
               onTap: () {
                 // TODO: Sync auslösen
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Synchronisierung gestartet...')),
+                  SnackBar(content: Text(l10n.syncStarted)),
                 );
               },
             ),

@@ -62,8 +62,10 @@ class ShoppingItem {
   final int position;
   final String? foodId;
   final String? unitId;
+  final String? labelId;
   final String id;
   final ShoppingItemLabel? label;
+  final Map<String, dynamic>? extras; // Add extras
 
   ShoppingItem({
     required this.quantity,
@@ -76,8 +78,10 @@ class ShoppingItem {
     required this.position,
     this.foodId,
     this.unitId,
+    this.labelId,
     required this.id,
     this.label,
+    this.extras,
   });
 
   factory ShoppingItem.fromJson(Map<String, dynamic> json) {
@@ -87,28 +91,94 @@ class ShoppingItem {
       food: json['food'] != null ? ShoppingItemFood.fromJson(json['food']) : null,
       note: json['note'] ?? '',
       display: json['display'] ?? '',
-      shoppingListId: json['shoppingListId'],
+      shoppingListId: json['shoppingListId'] ?? '',
       checked: json['checked'] ?? false,
       position: json['position'] ?? 0,
       foodId: json['foodId'],
       unitId: json['unitId'],
-      id: json['id'],
+      labelId: json['labelId'],
+      id: json['id'] ?? '',
       label: json['label'] != null ? ShoppingItemLabel.fromJson(json['label']) : null,
+      extras: json['extras'],
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    final bool isNewItem = id.isEmpty;
+    final Map<String, dynamic> data = {
       'quantity': quantity,
-      'note': note,
-      'display': display,
+      'note': note.isNotEmpty ? note : '',
       'shoppingListId': shoppingListId,
       'checked': checked,
       'position': position,
-      'foodId': foodId,
-      'unitId': unitId,
-      'id': id,
     };
+
+    // Only include id for existing items (updates)
+    if (!isNewItem) {
+      data['id'] = id;
+    }
+
+    // Only include display and extras for existing items (updates)
+    if (!isNewItem) {
+      if (display.isNotEmpty) data['display'] = display;
+      data['extras'] = extras ?? {};
+    }
+
+    if (isNewItem) {
+      // For creation: only send IDs, not nested objects
+      if (food != null) {
+        data['foodId'] = food!.id;
+      } else if (foodId != null && foodId!.isNotEmpty) {
+        data['foodId'] = foodId;
+      }
+
+      if (unit != null) {
+        data['unitId'] = unit!.id;
+      } else if (unitId != null && unitId!.isNotEmpty) {
+        data['unitId'] = unitId;
+      }
+
+      if (labelId != null && labelId!.isNotEmpty) {
+        data['labelId'] = labelId;
+      }
+    } else {
+      // For updates: send nested objects if available
+      if (food != null) {
+        data['food'] = {
+          'id': food!.id,
+          'name': food!.name,
+        };
+        data['foodId'] = food!.id;
+      } else if (foodId != null && foodId!.isNotEmpty) {
+        data['foodId'] = foodId;
+      }
+
+      if (unit != null) {
+        data['unit'] = {
+          'id': unit!.id,
+          'name': unit!.name,
+        };
+        data['unitId'] = unit!.id;
+      } else if (unitId != null && unitId!.isNotEmpty) {
+        data['unitId'] = unitId;
+      }
+
+      if (labelId != null && labelId!.isNotEmpty) {
+        data['labelId'] = labelId;
+      }
+      if (label != null) {
+        data['label'] = {
+          'id': label!.id,
+          'name': label!.name,
+          'color': label!.color,
+          'groupId': label!.groupId,
+        };
+      }
+
+      data['extras'] = extras ?? {};
+    }
+
+    return data;
   }
 
   ShoppingItem copyWith({
@@ -122,8 +192,10 @@ class ShoppingItem {
     int? position,
     String? foodId,
     String? unitId,
+    String? labelId,
     String? id,
     ShoppingItemLabel? label,
+    Map<String, dynamic>? extras,
   }) {
     return ShoppingItem(
       quantity: quantity ?? this.quantity,
@@ -136,8 +208,10 @@ class ShoppingItem {
       position: position ?? this.position,
       foodId: foodId ?? this.foodId,
       unitId: unitId ?? this.unitId,
+      labelId: labelId ?? this.labelId,
       id: id ?? this.id,
       label: label ?? this.label,
+      extras: extras ?? this.extras,
     );
   }
 }
