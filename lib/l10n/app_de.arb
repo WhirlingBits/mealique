@@ -103,11 +103,171 @@
     "loginSuccess": "Anmeldung erfolgreich.",
     "loginError": "Anmeldefehler: {error}",
     "@loginError": {
-      "description": "Fehlermeldung, die angezeigt wird, wenn die Anmeldung fehlschlägt",
-      "placeholders": {
-          "error": {
-          "type": "String"
+        "description": "Fehlermeldung bei fehlgeschlagener Anmeldung",
+        "placeholders": {
+            "error": { "type": "String" }
         }
-      }
-  }
+    },
+    "checkInternetConnection": "Bitte prüfe deine Internetverbindung.",
+    "serverError": "Ein Serverfehler ist aufgetreten. Bitte versuche es später erneut.",
+    "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten.",
+    "tryAgain": "Erneut versuchen",
+    "defaultUserName": "dort",
+    "noPopularRecipesFound": "Keine beliebten Rezepte gefunden.",
+    "unknownError": "Ein unbekannter Fehler ist aufgetreten.",
+    "featureNotImplemented": "Diese Funktion ist noch nicht implementiert.",
+    "all": "Alle",
+    "filter": "Filter",
+    "noRecipesFound": "Keine Rezepte gefunden.",
+    "recipeNotFound": "Rezept nicht gefunden.",
+    "servingsCount": "{count} Portionen",
+    "@servingsCount": {
+        "placeholders": { "count": { "type": "int" } }
+    },
+    "minutesShort": "{count} Min",
+    "@minutesShort": {
+        "placeholders": { "count": { "type": "String" } }
+    },
+    "ingredients": "Zutaten",
+    "instructions": "Zubereitung",
+    "trySearchingSomethingElse": "Versuche etwas anderes zu suchen.",
+    "favorite": "Favorit",
+    "loadingUser": "Lade Benutzer...",
+    "serverAndApi": "Server & API",
+    "appearanceAndLanguage": "Darstellung & Sprache",
+    "sync": "Sync",
+    "syncStarted": "Synchronisierung gestartet...",
+    "listCreatedSuccess": "\"{name}\" wurde erstellt",
+    "@listCreatedSuccess": {
+        "placeholders": { "name": { "type": "String" } }
+    },
+    "errorCreating": "Fehler beim Erstellen: {error}",
+    "@errorCreating": {
+        "placeholders": { "error": { "type": "String" } }
+    },
+    "shoppingListDeleted": "Einkaufsliste wurde gelöscht.",
+    "errorDeleting": "Fehler beim Löschen: {error}",
+    "@errorDeleting": {
+        "placeholders": { "error": { "type": "String" } }
+    },
+    "createFirstListHint": "Lege deine erste Liste an, um loszulegen.",
+    "createFirstList": "Erste Liste erstellen",
+    "allDone": "Alle erledigt",
+    "openItemsSingular": "1 offenes Element",
+    "openItemsPlural": "{count} offene Elemente",
+    "@openItemsPlural": {
+        "placeholders": { "count": { "type": "int" } }
+    },
+    "errorUpdating": "Fehler beim Aktualisieren: {error}",
+    "@errorUpdating": {
+        "placeholders": { "error": { "type": "String" } }
+    },
+    "itemAddedSuccess": "\"{name}\" wurde hinzugefügt",
+    "@itemAddedSuccess": {
+        "placeholders": { "name": { "type": "String" } }
+    },
+    "errorAdding": "Fehler beim Hinzufügen: {error}",
+    "@errorAdding": {
+        "placeholders": { "error": { "type": "String" } }
+    },
+    "itemDeletedSuccess": "\"{name}\" wurde gelöscht",
+    "@itemDeletedSuccess": {
+        "placeholders": { "name": { "type": "String" } }
+    },
+    "errorEditing": "Fehler beim Bearbeiten: {error}",
+    "@errorEditing": {
+        "placeholders": { "error": { "type": "String" } }
+    },
+    "general": "Allgemein",
+    "listEmpty": "Diese Liste ist leer",
+    "addFirstItemHint": "Füge dein erstes Item hinzu.",
+    "itemDetailsPlaceholder": "Details werden hier angezeigt.",
+    "offlineMode": "Offline-Modus",
+    "ok": "OK",
+    "appearance": "Darstellung",
+    "lightMode": "Heller Modus",
+    "useSystemSetting": "Systemeinstellung verwenden",
+    "appLanguage": "App-Sprache",
+    "german": "Deutsch",
+    "english": "English",
+    "notificationSettingsComingSoon": "Hier werden bald die Benachrichtigungseinstellungen zu finden sein.",
+    "serverUrl": "Server URL",
+    "refresh": "Aktualisieren",
+    "sort": "Sortieren",
+    "share": "Teilen",
+    "showCompletedItems": "Abgeschlossene Items anzeigen",
+    "hideCategories": "Kategorien ausblenden",
+    "uncheckAllItems": "Markierung aller Elemente entfernen",
+    "deleteCompletedItems": "Erledigte Elemente löschen",
+    "breakfast": "Frühstück",
+    "lunch": "Mittagessen",
+    "dinner": "Abendessen",
+    "snack": "Snack",
+    "searchOrEnterRecipeName": "Rezept suchen oder neuen Namen eingeben",
+    "newRecipeNameHint": "Name des neuen Rezepts...",
+    "continueToDetails": "Weiter zu Details",
+    "name": "Name",
+    "descriptionOptional": "Beschreibung (optional)",
+    "ingredientsPerLine": "Zutaten (je Zeile ein Eintrag)",
+    "servings": "Portionen",
+    "prepTimeMinutes": "Zubereitungszeit (Min)",
+    "back": "Zurück",
+    "done": "Fertig",
+    "pleaseEnterName": "Bitte einen Namen eingeben",
+    "newShoppingListNameHint": "Name der neuen Einkaufsliste...",
+    "foodCreatedSuccess": "\"{name}\" wurde erstellt",
+    "@foodCreatedSuccess": {
+        "placeholders": { "name": { "type": "String" } }
+    },
+    "errorCreatingFood": "Lebensmittel konnte nicht erstellt werden: {error}",
+    "@errorCreatingFood": {
+        "placeholders": { "error": { "type": "String" } }
+    },
+    "deleteFood": "Lebensmittel löschen?",
+    "confirmDeleteFood": "Möchtest du \"{name}\" wirklich löschen?",
+    "@confirmDeleteFood": {
+        "placeholders": { "name": { "type": "String" } }
+    },
+    "foodStillInUse": "\"{name}\" wird noch in einer Einkaufsliste oder einem Rezept verwendet und kann nicht gelöscht werden.",
+    "@foodStillInUse": {
+        "placeholders": { "name": { "type": "String" } }
+    },
+    "deleteFailed": "Löschen fehlgeschlagen: {error}",
+    "@deleteFailed": {
+        "placeholders": { "error": { "type": "String" } }
+    },
+    "pleaseEnterValidQuantity": "Bitte eine gültige Menge eingeben",
+    "pleaseSelectShoppingList": "Bitte eine Einkaufsliste auswählen",
+    "pleaseSelectOrEnterFood": "Bitte ein Lebensmittel auswählen oder eingeben",
+    "addNewItem": "Neues Item hinzufügen",
+    "pleaseSelectList": "Bitte eine Liste wählen",
+    "advanced": "Erweitert",
+    "unit": "Einheit",
+    "category": "Kategorie",
+    "food": "Lebensmittel",
+    "addNewFood": "Neues Lebensmittel hinzufügen",
+    "quantity": "Anzahl",
+    "notesOptional": "Notizen (optional)",
+    "couldNotLoadFormData": "Formulardaten konnten nicht geladen werden.",
+    "createShoppingList": "Einkaufsliste erstellen",
+    "searchRecipes": "Rezepte suchen...",
+    "untitledMeal": "Unbenannte Mahlzeit",
+    "addMealToPlanner": "Mahlzeit hinzufügen",
+    "editNotImplemented": "Die Bearbeitung ist noch nicht implementiert.",
+    "addNotImplemented": "Das Hinzufügen ist noch nicht implementiert.",
+    "searchArticle": "Artikel suchen...",
+    "lastModified": "Zuletzt geändert",
+    "doneItems": "{count} erledigt",
+    "@doneItems": {
+        "placeholders": { "count": { "type": "int" } }
+    },
+    "openItems": "{count} offen",
+    "@openItems": {
+        "placeholders": { "count": { "type": "int" } }
+    },
+    "renameList": "Liste umbenennen",
+    "enterNewName": "Neuen Namen eingeben",
+    "searchRecipesHint": "Rezepte suchen...",
+    "noRecipesFoundSearch": "Keine Rezepte gefunden",
+    "tryDifferentSearch": "Versuche etwas anderes zu suchen."
 }

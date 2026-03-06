@@ -99,14 +99,175 @@
     "greeting": "Hello, {name}!",
     "add": "Add",
     "unnamedMeal": "Unnamed Meal",
+    "meal": "Meal",
     "loginSuccess": "Login successful.",
     "loginError": "Login error: {error}",
     "@loginError": {
-      "description": "Error message shown when login fails",
-      "placeholders": {
-          "error": {
-          "type": "String"
+        "description": "Error message shown when login fails",
+        "placeholders": {
+            "error": { "type": "String" }
         }
-      }
-  }
+    },
+    "checkInternetConnection": "Please check your internet connection.",
+    "serverError": "A server error occurred. Please try again later.",
+    "unexpectedError": "An unexpected error occurred.",
+    "tryAgain": "Try Again",
+    "defaultUserName": "there",
+    "noPopularRecipesFound": "No popular recipes found.",
+    "unknownError": "An unknown error occurred.",
+    "featureNotImplemented": "This feature is not implemented yet.",
+    "all": "All",
+    "filter": "Filter",
+    "noRecipesFound": "No recipes found.",
+    "recipeNotFound": "Recipe not found.",
+    "servingsCount": "{count} servings",
+    "@servingsCount": {
+        "placeholders": { "count": { "type": "int" } }
+    },
+    "minutesShort": "{count} min",
+    "@minutesShort": {
+        "placeholders": { "count": { "type": "String" } }
+    },
+    "ingredients": "Ingredients",
+    "instructions": "Instructions",
+    "trySearchingSomethingElse": "Try searching for something else.",
+    "favorite": "Favorite",
+    "loadingUser": "Loading user...",
+    "serverAndApi": "Server & API",
+    "appearanceAndLanguage": "Appearance & Language",
+    "sync": "Sync",
+    "syncStarted": "Synchronization started...",
+    "listCreatedSuccess": "\"{name}\" was created",
+    "@listCreatedSuccess": {
+        "placeholders": { "name": { "type": "String" } }
+    },
+    "errorCreating": "Error creating: {error}",
+    "@errorCreating": {
+        "placeholders": { "error": { "type": "String" } }
+    },
+    "shoppingListDeleted": "Shopping list deleted.",
+    "errorDeleting": "Error deleting: {error}",
+    "@errorDeleting": {
+        "placeholders": { "error": { "type": "String" } }
+    },
+    "createFirstListHint": "Create your first list to get started.",
+    "createFirstList": "Create first list",
+    "allDone": "All done",
+    "openItemsSingular": "1 open item",
+    "openItemsPlural": "{count} open items",
+    "@openItemsPlural": {
+        "placeholders": { "count": { "type": "int" } }
+    },
+    "errorUpdating": "Error updating: {error}",
+    "@errorUpdating": {
+        "placeholders": { "error": { "type": "String" } }
+    },
+    "itemAddedSuccess": "\"{name}\" was added",
+    "@itemAddedSuccess": {
+        "placeholders": { "name": { "type": "String" } }
+    },
+    "errorAdding": "Error adding: {error}",
+    "@errorAdding": {
+        "placeholders": { "error": { "type": "String" } }
+    },
+    "itemDeletedSuccess": "\"{name}\" was deleted",
+    "@itemDeletedSuccess": {
+        "placeholders": { "name": { "type": "String" } }
+    },
+    "errorEditing": "Error editing: {error}",
+    "@errorEditing": {
+        "placeholders": { "error": { "type": "String" } }
+    },
+    "general": "General",
+    "listEmpty": "This list is empty",
+    "addFirstItemHint": "Add your first item.",
+    "itemDetailsPlaceholder": "Details will be displayed here.",
+    "offlineMode": "Offline mode",
+    "ok": "OK",
+    "appearance": "Appearance",
+    "lightMode": "Light Mode",
+    "useSystemSetting": "Use system setting",
+    "appLanguage": "App Language",
+    "german": "German",
+    "english": "English",
+    "notificationSettingsComingSoon": "Notification settings will be available soon.",
+    "serverUrl": "Server URL",
+    "refresh": "Refresh",
+    "sort": "Sort",
+    "share": "Share",
+    "showCompletedItems": "Show completed items",
+    "hideCategories": "Hide categories",
+    "uncheckAllItems": "Uncheck all items",
+    "deleteCompletedItems": "Delete completed items",
+    "breakfast": "Breakfast",
+    "lunch": "Lunch",
+    "dinner": "Dinner",
+    "snack": "Snack",
+    "searchOrEnterRecipeName": "Search recipe or enter new name",
+    "newRecipeNameHint": "Name of the new recipe...",
+    "continueToDetails": "Continue to details",
+    "name": "Name",
+    "descriptionOptional": "Description (optional)",
+    "ingredientsPerLine": "Ingredients (one per line)",
+    "servings": "Servings",
+    "prepTimeMinutes": "Prep time (min)",
+    "back": "Back",
+    "done": "Done",
+    "pleaseEnterName": "Please enter a name",
+    "newShoppingListNameHint": "Name of the new shopping list...",
+    "foodCreatedSuccess": "\"{name}\" was created",
+    "@foodCreatedSuccess": {
+        "placeholders": { "name": { "type": "String" } }
+    },
+    "errorCreatingFood": "Could not create food: {error}",
+    "@errorCreatingFood": {
+        "placeholders": { "error": { "type": "String" } }
+    },
+    "deleteFood": "Delete food?",
+    "confirmDeleteFood": "Do you really want to delete \"{name}\"?",
+    "@confirmDeleteFood": {
+        "placeholders": { "name": { "type": "String" } }
+    },
+    "foodStillInUse": "\"{name}\" is still used in a shopping list or recipe and cannot be deleted.",
+    "@foodStillInUse": {
+        "placeholders": { "name": { "type": "String" } }
+    },
+    "deleteFailed": "Deletion failed: {error}",
+    "@deleteFailed": {
+        "placeholders": { "error": { "type": "String" } }
+    },
+    "pleaseEnterValidQuantity": "Please enter a valid quantity",
+    "pleaseSelectShoppingList": "Please select a shopping list",
+    "pleaseSelectOrEnterFood": "Please select or enter a food",
+    "addNewItem": "Add new item",
+    "pleaseSelectList": "Please select a list",
+    "advanced": "Advanced",
+    "unit": "Unit",
+    "category": "Category",
+    "food": "Food",
+    "addNewFood": "Add new food",
+    "quantity": "Quantity",
+    "notesOptional": "Notes (optional)",
+    "couldNotLoadFormData": "Could not load form data.",
+    "createShoppingList": "Create shopping list",
+    "searchRecipes": "Search for recipes...",
+    "untitledMeal": "Untitled Meal",
+    "addMealToPlanner": "Add meal",
+    "editNotImplemented": "Edit functionality is not implemented yet.",
+    "addNotImplemented": "Add functionality is not implemented yet.",
+    "searchArticle": "Search article...",
+    "lastModified": "Last modified",
+    "doneItems": "{count} done",
+    "@doneItems": {
+        "placeholders": { "count": { "type": "int" } }
+    },
+    "openItems": "{count} open",
+    "@openItems": {
+        "placeholders": { "count": { "type": "int" } }
+    },
+    "renameList": "Rename list",
+    "enterNewName": "Enter new name",
+    "searchRecipesHint": "Search for recipes...",
+    "noRecipesFoundSearch": "No Recipes Found",
+    "tryDifferentSearch": "Try searching for something else."
 }
