@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:mealique/data/remote/dio_client.dart';
+import 'package:mealique/models/food_model.dart';
 import 'package:mealique/models/recipes_model.dart';
+import 'package:mealique/models/shopping_item_model.dart';
 import '../local/token_storage.dart';
 
 class RecipesApi {
@@ -56,5 +58,42 @@ class RecipesApi {
   Future<Recipe> getRecipe(String slug) async {
     final response = await _dio.get('api/recipes/$slug');
     return Recipe.fromJson(response.data);
+  }
+
+  Future<FoodResponse> getFoods({int page = 1, int perPage = 10}) async {
+    final response = await _dio.get(
+      'api/foods',
+      queryParameters: {'page': page, 'per_page': perPage},
+    );
+    return FoodResponse.fromJson(response.data);
+  }
+
+  Future<Food> createFood(Food food) async {
+    final response = await _dio.post(
+      'api/foods',
+      data: food.toJson(),
+    );
+    return Food.fromJson(response.data);
+  }
+
+  Future<void> deleteFood(String foodId) async {
+    await _dio.delete('api/foods/$foodId');
+  }
+
+  Future<List<ShoppingItemUnit>> getUnits() async {
+    try {
+      final response = await _dio.get('api/units');
+      // Some endpoints return list directly, others paginate.
+      // Assuming list based on typical Mealie endpoints for simple resources like units.
+      // If paginated, it would have 'items' key.
+      if (response.data is List) {
+        return (response.data as List).map((e) => ShoppingItemUnit.fromJson(e)).toList();
+      } else if (response.data['items'] is List) {
+        return (response.data['items'] as List).map((e) => ShoppingItemUnit.fromJson(e)).toList();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
   }
 }

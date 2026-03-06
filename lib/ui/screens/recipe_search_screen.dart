@@ -6,6 +6,7 @@ import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/data/sync/recipe_repository.dart';
 import 'package:mealique/models/recipes_model.dart';
 import 'package:mealique/ui/screens/recipe_detail_screen.dart';
+import '../../l10n/app_localizations.dart';
 
 class RecipeSearchScreen extends StatefulWidget {
   final String initialQuery;
@@ -59,12 +60,13 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
   }
 
   Widget _buildErrorWidget(Object error, VoidCallback onRetry) {
+    final l10n = AppLocalizations.of(context)!;
     String errorMessage;
     if (error is DioException && error.error is ApiException) {
       final apiError = error.error as ApiException;
       errorMessage = apiError.message;
     } else {
-      errorMessage = 'An unexpected error occurred.'; // TODO: l10n
+      errorMessage = l10n.unexpectedError;
     }
 
     return Center(
@@ -77,7 +79,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: onRetry,
-            child: const Text('Try Again'), // TODO: l10n
+            child: Text(l10n.tryAgain),
           ),
         ],
       ),
@@ -85,6 +87,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
   }
 
   Widget _buildEmptyState() {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -92,12 +95,12 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
           Icon(Icons.search_off_rounded, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 24),
           Text(
-            'No Recipes Found', // TODO: l10n
+            l10n.noRecipesFoundSearch,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
           Text(
-            'Try searching for something else.', // TODO: l10n
+            l10n.tryDifferentSearch,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
             textAlign: TextAlign.center,
           ),
@@ -108,6 +111,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
 
   Widget _buildRecipeListItem(Recipe recipe) {
     const accentColor = Color(0xFFE58325);
+    final l10n = AppLocalizations.of(context)!;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -129,7 +133,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
               backgroundColor: accentColor,
               foregroundColor: Colors.white,
               icon: Icons.edit,
-              label: 'Bearbeiten', // TODO: l10n
+              label: l10n.edit,
             ),
             SlidableAction(
               onPressed: (context) {
@@ -138,7 +142,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
               backgroundColor: Colors.blue,
               foregroundColor: Colors.white,
               icon: Icons.favorite,
-              label: 'Favorit', // TODO: l10n
+              label: l10n.favorite,
             ),
           ],
         ),
@@ -199,7 +203,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
               autofocus: true,
               style: const TextStyle(color: accentColor),
               decoration: InputDecoration(
-                hintText: 'Search for recipes...', // TODO: l10n
+                hintText: AppLocalizations.of(context)!.searchRecipesHint,
                 hintStyle: TextStyle(color: accentColor.withOpacity(0.7)),
                 prefixIcon: const Icon(Icons.search, color: accentColor),
                 suffixIcon: IconButton(
