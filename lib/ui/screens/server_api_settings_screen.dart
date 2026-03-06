@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mealique/data/local/token_storage.dart';
 import 'package:mealique/ui/screens/login_screen.dart';
+import '../../l10n/app_localizations.dart';
 
 class ServerApiSettingsScreen extends StatefulWidget {
   const ServerApiSettingsScreen({super.key});
@@ -40,24 +41,25 @@ class _ServerApiSettingsScreenState extends State<ServerApiSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Server & API'), // TODO: l10n
+        title: Text(l10n.serverAndApi),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
           ListTile(
-            title: const Text('Server URL'),
-            subtitle: Text(_serverUrl ?? 'Lade...'),
+            title: Text(l10n.serverUrl),
+            subtitle: Text(_serverUrl ?? l10n.loading),
             leading: const Icon(Icons.dns),
           ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text(
-              'Logout',
-              style: TextStyle(color: Colors.red),
+            title: Text(
+              l10n.logout,
+              style: const TextStyle(color: Colors.red),
             ),
             onTap: _logout,
           ),

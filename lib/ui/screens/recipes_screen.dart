@@ -44,20 +44,20 @@ class _RecipesScreenState extends State<RecipesScreen> {
   }
 
   Widget _buildErrorWidget(Object error, VoidCallback onRetry) {
-    //final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context)!;
     String errorMessage;
 
     if (error is DioException && error.error is ApiException) {
       final apiError = error.error as ApiException;
       if (apiError is NetworkException) {
-        errorMessage = 'Bitte prüfe deine Internetverbindung.'; // TODO: l10n
+        errorMessage = l10n.checkInternetConnection;
       } else if (apiError is ServerException) {
-        errorMessage = 'Ein Serverfehler ist aufgetreten. Bitte versuche es später erneut.'; // TODO: l10n
+        errorMessage = l10n.serverError;
       } else {
         errorMessage = apiError.message;
       }
     } else {
-      errorMessage = 'Ein unerwarteter Fehler ist aufgetreten.'; // TODO: l10n
+      errorMessage = l10n.unexpectedError;
     }
 
     return Center(
@@ -72,7 +72,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: onRetry,
-              child: const Text('Erneut versuchen'), // TODO: l10n
+              child: Text(l10n.tryAgain),
             ),
           ],
         ),
@@ -124,7 +124,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
                     child: IconButton(
                       icon: const Icon(Icons.tune),
                       onPressed: () {},
-                      tooltip: 'Filter',
+                      tooltip: l10n.filter,
                     ),
                   ),
                 ],
@@ -143,7 +143,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
                       });
                     });
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('No recipes found.'));
+                    return Center(child: Text(l10n.noRecipesFound));
                   }
 
                   final recipes = snapshot.data!;

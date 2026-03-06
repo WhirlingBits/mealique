@@ -60,6 +60,18 @@ class Recipe {
     required this.instructions,
   });
 
+  /// Parses recipeYield which can be a String ("4 servings"), int, or null.
+  static int _parseServings(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) {
+      final match = RegExp(r'(\d+)').firstMatch(value);
+      if (match != null) return int.parse(match.group(1)!);
+    }
+    return 0;
+  }
+
   factory Recipe.fromJson(Map<String, dynamic> json) {
     return Recipe(
       id: json['id']?.toString() ?? '',
@@ -70,7 +82,7 @@ class Recipe {
       totalTime: json['totalTime'],
       prepTime: json['prepTime'],
       performTime: json['performTime'],
-      servings: json['recipeYield'] ?? 0,
+      servings: _parseServings(json['recipeYield']),
       ingredients: (json['recipeIngredient'] as List? ?? [])
           .map((i) => RecipeIngredient.fromJson(i))
           .toList(),
