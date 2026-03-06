@@ -1,10 +1,10 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:mealique/data/remote/dio_client.dart';
 import '../../models/add_recipe_to_list_payload.dart';
 import '../../models/cookbook_model.dart';
 import '../../models/create_shopping_item_response_model.dart';
-import '../../models/delete_response_model.dart';
 import '../../models/email_invitation_response_model.dart';
 import '../../models/event_notification_model.dart';
 import '../../models/household_invitation_model.dart';
@@ -310,12 +310,22 @@ class HouseholdApi {
     return ShoppingItemResponse.fromJson(response.data);
   }
 
-  Future<CreateShoppingItemResponse> createShoppingItem(ShoppingItem shoppingItem) async {
+  Future<ShoppingItem> createShoppingItem(ShoppingItem shoppingItem) async {
+    final jsonData = shoppingItem.toJson();
+    debugPrint('Sending to API: $jsonData');
     final response = await _dio.post(
       'api/households/shopping/items',
-      data: shoppingItem.toJson(),
+      data: jsonData,
     );
-    return CreateShoppingItemResponse.fromJson(response.data);
+    debugPrint('API Response status: ${response.statusCode}, data: ${response.data}');
+    final parsed = CreateShoppingItemResponse.fromJson(response.data);
+    if (parsed.createdItems.isNotEmpty) {
+      return parsed.createdItems.first;
+    }
+    if (parsed.updatedItems.isNotEmpty) {
+      return parsed.updatedItems.first;
+    }
+    return ShoppingItem.fromJson(jsonData); // fallback
   }
 
   Future<CreateShoppingItemResponse> updateShoppingItems(List<ShoppingItem> shoppingItems) async {
@@ -326,38 +336,30 @@ class HouseholdApi {
     return CreateShoppingItemResponse.fromJson(response.data);
   }
 
-  Future<DeleteResponse> deleteShoppingItems(List<String> itemIds) async {
+  Future<CreateShoppingItemResponse> deleteShoppingItems(List<String> itemIds) async {
     final response = await _dio.delete(
       'api/households/shopping/items',
       data: itemIds,
     );
-    return DeleteResponse.fromJson(response.data);
-  }
-
-  Future<CreateShoppingItemResponse> createShoppingItemsBulk(List<ShoppingItem> shoppingItems) async {
-    final response = await _dio.post(
-      'api/households/shopping/items/create-bulk',
-      data: shoppingItems.map((item) => item.toJson()).toList(),
-    );
     return CreateShoppingItemResponse.fromJson(response.data);
   }
+
 
   Future<ShoppingItem> getShoppingItem(String itemId) async {
     final response = await _dio.get('api/households/shopping/items/$itemId');
     return ShoppingItem.fromJson(response.data);
   }
 
-  Future<CreateShoppingItemResponse> updateShoppingItem(String itemId, ShoppingItem shoppingItem) async {
+  Future<ShoppingItem> updateShoppingItem(String itemId, ShoppingItem shoppingItem) async {
     final response = await _dio.put(
       'api/households/shopping/items/$itemId',
       data: shoppingItem.toJson(),
     );
-    return CreateShoppingItemResponse.fromJson(response.data);
+    return ShoppingItem.fromJson(response.data);
   }
 
-  Future<DeleteResponse> deleteShoppingItem(String itemId) async {
-    final response = await _dio.delete('api/households/shopping/items/$itemId');
-    return DeleteResponse.fromJson(response.data);
+  Future<void> deleteShoppingItem(String itemId) async {
+    await _dio.delete('api/households/shopping/items/$itemId');
   }
 
   Future<HouseholdWebhookResponse> getHouseholdWebhooks(int page, int perPage) async {
@@ -396,9 +398,8 @@ class HouseholdApi {
     return HouseholdWebhook.fromJson(response.data);
   }
 
-  Future<HouseholdWebhook> deleteHouseholdWebhook(String itemId) async {
-    final response = await _dio.delete('api/households/webhooks/$itemId');
-    return HouseholdWebhook.fromJson(response.data);
+  Future<void> deleteHouseholdWebhook(String itemId) async {
+    await _dio.delete('api/households/webhooks/$itemId');
   }
 
   Future<void> rerunWebhooks() async {
@@ -446,9 +447,8 @@ class HouseholdApi {
     return MealplanRule.fromJson(response.data);
   }
 
-  Future<MealplanRule> deleteMealplanRule(String itemId) async {
-    final response = await _dio.delete('api/households/mealplans/rules/$itemId');
-    return MealplanRule.fromJson(response.data);
+  Future<void> deleteMealplanRule(String itemId) async {
+    await _dio.delete('api/households/mealplans/rules/$itemId');
   }
 
   Future<MealplanResponse> getMealplans(
@@ -499,11 +499,15 @@ class HouseholdApi {
     return MealplanEntry.fromJson(response.data);
   }
 
-  Future<MealplanEntry> updateMealplan(String itemId, MealplanEntry entry) async {
+  Future<MealplanEntry> updateMealplan(int itemId, MealplanEntry entry) async {
     final response = await _dio.put(
       'api/households/mealplans/$itemId',
       data: entry.toJson(),
     );
     return MealplanEntry.fromJson(response.data);
+  }
+
+  Future<void> deleteMealplan(int itemId) async {
+    await _dio.delete('api/households/mealplans/$itemId');
   }
 }

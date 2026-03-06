@@ -131,8 +131,8 @@ class _PlannerScreenState extends State<PlannerScreen> {
         child: AddMealForm(
           onAddMeal: (mealType, recipe) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                  content: Text('Add functionality is not implemented yet.')),
+              SnackBar(
+                  content: Text(AppLocalizations.of(context)!.featureNotImplemented)),
             );
           },
         ),
@@ -142,17 +142,18 @@ class _PlannerScreenState extends State<PlannerScreen> {
 
   void _showEditMealDialog(MealplanEntry meal) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edit functionality is not implemented yet.')),
+      SnackBar(content: Text(AppLocalizations.of(context)!.featureNotImplemented)),
     );
   }
 
   Widget _buildErrorWidget(Object error, VoidCallback onRetry) {
+    final l10n = AppLocalizations.of(context)!;
     String errorMessage;
     if (error is DioException && error.error is ApiException) {
       final apiError = error.error as ApiException;
       errorMessage = apiError.message;
     } else {
-      errorMessage = 'An unexpected error occurred.';
+      errorMessage = l10n.unexpectedError;
     }
 
     return Center(
@@ -167,7 +168,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: onRetry,
-              child: const Text('Try Again'),
+              child: Text(l10n.tryAgain),
             ),
           ],
         ),
@@ -188,7 +189,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
 
         List<Widget> chips = [
           ChoiceChip(
-            label: const Text('All'),
+            label: Text(AppLocalizations.of(context)!.all),
             selected: _selectedEntryType == null,
             onSelected: (selected) {
               if (selected) {
@@ -335,21 +336,21 @@ class _PlannerScreenState extends State<PlannerScreen> {
                                         backgroundColor: accentColor,
                                         foregroundColor: Colors.white,
                                         icon: Icons.edit,
-                                        label: 'Edit',
+                                        label: l10n.edit,
                                       ),
                                       SlidableAction(
                                         onPressed: (context) {},
                                         backgroundColor: Colors.redAccent,
                                         foregroundColor: Colors.white,
                                         icon: Icons.delete,
-                                        label: 'Delete',
+                                        label: l10n.delete,
                                       ),
                                     ],
                                   ),
                                   child: Card(
                                     margin: const EdgeInsets.only(bottom: 12),
                                     child: ListTile(
-                                      title: Text(meal.recipe?.name ?? meal.title ?? 'Untitled Meal'),
+                                      title: Text(meal.recipe?.name ?? meal.title ?? l10n.untitledMeal),
                                       leading: Text(
                                           toBeginningOfSentenceCase(meal.entryType.name) ?? '',
                                           style: const TextStyle(fontWeight: FontWeight.bold)),

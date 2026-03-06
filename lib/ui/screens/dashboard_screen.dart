@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
+import 'package:mealique/data/sync/household_repository.dart';
 import 'package:mealique/data/sync/mealplan_repository.dart';
 import 'package:mealique/data/sync/recipe_repository.dart';
 import 'package:mealique/data/sync/user_repository.dart';
@@ -26,6 +27,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final MealplanRepository _mealplanRepository = MealplanRepository();
   final RecipeRepository _recipeRepository = RecipeRepository();
   final UserRepository _userRepository = UserRepository();
+  final HouseholdRepository _householdRepository = HouseholdRepository();
 
   late Future<List<MealplanEntry>> _todaysMealsFuture;
   late Future<List<Recipe>> _popularRecipesFuture;
@@ -73,20 +75,65 @@ class _DashboardScreenState extends State<DashboardScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: AddShoppingListItemForm(
-          onAddItem: (item) {
-            // TODO: Implement shopping item creation logic
-            print('New item to add:');
-            print('  List ID: ${item.listId}');
-            print('  Food ID: ${item.foodId}');
-            print('  Quantity: ${item.quantity}');
-            print('  Unit ID: ${item.unitId}');
-            print('  Category ID: ${item.categoryId}');
-            Navigator.pop(ctx);
-          },
-        ),
+      builder: (ctx) => AddShoppingListItemForm(
+        onAddItem: (item) async {
+          final l10n = AppLocalizations.of(this.context)!;
+          try {
+            await _householdRepository.createShoppingItem(
+              listId: item.listId,
+              foodId: item.foodId,
+              foodName: item.foodName,
+              quantity: item.quantity.toDouble(),
+              note: item.notes,
+              unitId: item.unitId,
+              categoryId: item.categoryId,
+            );
+            if (mounted) {
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(this.context)
+                ..clearSnackBars()
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(l10n.itemAddedSuccess(item.foodName)),
+                    backgroundColor: Colors.green,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                );
+            }
+          } on DioException catch (e) {
+            final responseData = e.response?.data;
+            debugPrint('API Error creating shopping item: ${e.response?.statusCode}, $responseData');
+            if (mounted) {
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(this.context)
+                ..clearSnackBars()
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(l10n.errorAdding('${responseData?['detail'] ?? e.message}')),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                );
+            }
+          } catch (e) {
+            debugPrint('Error creating shopping item: $e');
+            if (mounted) {
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(this.context)
+                ..clearSnackBars()
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(l10n.errorAdding(e.toString())),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                );
+            }
+          }
+        },
       ),
     );
   }
@@ -99,10 +146,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: AddShoppingListForm(
-          onAddList: (listName) {
-            // TODO: Implement shopping list creation logic
-            print('Shopping list to create: $listName');
-            Navigator.pop(ctx);
+          onAddList: (listName) async {
+            final l10n = AppLocalizations.of(this.context)!;
+            try {
+              await _householdRepository.createShoppingList(listName);
+              if (mounted) {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(this.context)
+                  ..clearSnackBars()
+                  ..showSnackBar(
+                    SnackBar(
+                      content: Text(l10n.listCreatedSuccess(listName)),
+                      backgroundColor: Colors.green,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  );
+              }
+            } catch (e) {
+              debugPrint('Error creating shopping list: $e');
+              if (mounted) {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(this.context)
+                  ..clearSnackBars()
+                  ..showSnackBar(
+                    SnackBar(
+                      content: Text(l10n.errorCreating(e.toString())),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  );
+              }
+            }
           },
         ),
       ),
@@ -123,20 +199,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildErrorWidget(Object error, VoidCallback onRetry) {
-    //final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context)!;
     String errorMessage;
 
     if (error is DioException && error.error is ApiException) {
       final apiError = error.error as ApiException;
       if (apiError is NetworkException) {
-        errorMessage = 'Bitte prüfe deine Internetverbindung.'; // TODO: l10n
+        errorMessage = l10n.checkInternetConnection;
       } else if (apiError is ServerException) {
-        errorMessage = 'Ein Serverfehler ist aufgetreten. Bitte versuche es später erneut.'; // TODO: l10n
+        errorMessage = l10n.serverError;
       } else {
         errorMessage = apiError.message;
       }
     } else {
-      errorMessage = 'Ein unerwarteter Fehler ist aufgetreten.'; // TODO: l10n
+      errorMessage = l10n.unexpectedError;
     }
 
     return Center(
@@ -152,7 +228,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: onRetry,
-                child: const Text('Erneut versuchen'), // TODO: l10n
+                child: Text(l10n.tryAgain),
               ),
             ],
           ),
@@ -302,8 +378,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         });
                       });
                     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Center(
-                          child: Text('No popular recipes found.'));
+                      return Center(
+                          child: Text(l10n.noPopularRecipesFound));
                     }
 
                     final recipes = snapshot.data!;

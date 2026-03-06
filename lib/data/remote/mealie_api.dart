@@ -46,7 +46,7 @@ class MealieApi {
 
   Future<Map<String, dynamic>?> getSelf() async {
     try {
-      final response = await dio.get('/api/users/me');
+      final response = await dio.get('/api/users/self');
       return response.data as Map<String, dynamic>;
     } catch (e) {
       // Handle DioError or other exceptions

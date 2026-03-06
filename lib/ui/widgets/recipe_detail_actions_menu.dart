@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mealique/models/recipes_model.dart';
+import '../../l10n/app_localizations.dart';
 
 class RecipeDetailActionsMenu extends StatelessWidget {
   final Recipe recipe;
@@ -8,23 +9,24 @@ class RecipeDetailActionsMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return PopupMenuButton<String>(
       onSelected: (value) {
         // TODO: Implement menu actions for edit, delete, etc.
         print('Selected: $value for recipe ${recipe.id}');
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: 'edit',
-          child: Text('Bearbeiten'), // TODO: l10n
+          child: Text(l10n.edit),
         ),
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: 'delete',
-          child: Text('Löschen'), // TODO: l10n
+          child: Text(l10n.delete),
         ),
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: 'share',
-          child: Text('Teilen'), // TODO: l10n
+          child: Text(l10n.share),
         ),
       ],
     );

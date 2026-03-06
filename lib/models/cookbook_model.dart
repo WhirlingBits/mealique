@@ -34,8 +34,8 @@ class Cookbook {
   final String queryFilterString;
   final String groupId;
   final String householdId;
-  final QueryFilter queryFilter;
-  final Household household;
+  final QueryFilter? queryFilter;
+  final Household? household;
 
   Cookbook({
     required this.id,
@@ -47,8 +47,8 @@ class Cookbook {
     required this.queryFilterString,
     required this.groupId,
     required this.householdId,
-    required this.queryFilter,
-    required this.household,
+    this.queryFilter,
+    this.household,
   });
 
   factory Cookbook.fromJson(Map<String, dynamic> json) {
@@ -56,14 +56,14 @@ class Cookbook {
       id: json['id'],
       name: json['name'],
       description: json['description'],
-      slug: json['slug'],
-      position: json['position'],
-      public: json['public'],
+      slug: json['slug'] ?? '',
+      position: json['position'] ?? 0,
+      public: json['public'] ?? false,
       queryFilterString: json['queryFilterString'] ?? '',
-      groupId: json['groupId'],
-      householdId: json['householdId'],
-      queryFilter: QueryFilter.fromJson(json['queryFilter']),
-      household: Household.fromJson(json['household']),
+      groupId: json['groupId'] ?? '',
+      householdId: json['householdId'] ?? '',
+      queryFilter: json['queryFilter'] != null ? QueryFilter.fromJson(json['queryFilter']) : null,
+      household: json['household'] != null ? Household.fromJson(json['household']) : null,
     );
   }
 }

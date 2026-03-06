@@ -14,7 +14,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Darstellung & Sprache'), // TODO: l10n
+        title: Text(l10n.appearanceAndLanguage),
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -23,7 +23,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
-              'DARSTELLUNG', // TODO: l10n
+              l10n.appearance.toUpperCase(),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,
@@ -31,19 +31,19 @@ class AppearanceSettingsScreen extends StatelessWidget {
             ),
           ),
           RadioListTile<ThemeMode>(
-            title: const Text('Heller Modus'), // TODO: l10n
+            title: Text(l10n.lightMode),
             value: ThemeMode.light,
             groupValue: settings.themeMode,
             onChanged: (mode) => settings.setThemeMode(mode!),
           ),
           RadioListTile<ThemeMode>(
-            title: const Text('Dunkler Modus'), // TODO: l10n
+            title: Text(l10n.darkMode),
             value: ThemeMode.dark,
             groupValue: settings.themeMode,
             onChanged: (mode) => settings.setThemeMode(mode!),
           ),
           RadioListTile<ThemeMode>(
-            title: const Text('Systemeinstellung verwenden'), // TODO: l10n
+            title: Text(l10n.useSystemSetting),
             value: ThemeMode.system,
             groupValue: settings.themeMode,
             onChanged: (mode) => settings.setThemeMode(mode!),
@@ -54,7 +54,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
-              'SPRACHE', // TODO: l10n
+              l10n.language.toUpperCase(),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,
@@ -62,12 +62,12 @@ class AppearanceSettingsScreen extends StatelessWidget {
             ),
           ),
           ListTile(
-            title: const Text('App-Sprache'), // TODO: l10n
+            title: Text(l10n.appLanguage),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  (settings.locale?.languageCode == 'de') ? 'Deutsch' : 'English',
+                  (settings.locale?.languageCode == 'de') ? l10n.german : l10n.english,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                 ),
                 const SizedBox(width: 8),

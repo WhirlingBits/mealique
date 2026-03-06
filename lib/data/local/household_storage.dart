@@ -230,8 +230,8 @@ extension on Cookbook {
       queryFilterString: Value(queryFilterString),
       groupId: Value(groupId),
       householdId: Value(householdId),
-      queryFilter: Value(queryFilter),
-      household: Value(household),
+      queryFilter: Value(queryFilter ?? QueryFilter(parts: [])),
+      household: Value(household ?? Household(id: '', name: '')),
     );
   }
 }
@@ -275,12 +275,13 @@ extension on ShoppingListLabelSetting {
     'labelId': labelId,
     'position': position,
     'id': id,
-    'label': {
-      'name': label.name,
-      'color': label.color,
-      'groupId': label.groupId,
-      'id': label.id,
-    },
+    if (label != null)
+      'label': {
+        'name': label!.name,
+        'color': label!.color,
+        'groupId': label!.groupId,
+        'id': label!.id,
+      },
   };
 }
 

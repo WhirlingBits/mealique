@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 
 class PlannerActionsMenu extends StatelessWidget {
   final VoidCallback onAddMeal;
@@ -12,6 +13,7 @@ class PlannerActionsMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return PopupMenuButton<String>(
       onSelected: (value) {
         switch (value) {
@@ -24,18 +26,18 @@ class PlannerActionsMenu extends StatelessWidget {
         }
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: 'add_meal',
           child: ListTile(
-            leading: Icon(Icons.add),
-            title: Text('Mahlzeit hinzufügen'), // TODO: l10n
+            leading: const Icon(Icons.add),
+            title: Text(l10n.addMeal),
           ),
         ),
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: 'refresh',
           child: ListTile(
-            leading: Icon(Icons.refresh),
-            title: Text('Aktualisieren'), // TODO: l10n
+            leading: const Icon(Icons.refresh),
+            title: Text(l10n.refresh),
           ),
         ),
       ],

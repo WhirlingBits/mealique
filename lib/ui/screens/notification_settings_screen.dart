@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 
 class NotificationSettingsScreen extends StatelessWidget {
   const NotificationSettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Benachrichtigungen'), // TODO: l10n
+        title: Text(l10n.notifications),
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
-        children: const [
+        children: [
           // TODO: Implement notification settings
           Center(
             child: Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text('Hier werden bald die Benachrichtigungseinstellungen zu finden sein.'),
+              padding: const EdgeInsets.all(16.0),
+              child: Text(l10n.notificationSettingsComingSoon),
             ),
           )
         ],

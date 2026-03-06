@@ -4,6 +4,7 @@ import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/data/sync/recipe_repository.dart';
 import 'package:mealique/models/recipes_model.dart';
 import 'package:mealique/ui/widgets/recipe_detail_actions_menu.dart';
+import '../../l10n/app_localizations.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final String recipeSlug;
@@ -25,12 +26,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   }
 
   Widget _buildErrorWidget(Object error, VoidCallback onRetry) {
+    final l10n = AppLocalizations.of(context)!;
     String errorMessage;
     if (error is DioException && error.error is ApiException) {
       final apiError = error.error as ApiException;
       errorMessage = apiError.message;
     } else {
-      errorMessage = 'Ein unerwarteter Fehler ist aufgetreten.';
+      errorMessage = l10n.unexpectedError;
     }
 
     return Center(
@@ -41,7 +43,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           const SizedBox(height: 16),
           Text(errorMessage, textAlign: TextAlign.center),
           const SizedBox(height: 16),
-          ElevatedButton(onPressed: onRetry, child: const Text('Erneut versuchen')),
+          ElevatedButton(onPressed: onRetry, child: Text(l10n.tryAgain)),
         ],
       ),
     );
@@ -83,7 +85,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     });
                   });
                 } else if (!snapshot.hasData) {
-                  return const Center(child: Text('Recipe not found.'));
+                  return Center(child: Text(AppLocalizations.of(context)!.recipeNotFound));
                 }
 
                 final recipe = snapshot.data!;
@@ -146,7 +148,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                               children: [
                                 _buildInfoChip(Icons.access_time, recipe.totalTime ?? '- Min'),
                                 Container(width: 1, height: 24, color: Colors.grey[300]),
-                                _buildInfoChip(Icons.person_outline, '${recipe.servings} Portionen'),
+                                _buildInfoChip(Icons.person_outline, AppLocalizations.of(context)!.servingsCount(recipe.servings)),
                               ],
                             ),
                             const SizedBox(height: 24),
@@ -155,7 +157,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                               child: ElevatedButton.icon(
                                 onPressed: () {},
                                 icon: const Icon(Icons.add),
-                                label: const Text('Zur Einkaufsliste'),
+                                label: Text(AppLocalizations.of(context)!.addToShoppingList),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: accentColor,
                                   foregroundColor: Colors.white,
@@ -167,12 +169,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                               ),
                             ),
                             const SizedBox(height: 32),
-                            _buildSectionTitle('ZUTATEN', accentColor),
+                            _buildSectionTitle(AppLocalizations.of(context)!.ingredients.toUpperCase(), accentColor),
                             const SizedBox(height: 8),
                             for (final ingredient in recipe.ingredients)
                               _buildIngredientItem(ingredient.note, isChecked: false, accentColor: accentColor),
                             const SizedBox(height: 32),
-                            _buildSectionTitle('ZUBEREITUNG', accentColor),
+                            _buildSectionTitle(AppLocalizations.of(context)!.instructions.toUpperCase(), accentColor),
                             const SizedBox(height: 16),
                             for (int i = 0; i < recipe.instructions.length; i++)
                               _buildInstructionStep(i + 1, recipe.instructions[i].text, accentColor),

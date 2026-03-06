@@ -69,13 +69,20 @@ class MealplanEntry {
   });
 
   factory MealplanEntry.fromJson(Map<String, dynamic> json) {
+    // id can be int or String depending on context
+    int parsedId = 0;
+    if (json['id'] is int) {
+      parsedId = json['id'];
+    } else if (json['id'] is String) {
+      parsedId = int.tryParse(json['id']) ?? 0;
+    }
     return MealplanEntry(
       date: json['date'],
       entryType: PlanEntryType.fromString(json['entryType']),
       title: json['title'],
       text: json['text'],
       recipeId: json['recipeId'],
-      id: json['id'],
+      id: parsedId,
       groupId: json['groupId'],
       userId: json['userId'],
       recipe: json['recipe'] != null ? MealplanRecipe.fromJson(json['recipe']) : null,
@@ -83,16 +90,18 @@ class MealplanEntry {
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    final data = <String, dynamic>{
       'date': date,
       'entryType': entryType.name,
       'title': title,
       'text': text,
       'recipeId': recipeId,
-      'id': id,
-      'groupId': groupId,
-      'userId': userId,
     };
+    // Only include id if it's an existing entry (id > 0)
+    if (id > 0) {
+      data['id'] = id;
+    }
+    return data;
   }
 }
 

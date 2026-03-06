@@ -23,6 +23,33 @@ class ErrorInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     ApiException apiException;
+
+    // Helper to extract detail message from response data
+    String? _extractDetail(dynamic data) {
+      if (data is Map<String, dynamic>) {
+        final detail = data['detail'];
+        if (detail is String) return detail;
+        // FastAPI/Pydantic validation errors return detail as a List
+        if (detail is List && detail.isNotEmpty) {
+          return detail.map((e) {
+            if (e is Map<String, dynamic>) {
+              final loc = (e['loc'] as List?)?.join(' > ') ?? '';
+              final msg = e['msg'] ?? '';
+              return '$loc: $msg';
+            }
+            return e.toString();
+          }).join('; ');
+        }
+        if (detail != null) return detail.toString();
+        // Mealie error format: {message: "...", error: true, exception: "..."}
+        if (data['message'] is String) return data.toString();
+      }
+      if (data is String && data.isNotEmpty) {
+        return data;
+      }
+      return null;
+    }
+
     switch (err.type) {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
@@ -33,24 +60,30 @@ class ErrorInterceptor extends Interceptor {
         apiException = NetworkException('Please check your internet connection.');
         break;
       case DioExceptionType.badResponse:
+        final detail = _extractDetail(err.response?.data);
         switch (err.response?.statusCode) {
           case 401:
             apiException = UnauthorizedException();
             break;
           case 404:
-            apiException = NotFoundException(message: err.response?.data?['detail'] ?? 'Not found');
+            apiException = NotFoundException(message: detail ?? 'Not found');
+            break;
+          case 422:
+            apiException = BadRequestException(
+                statusCode: 422,
+                message: detail ?? err.response?.data?.toString() ?? 'Validation error');
             break;
           case 500:
           case 502:
           case 503:
             apiException = ServerException(
                 statusCode: err.response?.statusCode,
-                message: err.response?.data?['detail'] ?? 'Server error');
+                message: detail ?? 'Server error');
             break;
           default:
             apiException = BadRequestException(
                 statusCode: err.response?.statusCode,
-                message: err.response?.data?['detail'] ?? 'Bad request');
+                message: detail ?? 'Bad request');
             break;
         }
         break;
@@ -60,6 +93,7 @@ class ErrorInterceptor extends Interceptor {
     }
 
     // Replace the original DioException with one that contains the custom exception
+    // but preserve the original response for debugging
     final newErr = err.copyWith(error: apiException);
     return handler.next(newErr);
   }

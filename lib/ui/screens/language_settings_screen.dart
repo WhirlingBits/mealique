@@ -10,16 +10,17 @@ class LanguageSettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final settings = Provider.of<SettingsProvider>(context);
     final currentLocale = settings.locale ?? Localizations.localeOf(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sprache auswählen'), // TODO: l10n
+        title: Text(l10n.selectLanguage),
       ),
       body: ListView(
         children: AppLocalizations.supportedLocales.map((locale) {
           final isSelected = currentLocale.languageCode == locale.languageCode;
           return ListTile(
-            title: Text(locale.languageCode == 'de' ? 'Deutsch' : 'English'),
+            title: Text(locale.languageCode == 'de' ? l10n.german : l10n.english),
             trailing: isSelected
                 ? Icon(Icons.check, color: Theme.of(context).colorScheme.primary)
                 : null,

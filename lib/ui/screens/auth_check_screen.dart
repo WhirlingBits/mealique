@@ -23,10 +23,14 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
   }
 
   Future<void> _checkAuthStatus() async {
-    await Future.delayed(const Duration(seconds: 1)); // For splash effect
+    // Read server URL and token in parallel for faster startup
+    final results = await Future.wait([
+      _tokenStorage.getServerUrl(),
+      _tokenStorage.getToken(),
+    ]);
 
-    final serverUrl = await _tokenStorage.getServerUrl();
-    final token = await _tokenStorage.getToken();
+    final serverUrl = results[0];
+    final token = results[1];
 
     // If no credentials, go to login
     if (serverUrl == null || token == null) {
