@@ -1,72 +1,74 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 
 class ShoppingListDetailActionsMenu extends StatelessWidget {
   const ShoppingListDetailActionsMenu({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return PopupMenuButton<String>(
       onSelected: (value) {
         // TODO: Implement menu actions
         print('Selected: $value');
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: 'refresh',
           child: ListTile(
-            leading: Icon(Icons.refresh),
-            title: Text('Aktualisieren'), // TODO: l10n
+            leading: const Icon(Icons.refresh),
+            title: Text(l10n.refresh),
           ),
         ),
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: 'edit_list',
           child: ListTile(
-            leading: Icon(Icons.edit),
-            title: Text('Liste bearbeiten'), // TODO: l10n
+            leading: const Icon(Icons.edit),
+            title: Text(l10n.editList),
           ),
         ),
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: 'toggle_completed',
           child: ListTile(
-            leading: Icon(Icons.check_box_outline_blank),
-            title: Text('Abgeschlossene Items anzeigen'), // TODO: l10n
+            leading: const Icon(Icons.check_box_outline_blank),
+            title: Text(l10n.showCompletedItems),
           ),
         ),
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: 'sort',
           child: ListTile(
-            leading: Icon(Icons.sort),
-            title: Text('Sortieren'), // TODO: l10n
+            leading: const Icon(Icons.sort),
+            title: Text(l10n.sort),
           ),
         ),
-         const PopupMenuItem<String>(
+         PopupMenuItem<String>(
           value: 'toggle_categories',
           child: ListTile(
-            leading: Icon(Icons.label_off),
-            title: Text('Kategorien ausblenden'), // TODO: l10n
+            leading: const Icon(Icons.label_off),
+            title: Text(l10n.hideCategories),
           ),
         ),
         const PopupMenuDivider(),
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: 'uncheck_all',
           child: ListTile(
-            leading: Icon(Icons.radio_button_unchecked),
-            title: Text('Markierung aller Elemente entfernen'), // TODO: l10n
+            leading: const Icon(Icons.radio_button_unchecked),
+            title: Text(l10n.uncheckAllItems),
           ),
         ),
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: 'delete_completed',
           child: ListTile(
-            leading: Icon(Icons.delete_sweep),
-            title: Text('Erledigte Elemente löschen'), // TODO: l10n
+            leading: const Icon(Icons.delete_sweep),
+            title: Text(l10n.deleteCompletedItems),
           ),
         ),
         const PopupMenuDivider(),
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: 'delete_list',
           child: ListTile(
-            leading: Icon(Icons.delete_forever, color: Colors.red),
-            title: Text('Liste löschen', style: TextStyle(color: Colors.red)), // TODO: l10n
+            leading: const Icon(Icons.delete_forever, color: Colors.red),
+            title: Text(l10n.deleteList, style: const TextStyle(color: Colors.red)),
           ),
         ),
       ],

@@ -43,42 +43,75 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
   }
 
   Future<void> _toggleItem(ShoppingItem item) async {
+    final l10n = AppLocalizations.of(context)!;
     try {
       final newItem = item.copyWith(checked: !item.checked);
       await _repository.updateItem(newItem);
       _loadItems();
     } catch (e) {
-      _showError('Fehler beim Aktualisieren: $e');
+      _showError(l10n.errorUpdating(e.toString()));
     }
   }
 
   Future<void> _addComplexItem(NewShoppingItem newItemData) async {
+    final l10n = AppLocalizations.of(context)!;
     try {
-      await _repository.addItem(
-          newItemData.listId, 'Item (ID: ${newItemData.foodId}, Menge: ${newItemData.quantity})');
+       await _repository.createShoppingItem(
+        listId: newItemData.listId,
+        foodId: newItemData.foodId,
+        foodName: newItemData.foodName,
+        quantity: newItemData.quantity.toDouble(),
+        note: newItemData.notes,
+        unitId: newItemData.unitId,
+        categoryId: newItemData.categoryId,
+      );
       _loadItems();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.itemAddedSuccess(newItemData.foodName)),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } on DioException catch (e) {
+      final responseData = e.response?.data;
+      final apiError = e.error;
+      debugPrint('API Error creating shopping item: statusCode=${e.response?.statusCode}, responseData=$responseData, error=$apiError, message=${e.message}');
+      _showError(l10n.errorAdding('${responseData?['detail'] ?? apiError ?? e.message}'));
     } catch (e) {
-      _showError('Fehler beim Hinzufügen: $e');
+      debugPrint('Error creating shopping item: $e');
+      _showError(l10n.errorAdding(e.toString()));
     }
   }
 
   Future<void> _deleteItem(ShoppingItem item) async {
+    final l10n = AppLocalizations.of(context)!;
     try {
       await _repository.deleteItem(item.id);
       _loadItems();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.itemDeletedSuccess(item.display)),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     } catch (e) {
-      _showError('Fehler beim Löschen: $e');
+      _showError(l10n.errorDeleting(e.toString()));
       _loadItems();
     }
   }
 
   Future<void> _editItem(ShoppingItem item, String newName) async {
+    final l10n = AppLocalizations.of(context)!;
     try {
       final newItem = item.copyWith(display: newName);
       await _repository.updateItem(newItem);
       _loadItems();
     } catch (e) {
-      _showError('Fehler beim Bearbeiten: $e');
+      _showError(l10n.errorEditing(e.toString()));
     }
   }
 
@@ -112,7 +145,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Item bearbeiten'),
+        title: Text(l10n.editItem),
         content: TextField(
           controller: controller,
           autofocus: true,
@@ -135,7 +168,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
                 Navigator.pop(context);
               }
             },
-            child: const Text('Speichern'),
+            child: Text(l10n.save),
           ),
         ],
       ),
@@ -144,9 +177,10 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
 
   Map<String, List<ShoppingItem>> _groupItemsByCategory(
       List<ShoppingItem> items) {
+    final l10n = AppLocalizations.of(context)!;
     final Map<String, List<ShoppingItem>> grouped = {};
     for (var item in items) {
-      final category = item.food?.label?.name ?? 'Allgemein';
+      final category = item.food?.label?.name ?? l10n.general;
       if (!grouped.containsKey(category)) {
         grouped[category] = [];
       }
@@ -171,6 +205,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
   }
   
   Widget _buildEmptyState() {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     return Center(
       child: Column(
@@ -179,12 +214,12 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
           Icon(Icons.list_alt_rounded, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 24),
           Text(
-            'Diese Liste ist leer',
+            l10n.listEmpty,
             style: theme.textTheme.headlineSmall?.copyWith(color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
           Text(
-            'Füge dein erstes Item hinzu.',
+            l10n.addFirstItemHint,
             style: theme.textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
           ),
         ],
@@ -193,20 +228,20 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
   }
 
   Widget _buildErrorWidget(Object error, VoidCallback onRetry) {
-    //final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context)!;
     String errorMessage;
 
     if (error is DioException && error.error is ApiException) {
       final apiError = error.error as ApiException;
       if (apiError is NetworkException) {
-        errorMessage = 'Bitte prüfe deine Internetverbindung.'; // TODO: l10n
+        errorMessage = l10n.checkInternetConnection;
       } else if (apiError is ServerException) {
-        errorMessage = 'Ein Serverfehler ist aufgetreten. Bitte versuche es später erneut.'; // TODO: l10n
+        errorMessage = l10n.serverError;
       } else {
         errorMessage = apiError.message;
       }
     } else {
-      errorMessage = 'Ein unerwarteter Fehler ist aufgetreten.'; // TODO: l10n
+      errorMessage = l10n.unexpectedError;
     }
 
     return Center(
@@ -221,7 +256,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: onRetry,
-              child: const Text('Erneut versuchen'), // TODO: l10n
+              child: Text(l10n.tryAgain),
             ),
           ],
         ),
@@ -230,6 +265,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
   }
 
   Widget _buildItemTile(ShoppingItem item) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       margin: const EdgeInsets.only(bottom: 8.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -245,14 +281,14 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
               backgroundColor: const Color(0xFFE58325),
               foregroundColor: Colors.white,
               icon: Icons.edit,
-              label: 'Bearbeiten',
+              label: l10n.edit,
             ),
             SlidableAction(
               onPressed: (_) => _deleteItem(item),
               backgroundColor: const Color(0xFFFE4A49),
               foregroundColor: Colors.white,
               icon: Icons.delete,
-              label: 'Löschen',
+              label: l10n.delete,
             ),
           ],
         ),
@@ -288,113 +324,72 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+    final l10n = AppLocalizations.of(context)!;
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFE58325),
+        foregroundColor: Colors.white,
+        title: Text(widget.listName),
+        actions: const [
+          ShoppingListDetailActionsMenu(),
+        ],
       ),
-      child: Column(
-        children: [
-          const SizedBox(height: 12),
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[400],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(width: 48), // Placeholder for alignment
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      widget.listName,
-                      style: Theme.of(context).textTheme.headlineSmall,
+      body: FutureBuilder<List<ShoppingItem>>(
+        future: _itemsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return _buildErrorWidget(snapshot.error!, _loadItems);
+          }
+          final items = snapshot.data ?? [];
+          final groupedItems = _groupItemsByCategory(items);
+
+          if (items.isEmpty) {
+            return _buildEmptyState();
+          }
+
+          return SlidableAutoCloseBehavior(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                _loadItems();
+              },
+              child: CustomScrollView(
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final category = groupedItems.keys.elementAt(index);
+                          final categoryItems = groupedItems[category]!;
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionTitle(category),
+                              ...categoryItems.map((item) => _buildItemTile(item))
+                            ],
+                          );
+                        },
+                        childCount: groupedItems.length,
+                      ),
                     ),
                   ),
-                ),
-                const ShoppingListDetailActionsMenu(),
-              ],
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: Stack(
-              children: [
-                FutureBuilder<List<ShoppingItem>>(
-                  future: _itemsFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (snapshot.hasError) {
-                      return _buildErrorWidget(snapshot.error!, _loadItems);
-                    }
-                    final items = snapshot.data ?? [];
-                    final groupedItems = _groupItemsByCategory(items);
-
-                    if (items.isEmpty) {
-                      return _buildEmptyState();
-                    }
-
-                    return SlidableAutoCloseBehavior(
-                      child: RefreshIndicator(
-                        onRefresh: () async {
-                          _loadItems();
-                        },
-                        child: CustomScrollView(
-                          slivers: [
-                            SliverPadding(
-                              padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-                              sliver: SliverList(
-                                delegate: SliverChildBuilderDelegate(
-                                      (context, index) {
-                                    final category = groupedItems.keys.elementAt(index);
-                                    final categoryItems = groupedItems[category]!;
-
-                                    return Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        _buildSectionTitle(category),
-                                        ...categoryItems.map((item) => _buildItemTile(item))
-                                      ],
-                                    );
-                                  },
-                                  childCount: groupedItems.length,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                Positioned(
-                  bottom: 16 + bottomPadding,
-                  right: 16,
-                  child: FloatingActionButton(
-                    onPressed: _showAddItemSheet,
-                    tooltip: 'Item hinzufügen',
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    shape: const CircleBorder(),
-                    child: const Icon(Icons.add),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddItemSheet,
+        tooltip: l10n.addItem,
+        backgroundColor: Colors.green,
+        foregroundColor: Colors.white,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add),
       ),
     );
   }

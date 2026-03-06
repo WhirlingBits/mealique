@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mealique/models/shopping_item_model.dart';
+import '../../l10n/app_localizations.dart';
 
 class ShoppingListItemDetailScreen extends StatelessWidget {
   final ShoppingItem item;
@@ -8,12 +9,13 @@ class ShoppingListItemDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: Text(item.display),
       ),
-      body: const Center(
-        child: Text('Details for the shopping list item will be displayed here.'),
+      body: Center(
+        child: Text(l10n.itemDetailsPlaceholder),
       ),
     );
   }
