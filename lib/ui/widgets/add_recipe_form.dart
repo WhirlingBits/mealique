@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 
 class AddRecipeForm extends StatefulWidget {
   final Function(String) onAddRecipe;
@@ -81,6 +82,7 @@ class _AddRecipeFormState extends State<AddRecipeForm> {
   }
 
   Widget _buildNameStep() {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -99,16 +101,16 @@ class _AddRecipeFormState extends State<AddRecipeForm> {
             Expanded(
               child: TextField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name des neuen Rezepts...',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.newRecipeNameHint,
+                  border: const OutlineInputBorder(),
                 ),
                 onSubmitted: (_) => _submitName(),
               ),
             ),
             const SizedBox(width: 16),
             Tooltip(
-              message: 'Weiter zu Details',
+              message: l10n.continueToDetails,
               child: ElevatedButton(
                 onPressed: _submitName,
                 style: ElevatedButton.styleFrom(
@@ -127,6 +129,7 @@ class _AddRecipeFormState extends State<AddRecipeForm> {
   }
 
   Widget _buildDetailStep() {
+    final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -142,27 +145,27 @@ class _AddRecipeFormState extends State<AddRecipeForm> {
           ),
           TextField(
             controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'Name',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: l10n.name,
+              border: const OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _descController,
             maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: 'Beschreibung (optional)',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: l10n.descriptionOptional,
+              border: const OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _ingredientsController,
             maxLines: 4,
-            decoration: const InputDecoration(
-              labelText: 'Zutaten (je Zeile ein Eintrag)',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: l10n.ingredientsPerLine,
+              border: const OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 12),
@@ -172,9 +175,9 @@ class _AddRecipeFormState extends State<AddRecipeForm> {
                 child: TextField(
                   controller: _servingsController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Portionen',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l10n.servings,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
               ),
@@ -183,9 +186,9 @@ class _AddRecipeFormState extends State<AddRecipeForm> {
                 child: TextField(
                   controller: _timeController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Zubereitungszeit (Min)',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l10n.prepTimeMinutes,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
               ),
@@ -201,7 +204,7 @@ class _AddRecipeFormState extends State<AddRecipeForm> {
                     foregroundColor: Colors.black,
                     side: BorderSide(color: Colors.grey[400]!),
                   ),
-                  child: const Text('Zurück'),
+                  child: Text(l10n.back),
                 ),
               ),
               const SizedBox(width: 12),
@@ -212,7 +215,7 @@ class _AddRecipeFormState extends State<AddRecipeForm> {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                 ),
-                child: const Text('Fertig'),
+                child: Text(l10n.done),
               ),
             ],
           ),

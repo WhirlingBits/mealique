@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 
 // Placeholder models, assuming they exist elsewhere
 class Recipe {
@@ -30,7 +31,13 @@ class _AddMealFormState extends State<AddMealForm> {
   String _recipeText = '';
 
   // Dummy data - replace with your actual data
-  final List<String> _mealTypes = ['Frühstück', 'Mittagessen', 'Abendessen', 'Snack'];
+  List<String> get _mealTypes {
+    final l10n = AppLocalizations.of(context);
+    if (l10n != null) {
+      return [l10n.breakfast, l10n.lunch, l10n.dinner, l10n.snack];
+    }
+    return ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
+  }
   final List<Recipe> _availableRecipes = [
     Recipe(id: 'r1', name: 'Spaghetti Carbonara'),
     Recipe(id: 'r2', name: 'Hähnchen Curry'),
@@ -93,6 +100,7 @@ class _AddMealFormState extends State<AddMealForm> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     const accentColor = Color(0xFFE58325);
 
     return Theme(
@@ -134,9 +142,9 @@ class _AddMealFormState extends State<AddMealForm> {
                       // Meal Type Dropdown
                       DropdownButtonFormField<String>(
                         initialValue: _selectedMealType,
-                        decoration: const InputDecoration(
-                          labelText: 'Mahlzeit',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: l10n.meal,
+                          border: const OutlineInputBorder(),
                         ),
                         items: _mealTypes.map((String type) {
                           return DropdownMenuItem<String>(
@@ -178,9 +186,9 @@ class _AddMealFormState extends State<AddMealForm> {
                           return TextFormField(
                             controller: _recipeController,
                             focusNode: focusNode,
-                            decoration: const InputDecoration(
-                              labelText: 'Rezept suchen oder neuen Namen eingeben',
-                              border: OutlineInputBorder(),
+                            decoration: InputDecoration(
+                              labelText: l10n.searchOrEnterRecipeName,
+                              border: const OutlineInputBorder(),
                             ),
                             onFieldSubmitted: (_) => _handleSubmit(),
                           );
@@ -191,7 +199,7 @@ class _AddMealFormState extends State<AddMealForm> {
                       Align(
                         alignment: Alignment.centerRight,
                         child: Tooltip(
-                          message: 'Mahlzeit hinzufügen',
+                          message: l10n.addMealToPlanner,
                           child: ElevatedButton(
                             onPressed: _recipeText.trim().isNotEmpty && _selectedMealType != null
                                 ? _handleSubmit
