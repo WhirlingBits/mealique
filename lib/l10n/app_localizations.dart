@@ -1369,6 +1369,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Try searching for something else.'**
   String get tryDifferentSearch;
+
+  /// No description provided for @itemDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Item Details'**
+  String get itemDetails;
+
+  /// No description provided for @notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get notes;
+
+  /// No description provided for @noNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'No notes'**
+  String get noNotes;
+
+  /// No description provided for @noUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'No unit'**
+  String get noUnit;
+
+  /// No description provided for @noFood.
+  ///
+  /// In en, this message translates to:
+  /// **'No food'**
+  String get noFood;
+
+  /// No description provided for @noCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'No category'**
+  String get noCategory;
+
+  /// No description provided for @checkedStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Checked'**
+  String get checkedStatus;
+
+  /// No description provided for @uncheckedStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Unchecked'**
+  String get uncheckedStatus;
+
+  /// No description provided for @editQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit quantity'**
+  String get editQuantity;
+
+  /// No description provided for @editNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit notes'**
+  String get editNotes;
+
+  /// No description provided for @editDisplay.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit display name'**
+  String get editDisplay;
+
+  /// No description provided for @newQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'New quantity'**
+  String get newQuantity;
+
+  /// No description provided for @newNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'New notes'**
+  String get newNotes;
+
+  /// No description provided for @newDisplayName.
+  ///
+  /// In en, this message translates to:
+  /// **'New display name'**
+  String get newDisplayName;
+
+  /// No description provided for @toggleChecked.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle checked'**
+  String get toggleChecked;
+
+  /// No description provided for @itemUpdatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" was updated'**
+  String itemUpdatedSuccess(String name);
 }
 
 class _AppLocalizationsDelegate

@@ -270,5 +270,24 @@
     "enterNewName": "Neuen Namen eingeben",
     "searchRecipesHint": "Rezepte suchen...",
     "noRecipesFoundSearch": "Keine Rezepte gefunden",
-    "tryDifferentSearch": "Versuche etwas anderes zu suchen."
+    "tryDifferentSearch": "Versuche etwas anderes zu suchen.",
+    "itemDetails": "Artikeldetails",
+    "notes": "Notizen",
+    "noNotes": "Keine Notizen",
+    "noUnit": "Keine Einheit",
+    "noFood": "Kein Lebensmittel",
+    "noCategory": "Keine Kategorie",
+    "checkedStatus": "Erledigt",
+    "uncheckedStatus": "Offen",
+    "editQuantity": "Menge bearbeiten",
+    "editNotes": "Notizen bearbeiten",
+    "editDisplay": "Anzeigename bearbeiten",
+    "newQuantity": "Neue Menge",
+    "newNotes": "Neue Notizen",
+    "newDisplayName": "Neuer Anzeigename",
+    "toggleChecked": "Status umschalten",
+    "itemUpdatedSuccess": "\"{name}\" wurde aktualisiert",
+    "@itemUpdatedSuccess": {
+        "placeholders": { "name": { "type": "String" } }
+    }
 }

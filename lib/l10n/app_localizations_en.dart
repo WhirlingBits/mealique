@@ -695,4 +695,54 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tryDifferentSearch => 'Try searching for something else.';
+
+  @override
+  String get itemDetails => 'Item Details';
+
+  @override
+  String get notes => 'Notes';
+
+  @override
+  String get noNotes => 'No notes';
+
+  @override
+  String get noUnit => 'No unit';
+
+  @override
+  String get noFood => 'No food';
+
+  @override
+  String get noCategory => 'No category';
+
+  @override
+  String get checkedStatus => 'Checked';
+
+  @override
+  String get uncheckedStatus => 'Unchecked';
+
+  @override
+  String get editQuantity => 'Edit quantity';
+
+  @override
+  String get editNotes => 'Edit notes';
+
+  @override
+  String get editDisplay => 'Edit display name';
+
+  @override
+  String get newQuantity => 'New quantity';
+
+  @override
+  String get newNotes => 'New notes';
+
+  @override
+  String get newDisplayName => 'New display name';
+
+  @override
+  String get toggleChecked => 'Toggle checked';
+
+  @override
+  String itemUpdatedSuccess(String name) {
+    return '\"$name\" was updated';
+  }
 }

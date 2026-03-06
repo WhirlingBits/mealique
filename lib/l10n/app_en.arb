@@ -270,5 +270,24 @@
     "enterNewName": "Enter new name",
     "searchRecipesHint": "Search for recipes...",
     "noRecipesFoundSearch": "No Recipes Found",
-    "tryDifferentSearch": "Try searching for something else."
+    "tryDifferentSearch": "Try searching for something else.",
+    "itemDetails": "Item Details",
+    "notes": "Notes",
+    "noNotes": "No notes",
+    "noUnit": "No unit",
+    "noFood": "No food",
+    "noCategory": "No category",
+    "checkedStatus": "Checked",
+    "uncheckedStatus": "Unchecked",
+    "editQuantity": "Edit quantity",
+    "editNotes": "Edit notes",
+    "editDisplay": "Edit display name",
+    "newQuantity": "New quantity",
+    "newNotes": "New notes",
+    "newDisplayName": "New display name",
+    "toggleChecked": "Toggle checked",
+    "itemUpdatedSuccess": "\"{name}\" was updated",
+    "@itemUpdatedSuccess": {
+        "placeholders": { "name": { "type": "String" } }
+    }
 }

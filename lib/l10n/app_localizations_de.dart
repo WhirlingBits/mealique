@@ -705,4 +705,54 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get tryDifferentSearch => 'Versuche etwas anderes zu suchen.';
+
+  @override
+  String get itemDetails => 'Artikeldetails';
+
+  @override
+  String get notes => 'Notizen';
+
+  @override
+  String get noNotes => 'Keine Notizen';
+
+  @override
+  String get noUnit => 'Keine Einheit';
+
+  @override
+  String get noFood => 'Kein Lebensmittel';
+
+  @override
+  String get noCategory => 'Keine Kategorie';
+
+  @override
+  String get checkedStatus => 'Erledigt';
+
+  @override
+  String get uncheckedStatus => 'Offen';
+
+  @override
+  String get editQuantity => 'Menge bearbeiten';
+
+  @override
+  String get editNotes => 'Notizen bearbeiten';
+
+  @override
+  String get editDisplay => 'Anzeigename bearbeiten';
+
+  @override
+  String get newQuantity => 'Neue Menge';
+
+  @override
+  String get newNotes => 'Neue Notizen';
+
+  @override
+  String get newDisplayName => 'Neuer Anzeigename';
+
+  @override
+  String get toggleChecked => 'Status umschalten';
+
+  @override
+  String itemUpdatedSuccess(String name) {
+    return '\"$name\" wurde aktualisiert';
+  }
 }
