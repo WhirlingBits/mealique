@@ -5,17 +5,26 @@ import 'package:mealique/providers/settings_provider.dart';
 import 'package:mealique/ui/screens/auth_check_screen.dart';
 import 'package:provider/provider.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Pre-load settings before building the widget tree to avoid
+  // unnecessary rebuilds and frame drops on startup.
+  final settingsProvider = SettingsProvider();
+  await settingsProvider.init();
+
+  runApp(MyApp(settingsProvider: settingsProvider));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final SettingsProvider settingsProvider;
+
+  const MyApp({super.key, required this.settingsProvider});
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => SettingsProvider(),
+    return ChangeNotifierProvider.value(
+      value: settingsProvider,
       child: Consumer<SettingsProvider>(
         builder: (context, settings, child) {
           return MaterialApp(
