@@ -1465,6 +1465,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'\"{name}\" was updated'**
   String itemUpdatedSuccess(String name);
+
+  /// No description provided for @appVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'App Version'**
+  String get appVersion;
 }
 
 class _AppLocalizationsDelegate

@@ -289,5 +289,6 @@
     "itemUpdatedSuccess": "\"{name}\" wurde aktualisiert",
     "@itemUpdatedSuccess": {
         "placeholders": { "name": { "type": "String" } }
-    }
+    },
+    "appVersion": "App-Version"
 }

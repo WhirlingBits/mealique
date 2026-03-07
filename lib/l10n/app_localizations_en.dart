@@ -745,4 +745,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String itemUpdatedSuccess(String name) {
     return '\"$name\" was updated';
   }
+
+  @override
+  String get appVersion => 'App Version';
 }

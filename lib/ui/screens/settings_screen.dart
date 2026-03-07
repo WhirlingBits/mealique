@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mealique/l10n/app_localizations.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:mealique/ui/screens/appearance_settings_screen.dart';
 import 'package:mealique/ui/screens/notification_settings_screen.dart';
 import 'package:mealique/ui/screens/server_api_settings_screen.dart';
@@ -17,11 +18,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final UserRepository _userRepository = UserRepository();
 
   UserSelf? _user;
+  String _appVersion = '';
 
   @override
   void initState() {
     super.initState();
     _loadUser();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    final info = await PackageInfo.fromPlatform();
+    if (mounted) {
+      setState(() {
+        _appVersion = '${info.version} (${info.buildNumber})';
+      });
+    }
   }
 
   Future<void> _loadUser() async {
@@ -126,6 +138,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   SnackBar(content: Text(l10n.syncStarted)),
                 );
               },
+            ),
+
+            const Divider(height: 1),
+
+            // App-Version
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24.0),
+              child: Center(
+                child: Text(
+                  '${l10n.appVersion}: $_appVersion',
+                  style: TextStyle(color: Colors.grey[500], fontSize: 13),
+                ),
+              ),
             ),
           ],
         ),
