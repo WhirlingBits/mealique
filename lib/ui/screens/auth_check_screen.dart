@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:mealique/config/app_constants.dart';
+import 'package:mealique/data/remote/auth_api.dart';
 import '../../data/local/token_storage.dart';
 import '../../data/remote/recipes_api.dart'; 
 import 'main_screen.dart';
@@ -54,7 +55,16 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
     } on DioException catch (e) {
       if (!mounted) return;
       if (e.response?.statusCode == 401) {
-        _navigateToLogin(); // Token expired or invalid
+        // Token expired — try to refresh using stored credentials
+        final authApi = AuthApi();
+        final newToken = await authApi.refreshToken();
+        if (newToken != null) {
+          // Refresh succeeded, proceed to home
+          if (mounted) _navigateToHome();
+        } else {
+          // Refresh failed, go to login
+          if (mounted) _navigateToLogin();
+        }
       } else {
         _navigateToHome(); // Other network error, let the app handle it
       }

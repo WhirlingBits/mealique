@@ -65,6 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (token != null) {
         await _tokenStorage.saveToken(token);
         await _tokenStorage.saveServerUrl(server);
+        await _tokenStorage.saveCredentials(email, password);
 
         if (mounted) {
           Navigator.of(context).pushReplacement(

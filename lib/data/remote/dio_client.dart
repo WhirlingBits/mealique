@@ -1,5 +1,14 @@
+import 'dart:async';
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:mealique/config/app_constants.dart';
+import 'package:mealique/data/local/token_storage.dart';
+import 'package:mealique/data/remote/auth_api.dart';
 import 'api_exceptions.dart';
+
+/// Global navigator key used to redirect to login on unrecoverable auth failures.
+/// Must be assigned to the MaterialApp's navigatorKey.
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 class DioClient {
   static Dio createDio() {
@@ -11,6 +20,7 @@ class DioClient {
 
     dio.interceptors.addAll([
       RetryInterceptor(dio: dio),
+      TokenRefreshInterceptor(dio: dio),
       ErrorInterceptor(),
     ]);
 
@@ -138,3 +148,105 @@ class RetryInterceptor extends Interceptor {
         err.type == DioExceptionType.unknown;
   }
 }
+
+/// Interceptor that automatically refreshes the JWT token when a 401 is received.
+/// It re-authenticates using stored credentials and retries the original request.
+/// If the refresh fails, the user is redirected to the login screen.
+class TokenRefreshInterceptor extends Interceptor {
+  final Dio dio;
+  final TokenStorage _tokenStorage = TokenStorage();
+  final AuthApi _authApi = AuthApi();
+
+  // Prevent multiple simultaneous refresh attempts
+  bool _isRefreshing = false;
+  final _pendingRequests = <({ErrorInterceptorHandler handler, RequestOptions options})>[];
+
+  TokenRefreshInterceptor({required this.dio});
+
+  @override
+  Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
+    // Only handle 401 responses
+    if (err.response?.statusCode != 401) {
+      return handler.next(err);
+    }
+
+    // Don't try to refresh if this was already a retry after refresh
+    if (err.requestOptions.extra['is_retry_after_refresh'] == true) {
+      return handler.next(err);
+    }
+
+    // Don't try to refresh for demo accounts
+    final currentToken = await _tokenStorage.getToken();
+    if (currentToken == AppConstants.demoToken) {
+      return handler.next(err);
+    }
+
+    // If already refreshing, queue this request
+    if (_isRefreshing) {
+      _pendingRequests.add((handler: handler, options: err.requestOptions));
+      return;
+    }
+
+    _isRefreshing = true;
+
+    try {
+      final newToken = await _authApi.refreshToken();
+
+      if (newToken != null) {
+        // Update the authorization header and retry the failed request
+        err.requestOptions.headers['Authorization'] = 'Bearer $newToken';
+        err.requestOptions.extra['is_retry_after_refresh'] = true;
+
+        try {
+          final response = await dio.fetch(err.requestOptions);
+          handler.resolve(response);
+        } on DioException catch (retryError) {
+          handler.next(retryError);
+        }
+
+        // Retry all queued requests with the new token
+        for (final pending in _pendingRequests) {
+          pending.options.headers['Authorization'] = 'Bearer $newToken';
+          pending.options.extra['is_retry_after_refresh'] = true;
+          try {
+            final response = await dio.fetch(pending.options);
+            pending.handler.resolve(response);
+          } on DioException catch (retryError) {
+            pending.handler.next(retryError);
+          }
+        }
+      } else {
+        // Refresh failed — credentials invalid or missing.
+        // Reject the original request and all pending ones.
+        handler.next(err);
+        for (final pending in _pendingRequests) {
+          pending.handler.next(err);
+        }
+
+        // Navigate to login screen
+        _redirectToLogin();
+      }
+    } catch (_) {
+      handler.next(err);
+      for (final pending in _pendingRequests) {
+        pending.handler.next(err);
+      }
+      _redirectToLogin();
+    } finally {
+      _pendingRequests.clear();
+      _isRefreshing = false;
+    }
+  }
+
+  void _redirectToLogin() {
+    // Clear stored token since it's no longer valid
+    _tokenStorage.clearAll();
+
+    // Use the global navigator key to navigate to login
+    final context = navigatorKey.currentContext;
+    if (context != null) {
+      Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
+    }
+  }
+}
+

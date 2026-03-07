@@ -30,7 +30,7 @@ class _ServerApiSettingsScreenState extends State<ServerApiSettingsScreen> {
   }
 
   Future<void> _logout() async {
-    await _tokenStorage.deleteToken();
+    await _tokenStorage.clearAll();
     if (mounted) {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const LoginScreen()),
