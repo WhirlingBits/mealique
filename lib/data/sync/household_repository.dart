@@ -36,14 +36,14 @@ class HouseholdRepository {
         _storage = HouseholdStorage(),
         _tokenStorage = TokenStorage();
 
-  Future<List<ShoppingList>> getShoppingLists() async {
+  Future<List<ShoppingList>> getShoppingLists({String? orderBy, String? orderDirection}) async {
     final token = await _tokenStorage.getToken();
     if (token == AppConstants.demoToken) {
       return _getDemoShoppingLists();
     }
 
     try {
-      final response = await _api.getShoppingLists(1, 100);
+      final response = await _api.getShoppingLists(1, 100, orderBy: orderBy, orderDirection: orderDirection);
       return response.items;
     } on DioException catch (e) {
       if (e.error is NetworkException) {
@@ -53,13 +53,13 @@ class HouseholdRepository {
       rethrow;
     }
   }
-   Future<List<ShoppingList>> getShoppingListsWithItemCount() async {
+   Future<List<ShoppingList>> getShoppingListsWithItemCount({String? orderBy, String? orderDirection}) async {
     final token = await _tokenStorage.getToken();
     if (token == AppConstants.demoToken) {
       return _getDemoShoppingLists();
     }
 
-    final response = await _api.getShoppingLists(1, 100);
+    final response = await _api.getShoppingLists(1, 100, orderBy: orderBy, orderDirection: orderDirection);
     final lists = response.items;
     final listsWithCount = <ShoppingList>[];
 

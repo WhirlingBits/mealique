@@ -18,6 +18,7 @@ class RecipeRepository {
       {int page = 1,
       int perPage = 15,
       String? sort,
+      String? orderDirection,
       String? searchQuery}) async {
     final token = await _tokenStorage.getToken();
     if (token == AppConstants.demoToken) {
@@ -25,7 +26,7 @@ class RecipeRepository {
     }
 
     try {
-      final response = await _api.getRecipes(page: page, perPage: perPage, sort: sort, searchQuery: searchQuery);
+      final response = await _api.getRecipes(page: page, perPage: perPage, sort: sort, orderDirection: orderDirection, searchQuery: searchQuery);
       if (response.statusCode == 200) {
         final data = response.data;
         if (data != null && data['items'] is List) {

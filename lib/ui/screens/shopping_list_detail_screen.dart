@@ -5,6 +5,7 @@ import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/providers/settings_provider.dart';
 import 'package:mealique/ui/screens/shopping_list_item_detail_screen.dart';
 import 'package:mealique/ui/widgets/shopping_list_detail_actions_menu.dart';
+import 'package:mealique/ui/widgets/sort_dialog.dart';
 import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../data/sync/household_repository.dart';
@@ -36,6 +37,9 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
   void initState() {
     super.initState();
     _loadItems();
+    // Load per-list settings
+    Provider.of<SettingsProvider>(context, listen: false)
+        .loadListSettings(widget.listId);
   }
 
   void _loadItems() {
@@ -46,12 +50,12 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
 
   void _handleToggleShowCompleted() {
     final settings = Provider.of<SettingsProvider>(context, listen: false);
-    settings.setShowCompleted(!settings.showCompleted);
+    settings.setShowCompleted(widget.listId, !settings.showCompletedForList(widget.listId));
   }
 
   void _handleToggleShowCategories() {
     final settings = Provider.of<SettingsProvider>(context, listen: false);
-    settings.setShowCategories(!settings.showCategories);
+    settings.setShowCategories(widget.listId, !settings.showCategoriesForList(widget.listId));
   }
 
   void _handleEditList() {
@@ -183,11 +187,57 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
     }
   }
 
-  void _handleSortItems() {
+  void _handleSortItems() async {
     final l10n = AppLocalizations.of(context)!;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.featureNotImplemented)),
+    final settings = Provider.of<SettingsProvider>(context, listen: false);
+    final result = await showSortDialog(
+      context: context,
+      options: [
+        SortOption(field: 'position', label: l10n.sortByPosition),
+        SortOption(field: 'name', label: l10n.sortByName),
+        SortOption(field: 'checked', label: l10n.sortByChecked),
+        SortOption(field: 'category', label: l10n.sortByCategory),
+      ],
+      currentField: settings.shoppingItemSortFieldForList(widget.listId) ?? 'position',
+      currentDirection: settings.shoppingItemSortDirectionForList(widget.listId),
     );
+
+    if (result != null) {
+      await settings.setShoppingItemSort(widget.listId, result.field, result.direction);
+      setState(() {}); // Trigger rebuild to apply new sort
+    }
+  }
+
+  List<ShoppingItem> _sortItems(List<ShoppingItem> items) {
+    final settings = Provider.of<SettingsProvider>(context, listen: false);
+    final field = settings.shoppingItemSortFieldForList(widget.listId);
+    final direction = settings.shoppingItemSortDirectionForList(widget.listId);
+
+    if (field == null) return items;
+
+    final sorted = List<ShoppingItem>.from(items);
+    sorted.sort((a, b) {
+      int result;
+      switch (field) {
+        case 'name':
+          result = a.display.toLowerCase().compareTo(b.display.toLowerCase());
+          break;
+        case 'checked':
+          result = (a.checked ? 1 : 0).compareTo(b.checked ? 1 : 0);
+          break;
+        case 'category':
+          final catA = a.food?.label?.name ?? '';
+          final catB = b.food?.label?.name ?? '';
+          result = catA.toLowerCase().compareTo(catB.toLowerCase());
+          break;
+        case 'position':
+        default:
+          result = a.position.compareTo(b.position);
+          break;
+      }
+      return direction == 'desc' ? -result : result;
+    });
+    return sorted;
   }
 
   Future<void> _toggleItem(ShoppingItem item) async {
@@ -490,9 +540,9 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
             onDeleteCompleted: _handleDeleteCompleted,
             onDeleteList: _handleDeleteList,
             onSortItems: _handleSortItems,
-            showCompleted: settings.showCompleted,
+            showCompleted: settings.showCompletedForList(widget.listId),
             onToggleShowCompleted: _handleToggleShowCompleted,
-            showCategories: settings.showCategories,
+            showCategories: settings.showCategoriesForList(widget.listId),
             onToggleShowCategories: _handleToggleShowCategories,
           ),
         ],
@@ -510,9 +560,12 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
           var displayItems = items.toList();
 
           // Filter out completed items if toggle is off
-          if (!settings.showCompleted) {
+          if (!settings.showCompletedForList(widget.listId)) {
             displayItems = displayItems.where((i) => !i.checked).toList();
           }
+
+          // Apply sort
+          displayItems = _sortItems(displayItems);
 
           if (displayItems.isEmpty && items.isNotEmpty) {
             // All items are completed and hidden
@@ -523,7 +576,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
           }
 
           // Group by category or show flat list
-          if (settings.showCategories) {
+          if (settings.showCategoriesForList(widget.listId)) {
             final groupedItems = _groupItemsByCategory(displayItems);
             return SlidableAutoCloseBehavior(
               child: RefreshIndicator(

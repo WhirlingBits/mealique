@@ -4,11 +4,13 @@ import '../../l10n/app_localizations.dart';
 class ShoppingListActionsMenu extends StatelessWidget {
   final VoidCallback onAddList;
   final VoidCallback onRefresh;
+  final VoidCallback? onSort;
 
   const ShoppingListActionsMenu({
     super.key,
     required this.onAddList,
     required this.onRefresh,
+    this.onSort,
   });
 
   @override
@@ -19,6 +21,9 @@ class ShoppingListActionsMenu extends StatelessWidget {
         switch (value) {
           case 'add_list':
             onAddList();
+            break;
+          case 'sort':
+            onSort?.call();
             break;
           case 'refresh':
             onRefresh();
@@ -33,6 +38,14 @@ class ShoppingListActionsMenu extends StatelessWidget {
             title: Text(l10n.addList),
           ),
         ),
+        if (onSort != null)
+          PopupMenuItem<String>(
+            value: 'sort',
+            child: ListTile(
+              leading: const Icon(Icons.sort),
+              title: Text(l10n.sort),
+            ),
+          ),
         PopupMenuItem<String>(
           value: 'refresh',
           child: ListTile(

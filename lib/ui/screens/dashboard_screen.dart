@@ -50,7 +50,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<List<Recipe>> _fetchPopularRecipes() async {
-    return _recipeRepository.getRecipes(sort: '-rating', perPage: 5);
+    return _recipeRepository.getRecipes(sort: 'rating', orderDirection: 'desc', perPage: 5);
   }
 
   void _showAddRecipeSheet(BuildContext context) {

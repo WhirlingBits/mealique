@@ -232,10 +232,20 @@ class HouseholdApi {
     return EmailInvitationResponse.fromJson(response.data);
   }
 
-  Future<ShoppingListResponse> getShoppingLists(int page, int perPage) async {
+  Future<ShoppingListResponse> getShoppingLists(int page, int perPage, {String? orderBy, String? orderDirection}) async {
+    final queryParameters = <String, dynamic>{
+      'page': page,
+      'per_page': perPage,
+    };
+    if (orderBy != null) {
+      queryParameters['orderBy'] = orderBy;
+    }
+    if (orderDirection != null) {
+      queryParameters['orderDirection'] = orderDirection;
+    }
     final response = await _dio.get(
       'api/households/shopping/lists',
-      queryParameters: {'page': page, 'per_page': perPage},
+      queryParameters: queryParameters,
     );
     return ShoppingListResponse.fromJson(response.data);
   }

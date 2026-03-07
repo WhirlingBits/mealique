@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/ui/widgets/shopping_list_actions_menu.dart';
+import 'package:mealique/ui/widgets/sort_dialog.dart';
+import 'package:provider/provider.dart';
 import '../../data/sync/household_repository.dart';
 import '../../models/shopping_list_model.dart';
 import '../../l10n/app_localizations.dart';
+import '../../providers/settings_provider.dart';
 import '../widgets/add_shopping_list_form.dart';
 import 'shopping_list_detail_screen.dart';
 
@@ -20,22 +23,51 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   final HouseholdRepository _repository = HouseholdRepository();
 
   late Future<List<ShoppingList>> _listsFuture;
+  String? _sortField;
+  String _sortDirection = 'asc';
 
   @override
   void initState() {
     super.initState();
+    final settings = Provider.of<SettingsProvider>(context, listen: false);
+    _sortField = settings.shoppingListSortField;
+    _sortDirection = settings.shoppingListSortDirection;
     _loadLists();
   }
 
   void _loadLists() {
     setState(() {
-      _listsFuture = _repository.getShoppingListsWithItemCount();
+      _listsFuture = _repository.getShoppingListsWithItemCount(
+        orderBy: _sortField,
+        orderDirection: _sortDirection,
+      );
     });
   }
 
   Future<void> _handleRefresh() async {
-    // Re-trigger the future to rebuild the UI with fresh data
     _loadLists();
+  }
+
+  void _showSortDialog() async {
+    final l10n = AppLocalizations.of(context)!;
+    final result = await showSortDialog(
+      context: context,
+      options: [
+        SortOption(field: 'name', label: l10n.sortByName),
+        SortOption(field: 'created_at', label: l10n.sortByDateCreated),
+        SortOption(field: 'update_at', label: l10n.sortByDateUpdated),
+      ],
+      currentField: _sortField,
+      currentDirection: _sortDirection,
+    );
+
+    if (result != null) {
+      _sortField = result.field;
+      _sortDirection = result.direction;
+      Provider.of<SettingsProvider>(context, listen: false)
+          .setShoppingListSort(result.field, result.direction);
+      _loadLists();
+    }
   }
 
   void _showAddListSheet() {
@@ -170,6 +202,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         actions: [
           ShoppingListActionsMenu(
             onAddList: _showAddListSheet,
+            onSort: _showSortDialog,
             onRefresh: _handleRefresh,
           ),
         ],

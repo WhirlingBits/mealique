@@ -1471,6 +1471,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'App Version'**
   String get appVersion;
+
+  /// No description provided for @sortBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by'**
+  String get sortBy;
+
+  /// No description provided for @sortDirection.
+  ///
+  /// In en, this message translates to:
+  /// **'Direction'**
+  String get sortDirection;
+
+  /// No description provided for @ascending.
+  ///
+  /// In en, this message translates to:
+  /// **'Ascending'**
+  String get ascending;
+
+  /// No description provided for @descending.
+  ///
+  /// In en, this message translates to:
+  /// **'Descending'**
+  String get descending;
+
+  /// No description provided for @sortByName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get sortByName;
+
+  /// No description provided for @sortByDateCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Date created'**
+  String get sortByDateCreated;
+
+  /// No description provided for @sortByDateUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Date updated'**
+  String get sortByDateUpdated;
+
+  /// No description provided for @sortByRating.
+  ///
+  /// In en, this message translates to:
+  /// **'Rating'**
+  String get sortByRating;
+
+  /// No description provided for @sortByPrepTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Prep time'**
+  String get sortByPrepTime;
+
+  /// No description provided for @sortByPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'Position'**
+  String get sortByPosition;
+
+  /// No description provided for @sortByChecked.
+  ///
+  /// In en, this message translates to:
+  /// **'Checked status'**
+  String get sortByChecked;
+
+  /// No description provided for @sortByCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get sortByCategory;
 }
 
 class _AppLocalizationsDelegate

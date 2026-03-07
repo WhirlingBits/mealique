@@ -4,9 +4,12 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/ui/screens/recipe_detail_screen.dart';
 import 'package:mealique/ui/widgets/recipe_actions_menu.dart';
+import 'package:mealique/ui/widgets/sort_dialog.dart';
+import 'package:provider/provider.dart';
 import '../../data/sync/recipe_repository.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/recipes_model.dart';
+import '../../providers/settings_provider.dart';
 import '../widgets/add_recipe_form.dart';
 
 class RecipesScreen extends StatefulWidget {
@@ -19,11 +22,49 @@ class RecipesScreen extends StatefulWidget {
 class _RecipesScreenState extends State<RecipesScreen> {
   late Future<List<Recipe>> _recipesFuture;
   final RecipeRepository _recipeRepository = RecipeRepository();
+  String? _sortField;
+  String _sortDirection = 'asc';
 
   @override
   void initState() {
     super.initState();
-    _recipesFuture = _recipeRepository.getRecipes();
+    final settings = Provider.of<SettingsProvider>(context, listen: false);
+    _sortField = settings.recipeSortField;
+    _sortDirection = settings.recipeSortDirection;
+    _loadRecipes();
+  }
+
+  void _loadRecipes() {
+    setState(() {
+      _recipesFuture = _recipeRepository.getRecipes(
+        sort: _sortField,
+        orderDirection: _sortDirection,
+      );
+    });
+  }
+
+  void _showSortDialog() async {
+    final l10n = AppLocalizations.of(context)!;
+    final result = await showSortDialog(
+      context: context,
+      options: [
+        SortOption(field: 'name', label: l10n.sortByName),
+        SortOption(field: 'created_at', label: l10n.sortByDateCreated),
+        SortOption(field: 'update_at', label: l10n.sortByDateUpdated),
+        SortOption(field: 'rating', label: l10n.sortByRating),
+        SortOption(field: 'total_time', label: l10n.sortByPrepTime),
+      ],
+      currentField: _sortField,
+      currentDirection: _sortDirection,
+    );
+
+    if (result != null) {
+      _sortField = result.field;
+      _sortDirection = result.direction;
+      Provider.of<SettingsProvider>(context, listen: false)
+          .setRecipeSort(result.field, result.direction);
+      _loadRecipes();
+    }
   }
 
   void _showAddRecipeSheet(BuildContext context) {
@@ -92,11 +133,8 @@ class _RecipesScreenState extends State<RecipesScreen> {
         actions: [
           RecipeActionsMenu(
             onAddRecipe: () => _showAddRecipeSheet(context),
-            onRefresh: () {
-              setState(() {
-                _recipesFuture = _recipeRepository.getRecipes();
-              });
-            },
+            onSort: _showSortDialog,
+            onRefresh: _loadRecipes,
           ),
         ],
       ),
@@ -144,11 +182,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
-                    return _buildErrorWidget(snapshot.error!, () {
-                      setState(() {
-                        _recipesFuture = _recipeRepository.getRecipes();
-                      });
-                    });
+                    return _buildErrorWidget(snapshot.error!, _loadRecipes);
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return Center(child: Text(l10n.noRecipesFound));
                   }

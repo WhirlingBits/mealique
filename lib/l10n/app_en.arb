@@ -290,5 +290,17 @@
     "@itemUpdatedSuccess": {
         "placeholders": { "name": { "type": "String" } }
     },
-    "appVersion": "App Version"
+    "appVersion": "App Version",
+    "sortBy": "Sort by",
+    "sortDirection": "Direction",
+    "ascending": "Ascending",
+    "descending": "Descending",
+    "sortByName": "Name",
+    "sortByDateCreated": "Date created",
+    "sortByDateUpdated": "Date updated",
+    "sortByRating": "Rating",
+    "sortByPrepTime": "Prep time",
+    "sortByPosition": "Position",
+    "sortByChecked": "Checked status",
+    "sortByCategory": "Category"
 }

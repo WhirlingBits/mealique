@@ -748,4 +748,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appVersion => 'App Version';
+
+  @override
+  String get sortBy => 'Sort by';
+
+  @override
+  String get sortDirection => 'Direction';
+
+  @override
+  String get ascending => 'Ascending';
+
+  @override
+  String get descending => 'Descending';
+
+  @override
+  String get sortByName => 'Name';
+
+  @override
+  String get sortByDateCreated => 'Date created';
+
+  @override
+  String get sortByDateUpdated => 'Date updated';
+
+  @override
+  String get sortByRating => 'Rating';
+
+  @override
+  String get sortByPrepTime => 'Prep time';
+
+  @override
+  String get sortByPosition => 'Position';
+
+  @override
+  String get sortByChecked => 'Checked status';
+
+  @override
+  String get sortByCategory => 'Category';
 }

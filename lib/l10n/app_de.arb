@@ -290,5 +290,17 @@
     "@itemUpdatedSuccess": {
         "placeholders": { "name": { "type": "String" } }
     },
-    "appVersion": "App-Version"
+    "appVersion": "App-Version",
+    "sortBy": "Sortieren nach",
+    "sortDirection": "Richtung",
+    "ascending": "Aufsteigend",
+    "descending": "Absteigend",
+    "sortByName": "Name",
+    "sortByDateCreated": "Erstellungsdatum",
+    "sortByDateUpdated": "Änderungsdatum",
+    "sortByRating": "Bewertung",
+    "sortByPrepTime": "Zubereitungszeit",
+    "sortByPosition": "Position",
+    "sortByChecked": "Erledigt-Status",
+    "sortByCategory": "Kategorie"
 }

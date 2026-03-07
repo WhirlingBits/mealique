@@ -35,6 +35,7 @@ class RecipesApi {
       {int page = 1,
       int perPage = 15,
       String? sort,
+      String? orderDirection,
       String? searchQuery}) async {
     final queryParameters = <String, dynamic>{
       'page': page,
@@ -42,7 +43,10 @@ class RecipesApi {
     };
 
     if (sort != null) {
-      queryParameters['sort'] = sort;
+      queryParameters['orderBy'] = sort;
+    }
+    if (orderDirection != null) {
+      queryParameters['orderDirection'] = orderDirection;
     }
     if (searchQuery != null && searchQuery.isNotEmpty) {
       queryParameters['search'] = searchQuery;
