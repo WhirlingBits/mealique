@@ -92,18 +92,23 @@ class HouseholdRepository {
     final token = await _tokenStorage.getToken();
     if (token == AppConstants.demoToken) return;
     final list = await _api.getShoppingList(listId);
-    final updatedList = ShoppingList(
-      id: list.id,
-      name: newName,
-      extras: list.extras,
-      createdAt: list.createdAt,
-      updatedAt: list.updatedAt,
-      recipeReferences: list.recipeReferences,
-      labelSettings: list.labelSettings,
-      listItems: list.listItems,
-      itemCount: list.itemCount,
-    );
+    final updatedList = list.copyWith(name: newName);
     await _api.updateShoppingList(list.id, updatedList);
+    // Sync label-settings via dedicated endpoint
+    if (list.labelSettings.isNotEmpty) {
+      await _api.updateShoppingListLabelSettings(list.id, list.labelSettings);
+    }
+  }
+
+  /// Update label settings for a shopping list using the dedicated
+  /// /api/households/shopping/lists/{item_id}/label-settings endpoint.
+  Future<ShoppingList> updateShoppingListLabelSettings(
+      String listId, List<ShoppingListLabelSetting> labelSettings) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      return _getDemoShoppingLists().firstWhere((l) => l.id == listId);
+    }
+    return await _api.updateShoppingListLabelSettings(listId, labelSettings);
   }
 
   Future<List<ShoppingItem>> getItemsForList(String listId) async {

@@ -152,6 +152,54 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     }
   }
 
+  void _editList(ShoppingList list) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: AddShoppingListForm(
+          initialName: list.name,
+          onAddList: (newName) async {
+            final l10n = AppLocalizations.of(this.context)!;
+            try {
+              await _repository.updateShoppingListName(list.id, newName);
+              _loadLists();
+              if (mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(this.context)
+                  ..clearSnackBars()
+                  ..showSnackBar(
+                    SnackBar(
+                      content: Text(l10n.listCreatedSuccess(newName)),
+                      backgroundColor: Colors.green,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  );
+              }
+            } catch (e) {
+              if (mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(this.context)
+                  ..clearSnackBars()
+                  ..showSnackBar(
+                    SnackBar(
+                      content: Text(l10n.errorUpdating(e.toString())),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      duration: const Duration(seconds: 4),
+                    ),
+                  );
+              }
+            }
+          },
+        ),
+      ),
+    );
+  }
+
   Widget _buildErrorWidget(Object error, VoidCallback onRetry) {
     final l10n = AppLocalizations.of(context)!;
     String errorMessage;
@@ -278,9 +326,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                         children: [
                           SlidableAction(
                             flex: 1,
-                            onPressed: (context) {
-                              // TODO: Liste bearbeiten Logik implementieren
-                            },
+                            onPressed: (context) => _editList(list),
                             backgroundColor: const Color(0xFFE58325),
                             foregroundColor: Colors.white,
                             icon: Icons.edit,

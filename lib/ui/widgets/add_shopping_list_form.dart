@@ -3,8 +3,9 @@ import '../../l10n/app_localizations.dart';
 
 class AddShoppingListForm extends StatefulWidget {
   final Function(String) onAddList;
+  final String? initialName;
 
-  const AddShoppingListForm({super.key, required this.onAddList});
+  const AddShoppingListForm({super.key, required this.onAddList, this.initialName});
 
   @override
   State<AddShoppingListForm> createState() => _AddShoppingListFormState();
@@ -12,6 +13,14 @@ class AddShoppingListForm extends StatefulWidget {
 
 class _AddShoppingListFormState extends State<AddShoppingListForm> {
   final _textController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialName != null) {
+      _textController.text = widget.initialName!;
+    }
+  }
 
   // Inline toast state
   String? _toastMessage;
