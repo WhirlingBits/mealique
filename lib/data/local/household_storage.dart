@@ -1,15 +1,13 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
 import 'package:mealique/models/cookbook_model.dart';
 import 'package:mealique/models/mealplan_model.dart';
 import 'package:mealique/models/mealplan_rule_model.dart';
 import 'package:mealique/models/shopping_item_model.dart';
 import 'package:mealique/models/shopping_list_model.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as p;
+
+import 'connection/connection.dart';
 
 part 'household_storage.g.dart';
 
@@ -202,19 +200,12 @@ class Mealplans extends Table {
 
 @DriftDatabase(tables: [Cookbooks, ShoppingLists, MealplanRules, Mealplans])
 class HouseholdDatabase extends _$HouseholdDatabase {
-  HouseholdDatabase() : super(_openConnection());
+  HouseholdDatabase() : super(openConnection());
 
   @override
   int get schemaVersion => 1;
 }
 
-LazyDatabase _openConnection() {
-  return LazyDatabase(() async {
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'mealique.sqlite'));
-    return NativeDatabase.createInBackground(file);
-  });
-}
 
 // --- Mappers ---
 
