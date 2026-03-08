@@ -43,6 +43,36 @@ class MealplanRepository {
     return mealsByDay;
   }
 
+  Future<MealplanEntry> createMealplan(MealplanEntry entry) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      final demoEntry = MealplanEntry(
+        id: DateTime.now().millisecondsSinceEpoch,
+        date: entry.date,
+        entryType: entry.entryType,
+        title: entry.title,
+        recipeId: entry.recipeId,
+        recipe: entry.recipe,
+      );
+      return demoEntry;
+    }
+    return await _api.createMealplan(entry);
+  }
+
+  Future<MealplanEntry> updateMealplan(int itemId, MealplanEntry entry) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      return entry;
+    }
+    return await _api.updateMealplan(itemId, entry);
+  }
+
+  Future<void> deleteMealplan(int itemId) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) return;
+    await _api.deleteMealplan(itemId);
+  }
+
   // Helper for demo data
   LinkedHashMap<DateTime, List<MealplanEntry>> _getDemoMealplans(DateTime start, DateTime end) {
     final today = DateTime.now();

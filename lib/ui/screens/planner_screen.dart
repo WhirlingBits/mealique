@@ -129,11 +129,50 @@ class _PlannerScreenState extends State<PlannerScreen> {
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: AddMealForm(
-          onAddMeal: (mealType, recipe) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text(AppLocalizations.of(context)!.featureNotImplemented)),
+          onAddMeal: (entryType, recipe) async {
+            final l10n = AppLocalizations.of(context)!;
+            final dateStr = _selectedDay.toIso8601String().split('T').first;
+
+            final entry = MealplanEntry(
+              id: 0,
+              date: dateStr,
+              entryType: entryType,
+              title: recipe.name,
+              recipeId: recipe.id.isNotEmpty ? recipe.id : null,
             );
+
+            try {
+              await _mealplanRepository.createMealplan(entry);
+              if (mounted) {
+                setState(() {
+                  _mealplansFuture = _fetchMealplans();
+                });
+                ScaffoldMessenger.of(context)
+                  ..clearSnackBars()
+                  ..showSnackBar(
+                    SnackBar(
+                      content: Text(l10n.mealAddedSuccess(recipe.name)),
+                      backgroundColor: Colors.green,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  );
+              }
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context)
+                  ..clearSnackBars()
+                  ..showSnackBar(
+                    SnackBar(
+                      content: Text(l10n.errorCreating(e.toString())),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      duration: const Duration(seconds: 4),
+                    ),
+                  );
+              }
+            }
           },
         ),
       ),
@@ -141,9 +180,119 @@ class _PlannerScreenState extends State<PlannerScreen> {
   }
 
   void _showEditMealDialog(MealplanEntry meal) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppLocalizations.of(context)!.featureNotImplemented)),
+    final l10n = AppLocalizations.of(context)!;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        child: AddMealForm(
+          onAddMeal: (entryType, recipe) async {
+            final dateStr = _selectedDay.toIso8601String().split('T').first;
+
+            final updatedEntry = MealplanEntry(
+              id: meal.id,
+              date: dateStr,
+              entryType: entryType,
+              title: recipe.name,
+              recipeId: recipe.id.isNotEmpty ? recipe.id : null,
+              groupId: meal.groupId,
+              householdId: meal.householdId,
+            );
+
+            try {
+              await _mealplanRepository.updateMealplan(meal.id, updatedEntry);
+              if (mounted) {
+                setState(() {
+                  _mealplansFuture = _fetchMealplans();
+                });
+                ScaffoldMessenger.of(context)
+                  ..clearSnackBars()
+                  ..showSnackBar(
+                    SnackBar(
+                      content: Text(l10n.mealUpdatedSuccess),
+                      backgroundColor: Colors.green,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  );
+              }
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context)
+                  ..clearSnackBars()
+                  ..showSnackBar(
+                    SnackBar(
+                      content: Text(l10n.errorCreating(e.toString())),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      duration: const Duration(seconds: 4),
+                    ),
+                  );
+              }
+            }
+          },
+        ),
+      ),
     );
+  }
+
+  Future<void> _deleteMeal(MealplanEntry meal) async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.deleteMeal),
+        content: Text(l10n.confirmDeleteMeal(meal.recipe?.name ?? meal.title ?? '')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await _mealplanRepository.deleteMealplan(meal.id);
+      if (mounted) {
+        setState(() {
+          _mealplansFuture = _fetchMealplans();
+        });
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(l10n.mealDeletedSuccess),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(l10n.errorCreating(e.toString())),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+      }
+    }
   }
 
   Widget _buildErrorWidget(Object error, VoidCallback onRetry) {
@@ -339,7 +488,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
                                         label: l10n.edit,
                                       ),
                                       SlidableAction(
-                                        onPressed: (context) {},
+                                        onPressed: (context) => _deleteMeal(meal),
                                         backgroundColor: Colors.redAccent,
                                         foregroundColor: Colors.white,
                                         icon: Icons.delete,

@@ -5,6 +5,7 @@
     "email": "Email",
     "password": "Passwort",
     "login": "Einloggen",
+    "loginDescription": "Melde dich mit deinem Mealie-Server an, um Rezepte, Einkaufslisten und Essenspläne zu verwalten.",
     "fillAllFields": "Bitte Server, Email und Passwort ausfüllen.",
     "home": "Startseite",
     "planner": "Planer",
@@ -70,8 +71,25 @@
     "noItemsPlanned": "Keine Elemente geplant.",
     "editMeal": "Mahlzeit bearbeiten",
     "deleteMeal": "Mahlzeit löschen",
-    "confirmDeleteMeal": "Bist du sicher, dass du diese Mahlzeit löschen möchtest?",
+    "confirmDeleteMeal": "Bist du sicher, dass du \"{name}\" löschen möchtest?",
+    "@confirmDeleteMeal": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
     "noMealsPlanned": "Keine Mahlzeiten geplant.",
+    "mealAddedSuccess": "\"{name}\" zum Planer hinzugefügt.",
+    "@mealAddedSuccess": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "mealUpdatedSuccess": "Mahlzeit erfolgreich aktualisiert.",
+    "mealDeletedSuccess": "Mahlzeit erfolgreich gelöscht.",
     "noToken": "Kein Token gefunden. Bitte melde dich erneut an.",
     "addList": "Liste hinzufügen",
     "createList": "Liste erstellen",
@@ -204,6 +222,9 @@
     "lunch": "Mittagessen",
     "dinner": "Abendessen",
     "snack": "Snack",
+    "side": "Beilage",
+    "drink": "Getränk",
+    "dessert": "Dessert",
     "searchOrEnterRecipeName": "Rezept suchen oder neuen Namen eingeben",
     "newRecipeNameHint": "Name des neuen Rezepts...",
     "continueToDetails": "Weiter zu Details",

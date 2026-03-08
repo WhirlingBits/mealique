@@ -53,6 +53,7 @@ class MealplanEntry {
   final String? recipeId;
   final int id;
   final String? groupId;
+  final String? householdId;
   final String? userId;
   final MealplanRecipe? recipe;
 
@@ -64,6 +65,7 @@ class MealplanEntry {
     this.recipeId,
     required this.id,
     this.groupId,
+    this.householdId,
     this.userId,
     this.recipe,
   });
@@ -78,13 +80,14 @@ class MealplanEntry {
     }
     return MealplanEntry(
       date: json['date'],
-      entryType: PlanEntryType.fromString(json['entryType']),
+      entryType: PlanEntryType.fromString(json['entryType'] ?? json['entry_type']),
       title: json['title'],
       text: json['text'],
-      recipeId: json['recipeId'],
+      recipeId: json['recipeId'] ?? json['recipe_id'],
       id: parsedId,
-      groupId: json['groupId'],
-      userId: json['userId'],
+      groupId: json['groupId'] ?? json['group_id'],
+      householdId: json['householdId'] ?? json['household_id'],
+      userId: json['userId'] ?? json['user_id'],
       recipe: json['recipe'] != null ? MealplanRecipe.fromJson(json['recipe']) : null,
     );
   }
@@ -93,10 +96,19 @@ class MealplanEntry {
     final data = <String, dynamic>{
       'date': date,
       'entryType': entryType.name,
-      'title': title,
-      'text': text,
-      'recipeId': recipeId,
+      'title': title ?? '',
+      'text': text ?? '',
     };
+    // Only include recipeId when a real recipe is assigned
+    if (recipeId != null && recipeId!.isNotEmpty) {
+      data['recipeId'] = recipeId;
+    }
+    if (groupId != null) {
+      data['groupId'] = groupId;
+    }
+    if (householdId != null) {
+      data['householdId'] = householdId;
+    }
     // Only include id if it's an existing entry (id > 0)
     if (id > 0) {
       data['id'] = id;

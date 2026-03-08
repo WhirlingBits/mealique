@@ -2,10 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../data/sync/recipe_repository.dart';
 import '../../l10n/app_localizations.dart';
+import '../../models/mealplan_model.dart';
 import '../../models/recipes_model.dart';
 
 class AddMealForm extends StatefulWidget {
-  final Function(String mealType, Recipe recipe) onAddMeal;
+  final Function(PlanEntryType entryType, Recipe recipe) onAddMeal;
 
   const AddMealForm({
     super.key,
@@ -20,7 +21,7 @@ class _AddMealFormState extends State<AddMealForm> {
   final _focusScopeNode = FocusScopeNode();
   bool _isAnythingFocused = false;
 
-  String? _selectedMealType;
+  PlanEntryType _selectedEntryType = PlanEntryType.breakfast;
   Recipe? _selectedRecipe;
 
   final TextEditingController _recipeController = TextEditingController();
@@ -31,12 +32,23 @@ class _AddMealFormState extends State<AddMealForm> {
   bool _isLoadingSuggestions = false;
   Timer? _debounce;
 
-  List<String> get _mealTypes {
-    final l10n = AppLocalizations.of(context);
-    if (l10n != null) {
-      return [l10n.breakfast, l10n.lunch, l10n.dinner, l10n.snack];
+  String _localizedEntryType(AppLocalizations l10n, PlanEntryType type) {
+    switch (type) {
+      case PlanEntryType.breakfast:
+        return l10n.breakfast;
+      case PlanEntryType.lunch:
+        return l10n.lunch;
+      case PlanEntryType.dinner:
+        return l10n.dinner;
+      case PlanEntryType.snack:
+        return l10n.snack;
+      case PlanEntryType.side:
+        return l10n.side;
+      case PlanEntryType.drink:
+        return l10n.drink;
+      case PlanEntryType.dessert:
+        return l10n.dessert;
     }
-    return ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
   }
 
   @override
@@ -46,12 +58,6 @@ class _AddMealFormState extends State<AddMealForm> {
     _recipeController.addListener(_onRecipeTextChanged);
     // Load initial recipes
     _loadRecipes('');
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _selectedMealType ??= _mealTypes.first;
   }
 
   void _onRecipeTextChanged() {
@@ -114,8 +120,6 @@ class _AddMealFormState extends State<AddMealForm> {
   }
 
   void _handleSubmit() {
-    if (_selectedMealType == null) return;
-
     final text = _recipeController.text.trim();
     if (text.isEmpty) return;
 
@@ -125,7 +129,7 @@ class _AddMealFormState extends State<AddMealForm> {
     } else {
       // Treat as custom/new recipe name
       recipeToSend = Recipe(
-        id: 'custom-${DateTime.now().millisecondsSinceEpoch}',
+        id: '',
         name: text,
         slug: '',
         servings: 0,
@@ -134,7 +138,7 @@ class _AddMealFormState extends State<AddMealForm> {
       );
     }
 
-    widget.onAddMeal(_selectedMealType!, recipeToSend);
+    widget.onAddMeal(_selectedEntryType, recipeToSend);
     Navigator.of(context).pop();
   }
 
@@ -192,22 +196,24 @@ class _AddMealFormState extends State<AddMealForm> {
                       ),
                     ),
                     // Meal Type Dropdown
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedMealType,
+                    DropdownButtonFormField<PlanEntryType>(
+                      initialValue: _selectedEntryType,
                       decoration: InputDecoration(
                         labelText: l10n.meal,
                         border: const OutlineInputBorder(),
                       ),
-                      items: _mealTypes.map((String type) {
-                        return DropdownMenuItem<String>(
+                      items: PlanEntryType.values.map((PlanEntryType type) {
+                        return DropdownMenuItem<PlanEntryType>(
                           value: type,
-                          child: Text(type),
+                          child: Text(_localizedEntryType(l10n, type)),
                         );
                       }).toList(),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          _selectedMealType = newValue;
-                        });
+                      onChanged: (PlanEntryType? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _selectedEntryType = newValue;
+                          });
+                        }
                       },
                     ),
                     const SizedBox(height: 12),
@@ -307,7 +313,7 @@ class _AddMealFormState extends State<AddMealForm> {
                       child: Tooltip(
                         message: l10n.addMealToPlanner,
                         child: ElevatedButton(
-                          onPressed: _recipeText.trim().isNotEmpty && _selectedMealType != null
+                          onPressed: _recipeText.trim().isNotEmpty
                               ? _handleSubmit
                               : null,
                           style: ElevatedButton.styleFrom(

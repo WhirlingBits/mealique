@@ -5,6 +5,7 @@
     "email": "Email",
     "password": "Password",
     "login": "Login",
+    "loginDescription": "Sign in with your Mealie server to manage recipes, shopping lists, and meal plans.",
     "fillAllFields": "Please fill in server, email, and password.",
     "home": "Home",
     "planner": "Planner",
@@ -70,8 +71,25 @@
     "noItemsPlanned": "No items planned.",
     "editMeal": "Edit Meal",
     "deleteMeal": "Delete Meal",
-    "confirmDeleteMeal": "Are you sure you want to delete this meal?",
+    "confirmDeleteMeal": "Are you sure you want to delete \"{name}\"?",
+    "@confirmDeleteMeal": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
     "noMealsPlanned": "No meals planned.",
+    "mealAddedSuccess": "\"{name}\" added to planner.",
+    "@mealAddedSuccess": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "mealUpdatedSuccess": "Meal updated successfully.",
+    "mealDeletedSuccess": "Meal deleted successfully.",
     "noToken": "No token found. Please log in again.",
     "addList": "Add List",
     "createList": "Create List",
@@ -204,6 +222,9 @@
     "lunch": "Lunch",
     "dinner": "Dinner",
     "snack": "Snack",
+    "side": "Side",
+    "drink": "Drink",
+    "dessert": "Dessert",
     "searchOrEnterRecipeName": "Search recipe or enter new name",
     "newRecipeNameHint": "Name of the new recipe...",
     "continueToDetails": "Continue to details",

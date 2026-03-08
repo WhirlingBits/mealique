@@ -129,6 +129,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   'assets/mealique.png',
                   height: 120,
                 ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.loginDescription,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey[600],
+                  ),
+                ),
                 const SizedBox(height: 32),
                 TextField(
                   controller: _serverController,

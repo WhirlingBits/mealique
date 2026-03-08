@@ -134,6 +134,12 @@ abstract class AppLocalizations {
   /// **'Login'**
   String get login;
 
+  /// No description provided for @loginDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with your Mealie server to manage recipes, shopping lists, and meal plans.'**
+  String get loginDescription;
+
   /// No description provided for @fillAllFields.
   ///
   /// In en, this message translates to:
@@ -527,14 +533,32 @@ abstract class AppLocalizations {
   /// No description provided for @confirmDeleteMeal.
   ///
   /// In en, this message translates to:
-  /// **'Are you sure you want to delete this meal?'**
-  String get confirmDeleteMeal;
+  /// **'Are you sure you want to delete \"{name}\"?'**
+  String confirmDeleteMeal(String name);
 
   /// No description provided for @noMealsPlanned.
   ///
   /// In en, this message translates to:
   /// **'No meals planned.'**
   String get noMealsPlanned;
+
+  /// No description provided for @mealAddedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" added to planner.'**
+  String mealAddedSuccess(String name);
+
+  /// No description provided for @mealUpdatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Meal updated successfully.'**
+  String get mealUpdatedSuccess;
+
+  /// No description provided for @mealDeletedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Meal deleted successfully.'**
+  String get mealDeletedSuccess;
 
   /// No description provided for @noToken.
   ///
@@ -1093,6 +1117,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Snack'**
   String get snack;
+
+  /// No description provided for @side.
+  ///
+  /// In en, this message translates to:
+  /// **'Side'**
+  String get side;
+
+  /// No description provided for @drink.
+  ///
+  /// In en, this message translates to:
+  /// **'Drink'**
+  String get drink;
+
+  /// No description provided for @dessert.
+  ///
+  /// In en, this message translates to:
+  /// **'Dessert'**
+  String get dessert;
 
   /// No description provided for @searchOrEnterRecipeName.
   ///

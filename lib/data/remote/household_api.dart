@@ -483,9 +483,11 @@ class HouseholdApi {
   }
 
   Future<MealplanEntry> createMealplan(MealplanEntry entry) async {
+    final json = entry.toJson();
+    debugPrint('Creating mealplan with JSON: $json');
     final response = await _dio.post(
       'api/households/mealplans',
-      data: entry.toJson(),
+      data: json,
     );
     return MealplanEntry.fromJson(response.data);
   }
@@ -510,14 +512,17 @@ class HouseholdApi {
   }
 
   Future<MealplanEntry> updateMealplan(int itemId, MealplanEntry entry) async {
+    final json = entry.toJson();
+    debugPrint('Updating mealplan $itemId with JSON: $json');
     final response = await _dio.put(
       'api/households/mealplans/$itemId',
-      data: entry.toJson(),
+      data: json,
     );
     return MealplanEntry.fromJson(response.data);
   }
 
   Future<void> deleteMealplan(int itemId) async {
+    debugPrint('Deleting mealplan $itemId');
     await _dio.delete('api/households/mealplans/$itemId');
   }
 }

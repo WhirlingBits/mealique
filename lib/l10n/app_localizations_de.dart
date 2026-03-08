@@ -27,6 +27,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get login => 'Einloggen';
 
   @override
+  String get loginDescription =>
+      'Melde dich mit deinem Mealie-Server an, um Rezepte, Einkaufslisten und Essenspläne zu verwalten.';
+
+  @override
   String get fillAllFields => 'Bitte Server, Email und Passwort ausfüllen.';
 
   @override
@@ -225,11 +229,23 @@ class AppLocalizationsDe extends AppLocalizations {
   String get deleteMeal => 'Mahlzeit löschen';
 
   @override
-  String get confirmDeleteMeal =>
-      'Bist du sicher, dass du diese Mahlzeit löschen möchtest?';
+  String confirmDeleteMeal(String name) {
+    return 'Bist du sicher, dass du \"$name\" löschen möchtest?';
+  }
 
   @override
   String get noMealsPlanned => 'Keine Mahlzeiten geplant.';
+
+  @override
+  String mealAddedSuccess(String name) {
+    return '\"$name\" zum Planer hinzugefügt.';
+  }
+
+  @override
+  String get mealUpdatedSuccess => 'Mahlzeit erfolgreich aktualisiert.';
+
+  @override
+  String get mealDeletedSuccess => 'Mahlzeit erfolgreich gelöscht.';
 
   @override
   String get noToken => 'Kein Token gefunden. Bitte melde dich erneut an.';
@@ -548,6 +564,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get snack => 'Snack';
+
+  @override
+  String get side => 'Beilage';
+
+  @override
+  String get drink => 'Getränk';
+
+  @override
+  String get dessert => 'Dessert';
 
   @override
   String get searchOrEnterRecipeName =>
