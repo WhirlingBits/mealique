@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -27,19 +29,47 @@ class ShoppingListDetailScreen extends StatefulWidget {
       _ShoppingListDetailScreenState();
 }
 
-class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen> {
+class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
+    with WidgetsBindingObserver {
   final _repository = HouseholdRepository();
   late Future<List<ShoppingItem>> _itemsFuture;
+  Timer? _refreshTimer;
 
   final Color _accentColor = const Color(0xFFE58325);
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadItems();
+    _startAutoRefresh();
     // Load per-list settings
     Provider.of<SettingsProvider>(context, listen: false)
         .loadListSettings(widget.listId);
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadItems();
+      _startAutoRefresh();
+    } else if (state == AppLifecycleState.paused) {
+      _refreshTimer?.cancel();
+    }
+  }
+
+  void _startAutoRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
+      _loadItems();
+    });
   }
 
   void _loadItems() {
