@@ -560,6 +560,12 @@ abstract class AppLocalizations {
   /// **'Meal deleted successfully.'**
   String get mealDeletedSuccess;
 
+  /// No description provided for @mealTypeAlreadyPlanned.
+  ///
+  /// In en, this message translates to:
+  /// **'{mealType} is already planned for this day.'**
+  String mealTypeAlreadyPlanned(String mealType);
+
   /// No description provided for @noToken.
   ///
   /// In en, this message translates to:

@@ -246,6 +246,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mealDeletedSuccess => 'Meal deleted successfully.';
 
   @override
+  String mealTypeAlreadyPlanned(String mealType) {
+    return '$mealType is already planned for this day.';
+  }
+
+  @override
   String get noToken => 'No token found. Please log in again.';
 
   @override

@@ -90,6 +90,14 @@
     },
     "mealUpdatedSuccess": "Meal updated successfully.",
     "mealDeletedSuccess": "Meal deleted successfully.",
+    "mealTypeAlreadyPlanned": "{mealType} is already planned for this day.",
+    "@mealTypeAlreadyPlanned": {
+        "placeholders": {
+            "mealType": {
+                "type": "String"
+            }
+        }
+    },
     "noToken": "No token found. Please log in again.",
     "addList": "Add List",
     "createList": "Create List",

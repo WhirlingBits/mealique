@@ -7,10 +7,14 @@ import '../../models/recipes_model.dart';
 
 class AddMealForm extends StatefulWidget {
   final Function(PlanEntryType entryType, Recipe recipe) onAddMeal;
+  final Set<PlanEntryType> occupiedEntryTypes;
+  final PlanEntryType? editingEntryType;
 
   const AddMealForm({
     super.key,
     required this.onAddMeal,
+    this.occupiedEntryTypes = const {},
+    this.editingEntryType,
   });
 
   @override
@@ -25,11 +29,11 @@ class _AddMealFormState extends State<AddMealForm> {
   Recipe? _selectedRecipe;
 
   final TextEditingController _recipeController = TextEditingController();
+  final FocusNode _recipeFocusNode = FocusNode();
   String _recipeText = '';
 
   final RecipeRepository _recipeRepository = RecipeRepository();
-  List<Recipe> _recipeSuggestions = [];
-  bool _isLoadingSuggestions = false;
+  List<Recipe> _cachedRecipes = [];
   Timer? _debounce;
 
   String _localizedEntryType(AppLocalizations l10n, PlanEntryType type) {
@@ -55,23 +59,19 @@ class _AddMealFormState extends State<AddMealForm> {
   void initState() {
     super.initState();
     _focusScopeNode.addListener(_onFocusChange);
-    _recipeController.addListener(_onRecipeTextChanged);
-    // Load initial recipes
-    _loadRecipes('');
-  }
 
-  void _onRecipeTextChanged() {
-    final text = _recipeController.text;
-    if (_recipeText != text) {
-      setState(() {
-        _recipeText = text;
-        // Reset selection if user edits text after selecting
-        if (_selectedRecipe != null && _selectedRecipe!.name != text) {
-          _selectedRecipe = null;
-        }
-      });
-      _debouncedSearch(text);
+    // Set initial entry type: editing type, or first free type
+    if (widget.editingEntryType != null) {
+      _selectedEntryType = widget.editingEntryType!;
+    } else {
+      final freeType = PlanEntryType.values.cast<PlanEntryType?>().firstWhere(
+        (t) => !widget.occupiedEntryTypes.contains(t),
+        orElse: () => null,
+      );
+      _selectedEntryType = freeType ?? PlanEntryType.breakfast;
     }
+
+    _loadRecipes('');
   }
 
   void _debouncedSearch(String query) {
@@ -82,7 +82,6 @@ class _AddMealFormState extends State<AddMealForm> {
   }
 
   Future<void> _loadRecipes(String query) async {
-    setState(() => _isLoadingSuggestions = true);
     try {
       final recipes = await _recipeRepository.getRecipes(
         searchQuery: query.isEmpty ? null : query,
@@ -90,15 +89,10 @@ class _AddMealFormState extends State<AddMealForm> {
       );
       if (mounted) {
         setState(() {
-          _recipeSuggestions = recipes;
-          _isLoadingSuggestions = false;
+          _cachedRecipes = recipes;
         });
       }
-    } catch (_) {
-      if (mounted) {
-        setState(() => _isLoadingSuggestions = false);
-      }
-    }
+    } catch (_) {}
   }
 
   void _onFocusChange() {
@@ -114,8 +108,8 @@ class _AddMealFormState extends State<AddMealForm> {
     _debounce?.cancel();
     _focusScopeNode.removeListener(_onFocusChange);
     _focusScopeNode.dispose();
-    _recipeController.removeListener(_onRecipeTextChanged);
     _recipeController.dispose();
+    _recipeFocusNode.dispose();
     super.dispose();
   }
 
@@ -127,15 +121,22 @@ class _AddMealFormState extends State<AddMealForm> {
     if (_selectedRecipe != null && _selectedRecipe!.name == text) {
       recipeToSend = _selectedRecipe!;
     } else {
-      // Treat as custom/new recipe name
-      recipeToSend = Recipe(
-        id: '',
-        name: text,
-        slug: '',
-        servings: 0,
-        ingredients: [],
-        instructions: [],
+      // Try to match against cached recipes
+      final match = _cachedRecipes.where(
+        (r) => r.name.toLowerCase() == text.toLowerCase(),
       );
+      if (match.isNotEmpty) {
+        recipeToSend = match.first;
+      } else {
+        recipeToSend = Recipe(
+          id: '',
+          name: text,
+          slug: '',
+          servings: 0,
+          ingredients: [],
+          instructions: [],
+        );
+      }
     }
 
     widget.onAddMeal(_selectedEntryType, recipeToSend);
@@ -148,18 +149,9 @@ class _AddMealFormState extends State<AddMealForm> {
     final l10n = AppLocalizations.of(context)!;
     const accentColor = Color(0xFFE58325);
 
-    // Filter suggestions based on current text
-    final filteredSuggestions = _recipeText.isEmpty
-        ? _recipeSuggestions
-        : _recipeSuggestions
-            .where((r) => r.name.toLowerCase().contains(_recipeText.toLowerCase()))
-            .toList();
-
     return Theme(
       data: theme.copyWith(
-        colorScheme: theme.colorScheme.copyWith(
-          primary: accentColor,
-        ),
+        colorScheme: theme.colorScheme.copyWith(primary: accentColor),
       ),
       child: PopScope(
         canPop: !_isAnythingFocused,
@@ -175,7 +167,7 @@ class _AddMealFormState extends State<AddMealForm> {
           child: SafeArea(
             child: FocusScope(
               node: _focusScopeNode,
-              child: Padding(
+              child: SingleChildScrollView(
                 padding: EdgeInsets.only(
                   left: 16,
                   right: 16,
@@ -203,109 +195,30 @@ class _AddMealFormState extends State<AddMealForm> {
                         border: const OutlineInputBorder(),
                       ),
                       items: PlanEntryType.values.map((PlanEntryType type) {
+                        final isOccupied = widget.occupiedEntryTypes.contains(type) &&
+                            type != widget.editingEntryType;
                         return DropdownMenuItem<PlanEntryType>(
                           value: type,
-                          child: Text(_localizedEntryType(l10n, type)),
+                          enabled: !isOccupied,
+                          child: Text(
+                            isOccupied
+                                ? '${_localizedEntryType(l10n, type)} ✓'
+                                : _localizedEntryType(l10n, type),
+                            style: TextStyle(
+                              color: isOccupied ? Colors.grey : null,
+                            ),
+                          ),
                         );
                       }).toList(),
                       onChanged: (PlanEntryType? newValue) {
                         if (newValue != null) {
-                          setState(() {
-                            _selectedEntryType = newValue;
-                          });
+                          setState(() => _selectedEntryType = newValue);
                         }
                       },
                     ),
                     const SizedBox(height: 12),
-                    // Recipe search field
-                    TextFormField(
-                      controller: _recipeController,
-                      decoration: InputDecoration(
-                        labelText: l10n.searchOrEnterRecipeName,
-                        border: const OutlineInputBorder(),
-                        prefixIcon: const Icon(Icons.search),
-                        suffixIcon: _isLoadingSuggestions
-                            ? const Padding(
-                                padding: EdgeInsets.all(12),
-                                child: SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                ),
-                              )
-                            : _recipeText.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.clear),
-                                    onPressed: () {
-                                      _recipeController.clear();
-                                      setState(() {
-                                        _selectedRecipe = null;
-                                      });
-                                      _loadRecipes('');
-                                    },
-                                  )
-                                : null,
-                      ),
-                      onFieldSubmitted: (_) => _handleSubmit(),
-                    ),
-                    // Recipe suggestions list
-                    if (filteredSuggestions.isNotEmpty)
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 200),
-                        child: Card(
-                          margin: const EdgeInsets.only(top: 4),
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: ListView.separated(
-                            shrinkWrap: true,
-                            padding: EdgeInsets.zero,
-                            itemCount: filteredSuggestions.length,
-                            separatorBuilder: (_, __) => const Divider(height: 1),
-                            itemBuilder: (context, index) {
-                              final recipe = filteredSuggestions[index];
-                              final isSelected = _selectedRecipe?.id == recipe.id;
-                              return ListTile(
-                                dense: true,
-                                leading: Icon(
-                                  Icons.restaurant,
-                                  size: 20,
-                                  color: isSelected ? accentColor : Colors.grey,
-                                ),
-                                title: Text(
-                                  recipe.name,
-                                  style: TextStyle(
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                    color: isSelected ? accentColor : null,
-                                  ),
-                                ),
-                                subtitle: recipe.totalTime != null && recipe.totalTime!.isNotEmpty
-                                    ? Text(
-                                        '⏱ ${recipe.totalTime}',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey[600],
-                                        ),
-                                      )
-                                    : null,
-                                trailing: isSelected
-                                    ? const Icon(Icons.check_circle, color: accentColor)
-                                    : null,
-                                onTap: () {
-                                  setState(() {
-                                    _selectedRecipe = recipe;
-                                    _recipeController.text = recipe.name;
-                                    _recipeText = recipe.name;
-                                  });
-                                  FocusScope.of(context).unfocus();
-                                },
-                              );
-                            },
-                          ),
-                        ),
-                      ),
+                    // Recipe search with RawAutocomplete (like food autocomplete)
+                    _buildRecipeAutocomplete(l10n),
                     const SizedBox(height: 16),
                     // Submit Button
                     Align(
@@ -333,6 +246,116 @@ class _AddMealFormState extends State<AddMealForm> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildRecipeAutocomplete(AppLocalizations l10n) {
+    return RawAutocomplete<Recipe>(
+      textEditingController: _recipeController,
+      focusNode: _recipeFocusNode,
+      displayStringForOption: (recipe) => recipe.name,
+      optionsBuilder: (TextEditingValue textEditingValue) {
+        final query = textEditingValue.text.trim().toLowerCase();
+        // Trigger background search for new results
+        _debouncedSearch(textEditingValue.text.trim());
+        if (query.isEmpty) return const Iterable.empty();
+        return _cachedRecipes.where(
+          (r) => r.name.toLowerCase().contains(query),
+        );
+      },
+      onSelected: (Recipe recipe) {
+        setState(() {
+          _selectedRecipe = recipe;
+          _recipeText = recipe.name;
+        });
+      },
+      fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+        return TextFormField(
+          controller: controller,
+          focusNode: focusNode,
+          decoration: InputDecoration(
+            labelText: l10n.searchOrEnterRecipeName,
+            border: const OutlineInputBorder(),
+            prefixIcon: const Icon(Icons.search),
+            suffixIcon: controller.text.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      controller.clear();
+                      setState(() {
+                        _selectedRecipe = null;
+                        _recipeText = '';
+                      });
+                    },
+                  )
+                : null,
+          ),
+          onFieldSubmitted: (_) => _handleSubmit(),
+          onChanged: (value) {
+            setState(() {
+              _recipeText = value;
+              if (_selectedRecipe != null &&
+                  _selectedRecipe!.name != value) {
+                _selectedRecipe = null;
+              }
+            });
+          },
+        );
+      },
+      optionsViewBuilder: (context, onSelected, options) {
+        return Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            elevation: 4.0,
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width - 32,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 250),
+                child: ListView.builder(
+                  padding: EdgeInsets.zero,
+                  shrinkWrap: true,
+                  itemCount: options.length,
+                  itemBuilder: (context, index) {
+                    final recipe = options.elementAt(index);
+                    return InkWell(
+                      onTap: () => onSelected(recipe),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12.0, vertical: 10.0),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.restaurant,
+                                size: 20, color: Colors.grey),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                children: [
+                                  Text(recipe.name),
+                                  if (recipe.totalTime != null &&
+                                      recipe.totalTime!.isNotEmpty)
+                                    Text(
+                                      '⏱ ${recipe.totalTime}',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

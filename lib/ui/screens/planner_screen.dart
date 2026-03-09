@@ -132,6 +132,9 @@ class _PlannerScreenState extends State<PlannerScreen> {
   }
 
   void _showAddMealSheet() {
+    final mealsForDay = _getMealsForDay(_selectedDay);
+    final occupiedTypes = mealsForDay.map((m) => m.entryType).toSet();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -139,6 +142,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: AddMealForm(
+          occupiedEntryTypes: occupiedTypes,
           onAddMeal: (entryType, recipe) async {
             final l10n = AppLocalizations.of(context)!;
             final dateStr = _selectedDay.toIso8601String().split('T').first;
@@ -191,6 +195,9 @@ class _PlannerScreenState extends State<PlannerScreen> {
 
   void _showEditMealDialog(MealplanEntry meal) {
     final l10n = AppLocalizations.of(context)!;
+    final mealsForDay = _getMealsForDay(_selectedDay);
+    final occupiedTypes = mealsForDay.map((m) => m.entryType).toSet();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -198,6 +205,8 @@ class _PlannerScreenState extends State<PlannerScreen> {
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: AddMealForm(
+          occupiedEntryTypes: occupiedTypes,
+          editingEntryType: meal.entryType,
           onAddMeal: (entryType, recipe) async {
             final dateStr = _selectedDay.toIso8601String().split('T').first;
 

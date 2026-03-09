@@ -90,6 +90,14 @@
     },
     "mealUpdatedSuccess": "Mahlzeit erfolgreich aktualisiert.",
     "mealDeletedSuccess": "Mahlzeit erfolgreich gelöscht.",
+    "mealTypeAlreadyPlanned": "{mealType} ist für diesen Tag bereits geplant.",
+    "@mealTypeAlreadyPlanned": {
+        "placeholders": {
+            "mealType": {
+                "type": "String"
+            }
+        }
+    },
     "noToken": "Kein Token gefunden. Bitte melde dich erneut an.",
     "addList": "Liste hinzufügen",
     "createList": "Liste erstellen",
