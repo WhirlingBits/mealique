@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:mealique/l10n/app_localizations.dart';
+import 'package:mealique/services/sync_service.dart';
 import '../widgets/navigation_bar.dart';
 import 'dashboard_screen.dart';
 import 'recipes_screen.dart';
@@ -25,6 +26,7 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   late bool _isOffline;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
+  final SyncService _syncService = SyncService();
 
   // Track which tabs have been visited to enable lazy loading
   final Set<int> _visitedTabs = {0};
@@ -52,6 +54,9 @@ class _MainScreenState extends State<MainScreen> {
     super.initState();
     _isOffline = widget.isOffline;
 
+    // Initialise the sync service (starts its own connectivity listener)
+    _syncService.init();
+
     if (_isOffline) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showOfflineSnackBar();
@@ -69,10 +74,53 @@ class _MainScreenState extends State<MainScreen> {
         if (_isOffline) {
           _showOfflineSnackBar();
         } else {
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          if (mounted) {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          }
+          _processSyncQueue();
         }
       }
     });
+  }
+
+  /// Processes the offline queue and shows status snackbars.
+  Future<void> _processSyncQueue() async {
+    final pendingBefore = _syncService.pendingCount.value;
+    if (pendingBefore == 0) return;
+
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l10n.syncStarted),
+        backgroundColor: Colors.blue,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+
+    final synced = await _syncService.processQueue();
+
+    if (!mounted) return;
+    final remaining = _syncService.pendingCount.value;
+
+    if (remaining == 0 && synced > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${l10n.sync} ✓ – $synced'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } else if (remaining > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${l10n.sync}: $remaining ${l10n.offlineMode}'),
+          backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
   }
 
   @override
@@ -85,7 +133,7 @@ class _MainScreenState extends State<MainScreen> {
     final l10n = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${l10n.networkError} (Offline-Modus)'),
+        content: Text('${l10n.networkError} (${l10n.offlineMode})'),
         backgroundColor: Colors.orange,
         duration: const Duration(seconds: 5),
         action: SnackBarAction(

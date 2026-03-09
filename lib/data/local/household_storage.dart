@@ -97,7 +97,7 @@ class ListItemsConverter extends TypeConverter<List<ShoppingItem>, String> {
 
   @override
   String toSql(List<ShoppingItem> value) {
-    return json.encode(value.map((item) => item.toJson()).toList());
+    return json.encode(value.map((item) => item.toCacheJson()).toList());
   }
 }
 
@@ -200,7 +200,10 @@ class Mealplans extends Table {
 
 @DriftDatabase(tables: [Cookbooks, ShoppingLists, MealplanRules, Mealplans])
 class HouseholdDatabase extends _$HouseholdDatabase {
-  HouseholdDatabase() : super(openConnection());
+  HouseholdDatabase._() : super(openConnection());
+
+  static final HouseholdDatabase _instance = HouseholdDatabase._();
+  factory HouseholdDatabase() => _instance;
 
   @override
   int get schemaVersion => 1;

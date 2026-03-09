@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:mealique/data/local/household_storage.dart';
+import 'package:mealique/data/local/recipe_storage.dart';
 import 'package:mealique/data/local/token_storage.dart';
+import 'package:mealique/services/sync_service.dart';
 import 'package:mealique/ui/screens/login_screen.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -31,6 +34,10 @@ class _ServerApiSettingsScreenState extends State<ServerApiSettingsScreen> {
 
   Future<void> _logout() async {
     await _tokenStorage.clearAll();
+    // Clear all offline caches and pending sync queue
+    await HouseholdStorage().clearAll();
+    await RecipeStorage().clearAll();
+    await SyncService().clearQueue();
     if (mounted) {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const LoginScreen()),

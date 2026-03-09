@@ -54,14 +54,24 @@ class _PlannerScreenState extends State<PlannerScreen> {
 
   Future<void> _fetchMealplans() async {
     _mealsByDay.clear();
-    final mealplans =
-        await _mealplanRepository.getMealplans(_dateRange.start, _dateRange.end);
-    if (mounted) {
-      setState(() {
-        _mealsByDay.addAll(mealplans);
-        _selectedMeals.value = _getMealsForDay(_selectedDay);
-        _selectedEntryType = null; // Reset filter
-      });
+    try {
+      final mealplans =
+          await _mealplanRepository.getMealplans(_dateRange.start, _dateRange.end);
+      if (mounted) {
+        setState(() {
+          _mealsByDay.addAll(mealplans);
+          _selectedMeals.value = _getMealsForDay(_selectedDay);
+          _selectedEntryType = null; // Reset filter
+        });
+      }
+    } catch (e) {
+      debugPrint('Failed to fetch mealplans: $e');
+      if (mounted) {
+        setState(() {
+          _selectedMeals.value = _getMealsForDay(_selectedDay);
+          _selectedEntryType = null;
+        });
+      }
     }
   }
 

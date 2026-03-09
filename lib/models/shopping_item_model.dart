@@ -181,6 +181,52 @@ class ShoppingItem {
     return data;
   }
 
+  /// Complete serialization for local cache storage.
+  /// Unlike toJson() which is optimized for API calls, this always includes all fields.
+  Map<String, dynamic> toCacheJson() {
+    final Map<String, dynamic> data = {
+      'id': id,
+      'quantity': quantity,
+      'note': note,
+      'display': display,
+      'shoppingListId': shoppingListId,
+      'checked': checked,
+      'position': position,
+      'extras': extras ?? {},
+    };
+    if (food != null) {
+      data['food'] = {
+        'id': food!.id,
+        'name': food!.name,
+        if (food!.label != null)
+          'label': {
+            'id': food!.label!.id,
+            'name': food!.label!.name,
+            'color': food!.label!.color,
+            'groupId': food!.label!.groupId,
+          },
+      };
+    }
+    if (foodId != null) data['foodId'] = foodId;
+    if (unit != null) {
+      data['unit'] = {
+        'id': unit!.id,
+        'name': unit!.name,
+      };
+    }
+    if (unitId != null) data['unitId'] = unitId;
+    if (labelId != null) data['labelId'] = labelId;
+    if (label != null) {
+      data['label'] = {
+        'id': label!.id,
+        'name': label!.name,
+        'color': label!.color,
+        'groupId': label!.groupId,
+      };
+    }
+    return data;
+  }
+
   ShoppingItem copyWith({
     double? quantity,
     ShoppingItemUnit? unit,

@@ -1,5 +1,6 @@
-import 'package:dio/dio.dart';
 import 'package:mealique/config/app_constants.dart';
+import 'package:mealique/core/utils/offline_helper.dart';
+import 'package:mealique/data/local/recipe_storage.dart';
 import 'package:mealique/data/local/token_storage.dart';
 import 'package:mealique/models/food_model.dart';
 import 'package:mealique/models/recipes_model.dart';
@@ -8,10 +9,12 @@ import '../remote/recipes_api.dart';
 
 class RecipeRepository {
   final RecipesApi _api;
+  final RecipeStorage _storage;
   final TokenStorage _tokenStorage;
 
-  RecipeRepository() 
+  RecipeRepository()
       : _api = RecipesApi(),
+        _storage = RecipeStorage(),
         _tokenStorage = TokenStorage();
 
   Future<List<Recipe>> getRecipes(
@@ -25,32 +28,58 @@ class RecipeRepository {
       return _getDemoRecipes();
     }
 
-    try {
-      final response = await _api.getRecipes(page: page, perPage: perPage, sort: sort, orderDirection: orderDirection, searchQuery: searchQuery);
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data != null && data['items'] is List) {
-          final items = data['items'] as List;
-          return items.map((item) => Recipe.fromJson(item)).toList();
+    return withOfflineFallbackSimple<List<Recipe>>(
+      apiCall: () async {
+        final response = await _api.getRecipes(
+            page: page,
+            perPage: perPage,
+            sort: sort,
+            orderDirection: orderDirection,
+            searchQuery: searchQuery);
+        if (response.statusCode == 200) {
+          final data = response.data;
+          if (data != null && data['items'] is List) {
+            final items = data['items'] as List;
+            return items.map((item) => Recipe.fromJson(item)).toList();
+          }
         }
-      }
-      return [];
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        // Handle unauthorized access
-      }
-      rethrow;
-    }
+        return [];
+      },
+      cacheWrite: (recipes) async {
+        if (recipes.isNotEmpty) {
+          await _storage.saveRecipes(recipes);
+        }
+      },
+      cacheRead: () async {
+        final cached = await _storage.getRecipes();
+        if (cached == null || cached.isEmpty) return null;
+        // Apply client-side search filter on cached data
+        if (searchQuery != null && searchQuery.isNotEmpty) {
+          final query = searchQuery.toLowerCase();
+          return cached
+              .where((r) =>
+                  r.name.toLowerCase().contains(query) ||
+                  (r.description?.toLowerCase().contains(query) ?? false))
+              .toList();
+        }
+        return cached;
+      },
+    );
   }
 
   Future<Recipe> getRecipe(String slug) async {
     final token = await _tokenStorage.getToken();
     if (token == AppConstants.demoToken) {
-      final demoRecipe = _getDemoRecipes().firstWhere((r) => r.slug == slug, 
-        orElse: () => _getDemoRecipes().first);
+      final demoRecipe = _getDemoRecipes().firstWhere((r) => r.slug == slug,
+          orElse: () => _getDemoRecipes().first);
       return Future.value(demoRecipe);
     }
-    return _api.getRecipe(slug);
+
+    return withOfflineFallbackSimple<Recipe>(
+      apiCall: () => _api.getRecipe(slug),
+      cacheWrite: (recipe) => _storage.saveRecipe(recipe),
+      cacheRead: () => _storage.getRecipeBySlug(slug),
+    );
   }
 
   Future<List<Food>> getFoods() async {
@@ -58,8 +87,19 @@ class RecipeRepository {
     if (token == AppConstants.demoToken) {
       return _getDemoFoods();
     }
-    final response = await _api.getFoods(perPage: 1000); 
-    return response.items;
+
+    return withOfflineFallbackSimple<List<Food>>(
+      apiCall: () async {
+        final response = await _api.getFoods(perPage: 1000);
+        return response.items;
+      },
+      cacheWrite: (foods) async {
+        if (foods.isNotEmpty) {
+          await _storage.saveFoods(foods);
+        }
+      },
+      cacheRead: () => _storage.getFoods(),
+    );
   }
 
   Future<Food> createFood(Food food) async {
@@ -85,7 +125,7 @@ class RecipeRepository {
   Future<void> deleteFood(String foodId) async {
     final token = await _tokenStorage.getToken();
     if (token == AppConstants.demoToken) {
-      return; // In demo mode, do nothing but return successfully.
+      return;
     }
     return _api.deleteFood(foodId);
   }
@@ -93,7 +133,7 @@ class RecipeRepository {
   Future<void> deleteRecipe(String slug) async {
     final token = await _tokenStorage.getToken();
     if (token == AppConstants.demoToken) {
-      return; // In demo mode, do nothing but return successfully.
+      return;
     }
     return _api.deleteRecipe(slug);
   }
@@ -106,7 +146,16 @@ class RecipeRepository {
         ShoppingItemUnit(id: 'u2', name: 'g')
       ];
     }
-    return _api.getUnits();
+
+    return withOfflineFallbackSimple<List<ShoppingItemUnit>>(
+      apiCall: () => _api.getUnits(),
+      cacheWrite: (units) async {
+        if (units.isNotEmpty) {
+          await _storage.saveUnits(units);
+        }
+      },
+      cacheRead: () => _storage.getUnits(),
+    );
   }
 
   List<Recipe> _getDemoRecipes() {
