@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -61,10 +62,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: AddRecipeForm(
-          onAddRecipe: (recipeName) {
-            // TODO: Implement recipe creation logic
-            print('Recipe to add: $recipeName');
+          onAddRecipe: (recipeJson) async {
             Navigator.pop(ctx);
+            final l10n = AppLocalizations.of(context)!;
+            try {
+              final data = Map<String, dynamic>.from(
+                  jsonDecode(recipeJson) as Map);
+              await _recipeRepository.createRecipe(data);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(l10n.recipeCreated)),
+                );
+                setState(() {}); // refresh dashboard
+              }
+            } on DioException catch (e) {
+              debugPrint('DioException creating recipe: ${e.response?.statusCode} - ${e.response?.data}');
+              if (mounted) {
+                final detail = e.response?.data?['detail'] ?? e.message;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${l10n.error}: $detail'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            } catch (e) {
+              debugPrint('Error creating recipe: $e');
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${l10n.error}: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
           },
         ),
       ),

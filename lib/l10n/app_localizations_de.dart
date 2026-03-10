@@ -824,4 +824,81 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get sortByCategory => 'Kategorie';
+
+  @override
+  String get recipeYield => 'Portionsangabe (z.B. 4 Stück)';
+
+  @override
+  String get totalTime => 'Gesamtzeit (Min)';
+
+  @override
+  String get cookTime => 'Kochzeit (Min)';
+
+  @override
+  String get addIngredient => 'Zutat hinzufügen';
+
+  @override
+  String get ingredientsList => 'Zutaten';
+
+  @override
+  String get noIngredientsAdded => 'Noch keine Zutaten hinzugefügt.';
+
+  @override
+  String get removeIngredient => 'Zutat entfernen';
+
+  @override
+  String stepOf(int current, int total) {
+    return 'Schritt $current von $total';
+  }
+
+  @override
+  String get recipeCategories => 'Kategorien';
+
+  @override
+  String get categoriesHint => 'z.B. Italienisch, Vegan, ...';
+
+  @override
+  String get tags => 'Schlagworte';
+
+  @override
+  String get tagsHint => 'z.B. schnell, gesund, ...';
+
+  @override
+  String get tools => 'Utensilien';
+
+  @override
+  String get toolsHint => 'z.B. Ofen, Mixer, ...';
+
+  @override
+  String get instructionsPerStep => 'Zubereitungsschritte';
+
+  @override
+  String get noInstructionsAdded => 'Noch keine Schritte hinzugefügt';
+
+  @override
+  String get addInstructionHint => 'Schritt beschreiben...';
+
+  @override
+  String get addInstruction => 'Schritt hinzufügen';
+
+  @override
+  String get recipeNote => 'Rezeptnotiz';
+
+  @override
+  String get recipeNoteHint => 'Zusätzliche Notizen...';
+
+  @override
+  String get addTag => 'Hinzufügen';
+
+  @override
+  String get removeTag => 'Entfernen';
+
+  @override
+  String get rating => 'Bewertung';
+
+  @override
+  String get recipeCreated => 'Rezept erfolgreich erstellt';
+
+  @override
+  String get error => 'Fehler';
 }

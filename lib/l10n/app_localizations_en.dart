@@ -815,4 +815,81 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sortByCategory => 'Category';
+
+  @override
+  String get recipeYield => 'Yield (e.g. 4 pieces)';
+
+  @override
+  String get totalTime => 'Total time (min)';
+
+  @override
+  String get cookTime => 'Cook time (min)';
+
+  @override
+  String get addIngredient => 'Add Ingredient';
+
+  @override
+  String get ingredientsList => 'Ingredients';
+
+  @override
+  String get noIngredientsAdded => 'No ingredients added yet.';
+
+  @override
+  String get removeIngredient => 'Remove ingredient';
+
+  @override
+  String stepOf(int current, int total) {
+    return 'Step $current of $total';
+  }
+
+  @override
+  String get recipeCategories => 'Categories';
+
+  @override
+  String get categoriesHint => 'e.g. Italian, Vegan, ...';
+
+  @override
+  String get tags => 'Tags';
+
+  @override
+  String get tagsHint => 'e.g. quick, healthy, ...';
+
+  @override
+  String get tools => 'Utensils';
+
+  @override
+  String get toolsHint => 'e.g. oven, blender, ...';
+
+  @override
+  String get instructionsPerStep => 'Preparation Steps';
+
+  @override
+  String get noInstructionsAdded => 'No steps added yet';
+
+  @override
+  String get addInstructionHint => 'Describe the step...';
+
+  @override
+  String get addInstruction => 'Add step';
+
+  @override
+  String get recipeNote => 'Recipe Note';
+
+  @override
+  String get recipeNoteHint => 'Additional notes...';
+
+  @override
+  String get addTag => 'Add';
+
+  @override
+  String get removeTag => 'Remove';
+
+  @override
+  String get rating => 'Rating';
+
+  @override
+  String get recipeCreated => 'Recipe created successfully';
+
+  @override
+  String get error => 'Error';
 }

@@ -331,5 +331,36 @@
     "sortByPrepTime": "Prep time",
     "sortByPosition": "Position",
     "sortByChecked": "Checked status",
-    "sortByCategory": "Category"
+    "sortByCategory": "Category",
+    "recipeYield": "Yield (e.g. 4 pieces)",
+    "totalTime": "Total time (min)",
+    "cookTime": "Cook time (min)",
+    "addIngredient": "Add Ingredient",
+    "ingredientsList": "Ingredients",
+    "noIngredientsAdded": "No ingredients added yet.",
+    "removeIngredient": "Remove ingredient",
+    "stepOf": "Step {current} of {total}",
+    "@stepOf": {
+        "placeholders": {
+            "current": { "type": "int" },
+            "total": { "type": "int" }
+        }
+    },
+    "recipeCategories": "Categories",
+    "categoriesHint": "e.g. Italian, Vegan, ...",
+    "tags": "Tags",
+    "tagsHint": "e.g. quick, healthy, ...",
+    "tools": "Utensils",
+    "toolsHint": "e.g. oven, blender, ...",
+    "instructionsPerStep": "Preparation Steps",
+    "noInstructionsAdded": "No steps added yet",
+    "addInstructionHint": "Describe the step...",
+    "addInstruction": "Add step",
+    "recipeNote": "Recipe Note",
+    "recipeNoteHint": "Additional notes...",
+    "addTag": "Add",
+    "removeTag": "Remove",
+    "rating": "Rating",
+    "recipeCreated": "Recipe created successfully",
+    "error": "Error"
 }

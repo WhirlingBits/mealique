@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:mealique/config/app_constants.dart';
 import 'package:mealique/core/utils/offline_helper.dart';
 import 'package:mealique/data/local/recipe_storage.dart';
@@ -136,6 +137,123 @@ class RecipeRepository {
       return;
     }
     return _api.deleteRecipe(slug);
+  }
+
+  /// Creates a new recipe via POST /api/recipes (name only),
+  /// then fetches the full recipe, merges details, and PUTs it back.
+  Future<Recipe> createRecipe(Map<String, dynamic> recipeData) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      return Recipe(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: recipeData['name'] ?? '',
+        slug: 'demo-${DateTime.now().millisecondsSinceEpoch}',
+        description: recipeData['description'],
+        servings: int.tryParse(recipeData['servings']?.toString() ?? '') ?? 0,
+        ingredients: [],
+        instructions: [],
+      );
+    }
+
+    // Step 1: POST /api/recipes with just the name → returns slug
+    final slug = await _api.createRecipe(recipeData['name'] ?? '');
+    debugPrint('Created recipe stub with slug: $slug');
+
+    // Step 2: GET the full recipe object so we have all default fields
+    final fullRecipe = await _api.getRecipeRaw(slug);
+    debugPrint('Fetched full recipe for merge, keys: ${fullRecipe.keys}');
+
+    // Step 3: Merge our form data into the full recipe object
+    // Basic fields
+    if (recipeData['description'] != null && recipeData['description'].toString().isNotEmpty) {
+      fullRecipe['description'] = recipeData['description'];
+    }
+    if (recipeData['rating'] != null) {
+      final ratingValue = recipeData['rating'];
+      fullRecipe['rating'] = ratingValue is int ? ratingValue : int.tryParse(ratingValue.toString()) ?? 0;
+      debugPrint('Setting rating to: ${fullRecipe['rating']}');
+    }
+
+    // Yield / servings
+    final servings = recipeData['servings']?.toString() ?? '';
+    final recipeYield = recipeData['recipeYield']?.toString() ?? '';
+    if (servings.isNotEmpty || recipeYield.isNotEmpty) {
+      fullRecipe['recipeYield'] = recipeYield.isNotEmpty ? recipeYield : servings;
+    }
+
+    // Time fields
+    if (recipeData['totalTime'] != null && recipeData['totalTime'].toString().isNotEmpty) {
+      fullRecipe['totalTime'] = recipeData['totalTime'];
+    }
+    if (recipeData['prepTime'] != null && recipeData['prepTime'].toString().isNotEmpty) {
+      fullRecipe['prepTime'] = recipeData['prepTime'];
+    }
+    if (recipeData['cookTime'] != null && recipeData['cookTime'].toString().isNotEmpty) {
+      fullRecipe['performTime'] = recipeData['cookTime'];
+    }
+
+    // Ingredients: convert form data to Mealie format
+    final formIngredients = recipeData['recipeIngredient'] as List? ?? [];
+    if (formIngredients.isNotEmpty) {
+      fullRecipe['recipeIngredient'] = formIngredients.map((ing) {
+        final entry = <String, dynamic>{
+          'quantity': ing['quantity'] ?? 1,
+          'note': ing['note'] ?? '',
+        };
+        if (ing['foodId'] != null) {
+          entry['food'] = {'id': ing['foodId'], 'name': ing['foodName'] ?? ''};
+        }
+        if (ing['unitId'] != null) {
+          entry['unit'] = {'id': ing['unitId'], 'name': ing['unitName'] ?? ''};
+        }
+        return entry;
+      }).toList();
+    }
+
+    // Instructions: convert list of step strings to Mealie format
+    final instructionSteps = recipeData['recipeInstructions'] as List? ?? [];
+    if (instructionSteps.isNotEmpty) {
+      fullRecipe['recipeInstructions'] = instructionSteps
+          .where((s) => s.toString().trim().isNotEmpty)
+          .map((s) => {'text': s.toString().trim()})
+          .toList();
+    }
+
+    // Categories
+    final categories = recipeData['recipeCategory'] as List? ?? [];
+    if (categories.isNotEmpty) {
+      fullRecipe['recipeCategory'] = categories.map((c) => {'name': c}).toList();
+    }
+
+    // Tags
+    final tags = recipeData['tags'] as List? ?? [];
+    if (tags.isNotEmpty) {
+      fullRecipe['tags'] = tags.map((t) => {'name': t}).toList();
+    }
+
+    // Tools
+    final tools = recipeData['tools'] as List? ?? [];
+    if (tools.isNotEmpty) {
+      fullRecipe['tools'] = tools.map((t) => {'name': t}).toList();
+    }
+
+    // Notes
+    final notes = recipeData['notes']?.toString() ?? '';
+    if (notes.isNotEmpty) {
+      fullRecipe['notes'] = [{'title': '', 'text': notes}];
+    }
+
+    debugPrint('Sending PUT with keys: ${fullRecipe.keys}');
+
+    // Step 4: PUT /api/recipes/{slug} with the complete merged object
+    final recipe = await _api.updateRecipe(slug, fullRecipe);
+
+    // Cache the new recipe locally
+    try {
+      await _storage.saveRecipe(recipe);
+    } catch (_) {}
+
+    return recipe;
   }
 
   Future<List<ShoppingItemUnit>> getUnits() async {

@@ -331,5 +331,36 @@
     "sortByPrepTime": "Zubereitungszeit",
     "sortByPosition": "Position",
     "sortByChecked": "Erledigt-Status",
-    "sortByCategory": "Kategorie"
+    "sortByCategory": "Kategorie",
+    "recipeYield": "Portionsangabe (z.B. 4 Stück)",
+    "totalTime": "Gesamtzeit (Min)",
+    "cookTime": "Kochzeit (Min)",
+    "addIngredient": "Zutat hinzufügen",
+    "ingredientsList": "Zutaten",
+    "noIngredientsAdded": "Noch keine Zutaten hinzugefügt.",
+    "removeIngredient": "Zutat entfernen",
+    "stepOf": "Schritt {current} von {total}",
+    "@stepOf": {
+        "placeholders": {
+            "current": { "type": "int" },
+            "total": { "type": "int" }
+        }
+    },
+    "recipeCategories": "Kategorien",
+    "categoriesHint": "z.B. Italienisch, Vegan, ...",
+    "tags": "Schlagworte",
+    "tagsHint": "z.B. schnell, gesund, ...",
+    "tools": "Utensilien",
+    "toolsHint": "z.B. Ofen, Mixer, ...",
+    "instructionsPerStep": "Zubereitungsschritte",
+    "noInstructionsAdded": "Noch keine Schritte hinzugefügt",
+    "addInstructionHint": "Schritt beschreiben...",
+    "addInstruction": "Schritt hinzufügen",
+    "recipeNote": "Rezeptnotiz",
+    "recipeNoteHint": "Zusätzliche Notizen...",
+    "addTag": "Hinzufügen",
+    "removeTag": "Entfernen",
+    "rating": "Bewertung",
+    "recipeCreated": "Rezept erfolgreich erstellt",
+    "error": "Fehler"
 }

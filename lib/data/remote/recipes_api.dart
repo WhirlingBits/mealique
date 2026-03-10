@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mealique/data/remote/dio_client.dart';
 import 'package:mealique/models/food_model.dart';
 import 'package:mealique/models/recipes_model.dart';
@@ -64,6 +65,12 @@ class RecipesApi {
     return Recipe.fromJson(response.data);
   }
 
+  /// Returns the raw JSON map for a recipe (used for merge-then-PUT updates).
+  Future<Map<String, dynamic>> getRecipeRaw(String slug) async {
+    final response = await _dio.get('api/recipes/$slug');
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
   Future<FoodResponse> getFoods({int page = 1, int perPage = 10}) async {
     final response = await _dio.get(
       'api/foods',
@@ -86,6 +93,30 @@ class RecipesApi {
 
   Future<void> deleteRecipe(String slug) async {
     await _dio.delete('api/recipes/$slug');
+  }
+
+  /// POST /api/recipes – creates a recipe stub, returns the slug as String.
+  Future<String> createRecipe(String name) async {
+    debugPrint('POST /api/recipes with name: $name');
+    final response = await _dio.post(
+      'api/recipes',
+      data: {'name': name},
+    );
+    // Mealie returns the slug as a plain string (possibly quoted)
+    final slug = response.data.toString().replaceAll('"', '').trim();
+    debugPrint('POST /api/recipes returned slug: $slug');
+    return slug;
+  }
+
+  /// PUT /api/recipes/{slug} – updates the recipe with full details.
+  Future<Recipe> updateRecipe(String slug, Map<String, dynamic> data) async {
+    debugPrint('PUT /api/recipes/$slug');
+    final response = await _dio.put(
+      'api/recipes/$slug',
+      data: data,
+    );
+    debugPrint('PUT /api/recipes/$slug response status: ${response.statusCode}');
+    return Recipe.fromJson(response.data);
   }
 
   Future<List<ShoppingItemUnit>> getUnits() async {

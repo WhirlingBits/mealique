@@ -1591,6 +1591,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Category'**
   String get sortByCategory;
+
+  /// No description provided for @recipeYield.
+  ///
+  /// In en, this message translates to:
+  /// **'Yield (e.g. 4 pieces)'**
+  String get recipeYield;
+
+  /// No description provided for @totalTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Total time (min)'**
+  String get totalTime;
+
+  /// No description provided for @cookTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Cook time (min)'**
+  String get cookTime;
+
+  /// No description provided for @addIngredient.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Ingredient'**
+  String get addIngredient;
+
+  /// No description provided for @ingredientsList.
+  ///
+  /// In en, this message translates to:
+  /// **'Ingredients'**
+  String get ingredientsList;
+
+  /// No description provided for @noIngredientsAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'No ingredients added yet.'**
+  String get noIngredientsAdded;
+
+  /// No description provided for @removeIngredient.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove ingredient'**
+  String get removeIngredient;
+
+  /// No description provided for @stepOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {current} of {total}'**
+  String stepOf(int current, int total);
+
+  /// No description provided for @recipeCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get recipeCategories;
+
+  /// No description provided for @categoriesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Italian, Vegan, ...'**
+  String get categoriesHint;
+
+  /// No description provided for @tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get tags;
+
+  /// No description provided for @tagsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. quick, healthy, ...'**
+  String get tagsHint;
+
+  /// No description provided for @tools.
+  ///
+  /// In en, this message translates to:
+  /// **'Utensils'**
+  String get tools;
+
+  /// No description provided for @toolsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. oven, blender, ...'**
+  String get toolsHint;
+
+  /// No description provided for @instructionsPerStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparation Steps'**
+  String get instructionsPerStep;
+
+  /// No description provided for @noInstructionsAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'No steps added yet'**
+  String get noInstructionsAdded;
+
+  /// No description provided for @addInstructionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the step...'**
+  String get addInstructionHint;
+
+  /// No description provided for @addInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add step'**
+  String get addInstruction;
+
+  /// No description provided for @recipeNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe Note'**
+  String get recipeNote;
+
+  /// No description provided for @recipeNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional notes...'**
+  String get recipeNoteHint;
+
+  /// No description provided for @addTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get addTag;
+
+  /// No description provided for @removeTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get removeTag;
+
+  /// No description provided for @rating.
+  ///
+  /// In en, this message translates to:
+  /// **'Rating'**
+  String get rating;
+
+  /// No description provided for @recipeCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe created successfully'**
+  String get recipeCreated;
+
+  /// No description provided for @error.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get error;
 }
 
 class _AppLocalizationsDelegate
