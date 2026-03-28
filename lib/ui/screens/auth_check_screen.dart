@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:mealique/config/app_constants.dart';
 import 'package:mealique/data/remote/auth_api.dart';
 import '../../data/local/token_storage.dart';
-import '../../data/remote/recipes_api.dart'; 
+import '../../data/remote/recipes_api.dart';
+import '../../data/remote/users_api.dart';
 import 'main_screen.dart';
 import 'login_screen.dart';
 
@@ -51,6 +52,8 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
     try {
       final api = RecipesApi();
       await api.getRecipes(page: 1, perPage: 1); // Lightweight validation call
+      // Fetch and cache user ID for rating endpoint etc.
+      await _fetchAndSaveUserId();
       if (mounted) _navigateToHome();
     } on DioException catch (e) {
       if (!mounted) return;
@@ -70,6 +73,18 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
       }
     } catch (e) {
       if (mounted) _navigateToLogin(); // Any other unexpected error
+    }
+  }
+
+  /// Fetch the user profile and cache the userId.
+  Future<void> _fetchAndSaveUserId() async {
+    try {
+      final user = await UsersApi().getSelfUser();
+      if (user.id.isNotEmpty) {
+        await _tokenStorage.saveUserId(user.id);
+      }
+    } catch (_) {
+      // Non-critical – rating will fall back gracefully
     }
   }
 

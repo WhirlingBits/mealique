@@ -1,4 +1,5 @@
 class UserSelf {
+  final String id;
   final bool admin;
   final String email;
   final String fullName;
@@ -7,6 +8,7 @@ class UserSelf {
   final String username;
 
   UserSelf({
+    required this.id,
     required this.admin,
     required this.email,
     required this.fullName,
@@ -24,6 +26,7 @@ class UserSelf {
     }
 
     return UserSelf(
+      id: json['id']?.toString() ?? '',
       admin: adminValue,
       email: json['email'] ?? '',
       fullName: json['fullName'] ?? '',

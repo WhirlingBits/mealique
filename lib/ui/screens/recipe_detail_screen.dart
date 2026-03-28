@@ -5,6 +5,7 @@ import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/data/sync/recipe_repository.dart';
 import 'package:mealique/data/local/token_storage.dart';
 import 'package:mealique/models/recipes_model.dart';
+import 'package:mealique/ui/screens/edit_recipe_screen.dart';
 import 'package:mealique/ui/widgets/recipe_detail_actions_menu.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -21,10 +22,18 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   final RecipeRepository _recipeRepository = RecipeRepository();
   late Future<Recipe> _recipeFuture;
 
+  static const Color _accentColor = Color(0xFFE58325);
+
   @override
   void initState() {
     super.initState();
-    _recipeFuture = _recipeRepository.getRecipe(widget.recipeSlug);
+    _loadRecipe();
+  }
+
+  void _loadRecipe() {
+    setState(() {
+      _recipeFuture = _recipeRepository.getRecipe(widget.recipeSlug);
+    });
   }
 
   Future<void> _confirmDeleteRecipe(Recipe recipe) async {
@@ -51,7 +60,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       try {
         await _recipeRepository.deleteRecipe(recipe.slug);
         if (mounted) {
-          Navigator.of(context).pop(); // Close detail screen
+          Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(l10n.itemDeletedSuccess(recipe.name)),
@@ -61,12 +70,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(l10n.errorDeleting(e.toString())),
-              backgroundColor: Colors.red,
-            ),
-          );
+          _showError(l10n.errorDeleting(e.toString()));
         }
       }
     }
@@ -84,177 +88,71 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     }
   }
 
+  void _showError(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  void _showEditRecipeSheet(Recipe recipe) async {
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => EditRecipeScreen(recipe: recipe),
+      ),
+    );
+    // If the recipe was updated, reload it
+    if (result == true) {
+      _loadRecipe();
+    }
+  }
+
   Widget _buildErrorWidget(Object error, VoidCallback onRetry) {
     final l10n = AppLocalizations.of(context)!;
     String errorMessage;
+
     if (error is DioException && error.error is ApiException) {
       final apiError = error.error as ApiException;
-      errorMessage = apiError.message;
+      if (apiError is NetworkException) {
+        errorMessage = l10n.checkInternetConnection;
+      } else if (apiError is ServerException) {
+        errorMessage = l10n.serverError;
+      } else {
+        errorMessage = apiError.message;
+      }
     } else {
       errorMessage = l10n.unexpectedError;
     }
 
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.error_outline, color: Colors.red, size: 48),
-          const SizedBox(height: 16),
-          Text(errorMessage, textAlign: TextAlign.center),
-          const SizedBox(height: 16),
-          ElevatedButton(onPressed: onRetry, child: Text(l10n.tryAgain)),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            const SizedBox(height: 16),
+            Text(errorMessage, textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            ElevatedButton(onPressed: onRetry, child: Text(l10n.tryAgain)),
+          ],
+        ),
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    const accentColor = Color(0xFFE58325);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+  Widget _buildEmptyState() {
+    final l10n = AppLocalizations.of(context)!;
+    return Center(
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SizedBox(height: 12),
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[400],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: FutureBuilder<Recipe>(
-              future: _recipeFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return _buildErrorWidget(snapshot.error!, () {
-                    setState(() {
-                      _recipeFuture = _recipeRepository.getRecipe(widget.recipeSlug);
-                    });
-                  });
-                } else if (!snapshot.hasData) {
-                  return Center(child: Text(AppLocalizations.of(context)!.recipeNotFound));
-                }
-
-                final recipe = snapshot.data!;
-
-                return CustomScrollView(
-                  slivers: [
-                    SliverAppBar(
-                      expandedHeight: 250.0,
-                      pinned: true,
-                      backgroundColor: accentColor,
-                      automaticallyImplyLeading: false,
-                      actions: [
-                        IconButton(
-                          icon: const Icon(Icons.favorite_border),
-                          onPressed: () {
-                            // TODO: Favoriten Logik
-                          },
-                        ),
-                        RecipeDetailActionsMenu(
-                          onEdit: () {
-                            final l10n = AppLocalizations.of(context)!;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(l10n.editNotImplemented)),
-                            );
-                          },
-                          onDelete: () => _confirmDeleteRecipe(recipe),
-                          onShare: () => _shareRecipe(recipe),
-                        ),
-                      ],
-                      flexibleSpace: FlexibleSpaceBar(
-                        title: Text(
-                          recipe.name,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            shadows: [Shadow(color: Colors.black45, blurRadius: 10)],
-                          ),
-                        ),
-                        background: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            Container(
-                              color: Colors.grey[400],
-                              child: const Icon(Icons.image, size: 80, color: Colors.white54),
-                            ),
-                            DecoratedBox(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.transparent,
-                                    accentColor.withValues(alpha: 0.9),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                _buildInfoChip(Icons.access_time, recipe.totalTime ?? '- Min'),
-                                Container(width: 1, height: 24, color: Colors.grey[300]),
-                                _buildInfoChip(Icons.person_outline, AppLocalizations.of(context)!.servingsCount(recipe.servings)),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed: () {},
-                                icon: const Icon(Icons.add),
-                                label: Text(AppLocalizations.of(context)!.addToShoppingList),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: accentColor,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 32),
-                            _buildSectionTitle(AppLocalizations.of(context)!.ingredients.toUpperCase(), accentColor),
-                            const SizedBox(height: 8),
-                            for (final ingredient in recipe.ingredients)
-                              _buildIngredientItem(ingredient.note, isChecked: false, accentColor: accentColor),
-                            const SizedBox(height: 32),
-                            _buildSectionTitle(AppLocalizations.of(context)!.instructions.toUpperCase(), accentColor),
-                            const SizedBox(height: 16),
-                            for (int i = 0; i < recipe.instructions.length; i++)
-                              _buildInstructionStep(i + 1, recipe.instructions[i].text, accentColor),
-                            const SizedBox(height: 40),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
+          Icon(Icons.restaurant_menu, size: 80, color: Colors.grey[400]),
+          const SizedBox(height: 24),
+          Text(
+            l10n.recipeNotFound,
+            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
           ),
         ],
       ),
@@ -278,19 +176,69 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title, Color color) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.bold,
-        letterSpacing: 1.2,
-        color: color,
+  Widget _buildRatingRow(Recipe recipe) {
+    final l10n = AppLocalizations.of(context)!;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          l10n.rating,
+          style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+        ),
+        const SizedBox(width: 8),
+        ...List.generate(5, (i) {
+          final starIndex = i + 1;
+          return GestureDetector(
+            onTap: () => _updateRating(recipe, starIndex),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Icon(
+                starIndex <= recipe.rating
+                    ? Icons.star_rounded
+                    : Icons.star_border_rounded,
+                color: starIndex <= recipe.rating
+                    ? Colors.amber
+                    : Colors.grey[400],
+                size: 32,
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Future<void> _updateRating(Recipe recipe, int newRating) async {
+    // Toggle: tapping the same star resets to 0
+    final rating = recipe.rating == newRating ? 0 : newRating;
+    try {
+      await _recipeRepository.setRating(recipe.slug, rating.toDouble());
+      _loadRecipe();
+    } catch (e) {
+      debugPrint('Error updating rating: $e');
+      if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
+        _showError(l10n.errorUpdating(e.toString()));
+      }
+    }
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 24, 0, 8),
+      child: Text(
+        title.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.2,
+          color: _accentColor,
+        ),
       ),
     );
   }
 
-  Widget _buildIngredientItem(String text, {required bool isChecked, required Color accentColor}) {
+  Widget _buildIngredientItem(String text, {required bool isChecked}) {
     return CheckboxListTile(
       value: isChecked,
       onChanged: (val) {},
@@ -304,11 +252,11 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       controlAffinity: ListTileControlAffinity.leading,
       contentPadding: EdgeInsets.zero,
       dense: true,
-      activeColor: accentColor,
+      activeColor: _accentColor,
     );
   }
 
-  Widget _buildInstructionStep(int number, String text, Color color) {
+  Widget _buildInstructionStep(int number, String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
@@ -318,8 +266,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             width: 28,
             height: 28,
             alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: color,
+            decoration: const BoxDecoration(
+              color: _accentColor,
               shape: BoxShape.circle,
             ),
             child: Text(
@@ -338,6 +286,188 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRecipeContent(Recipe recipe) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return RefreshIndicator(
+      onRefresh: () async => _loadRecipe(),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+        children: [
+          // -- Hero image area --
+          Container(
+            height: 200,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.image, size: 80, color: Colors.white54),
+                  ),
+                ),
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          _accentColor.withValues(alpha: 0.9),
+                        ],
+                      ),
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      recipe.name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        shadows: [Shadow(color: Colors.black45, blurRadius: 10)],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // -- Info chips --
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildInfoChip(Icons.access_time, recipe.totalTime ?? '- Min'),
+              Container(width: 1, height: 24, color: Colors.grey[300]),
+              _buildInfoChip(Icons.person_outline, l10n.servingsCount(recipe.servings)),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // -- Rating --
+          _buildRatingRow(recipe),
+          const SizedBox(height: 16),
+
+          // -- Add to shopping list button --
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.add),
+              label: Text(l10n.addToShoppingList),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _accentColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+
+          // -- Description --
+          if (recipe.description != null && recipe.description!.isNotEmpty) ...[
+            _buildSectionTitle(l10n.description),
+            Text(
+              recipe.description!,
+              style: const TextStyle(fontSize: 15, height: 1.5),
+            ),
+          ],
+
+          // -- Ingredients --
+          if (recipe.ingredients.isNotEmpty) ...[
+            _buildSectionTitle(l10n.ingredients),
+            for (final ingredient in recipe.ingredients)
+              _buildIngredientItem(ingredient.note, isChecked: false),
+          ],
+
+          // -- Instructions --
+          if (recipe.instructions.isNotEmpty) ...[
+            _buildSectionTitle(l10n.instructions),
+            const SizedBox(height: 8),
+            for (int i = 0; i < recipe.instructions.length; i++)
+              _buildInstructionStep(i + 1, recipe.instructions[i].text),
+          ],
+
+          const SizedBox(height: 40),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: _accentColor,
+        foregroundColor: Colors.white,
+        title: FutureBuilder<Recipe>(
+          future: _recipeFuture,
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return Text(snapshot.data!.name);
+            }
+            return const Text('');
+          },
+        ),
+        actions: [
+          FutureBuilder<Recipe>(
+            future: _recipeFuture,
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const SizedBox.shrink();
+              final recipe = snapshot.data!;
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.favorite_border),
+                    onPressed: () {
+                      // TODO: Favoriten Logik
+                    },
+                  ),
+                  RecipeDetailActionsMenu(
+                    onEdit: () => _showEditRecipeSheet(recipe),
+                    onDelete: () => _confirmDeleteRecipe(recipe),
+                    onShare: () => _shareRecipe(recipe),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+      body: FutureBuilder<Recipe>(
+        future: _recipeFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return _buildErrorWidget(snapshot.error!, _loadRecipe);
+          }
+          if (!snapshot.hasData) {
+            return _buildEmptyState();
+          }
+          return _buildRecipeContent(snapshot.data!);
+        },
       ),
     );
   }

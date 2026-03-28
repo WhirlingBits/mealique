@@ -188,16 +188,27 @@ class RecipeStorage {
       'totalTime': recipe.totalTime,
       'prepTime': recipe.prepTime,
       'performTime': recipe.performTime,
-      'recipeYield': recipe.servings,
+      'recipeYield': recipe.recipeYield ?? recipe.servings.toString(),
+      'rating': recipe.rating,
       'recipeIngredient': recipe.ingredients.map((i) => {
         'note': i.note,
         'quantity': i.quantity,
-        if (i.unit != null) 'unit': {'name': i.unit},
-        if (i.food != null) 'food': {'name': i.food},
+        if (i.unitId != null || i.unit != null) 'unit': {
+          if (i.unitId != null) 'id': i.unitId,
+          if (i.unit != null) 'name': i.unit,
+        },
+        if (i.foodId != null || i.food != null) 'food': {
+          if (i.foodId != null) 'id': i.foodId,
+          if (i.food != null) 'name': i.food,
+        },
       }).toList(),
       'recipeInstructions': recipe.instructions.map((i) => {
         'text': i.text,
       }).toList(),
+      'recipeCategory': recipe.recipeCategory.map((c) => {'name': c}).toList(),
+      'tags': recipe.tags.map((t) => {'name': t}).toList(),
+      'tools': recipe.tools.map((t) => {'name': t}).toList(),
+      'notes': recipe.notes.map((n) => {'title': n.title, 'text': n.text}).toList(),
     };
   }
 

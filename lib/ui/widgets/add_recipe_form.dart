@@ -898,7 +898,7 @@ class _AddRecipeFormState extends State<AddRecipeForm> {
       );
     }
     return DropdownButtonFormField<String?>(
-      value: _selectedUnitId,
+      initialValue: _selectedUnitId,
       isExpanded: true,
       decoration: InputDecoration(
         labelText: l10n.unit,

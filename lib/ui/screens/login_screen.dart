@@ -4,6 +4,7 @@ import 'package:mealique/config/app_constants.dart';
 import 'package:mealique/data/local/token_storage.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/data/remote/auth_api.dart';
+import 'package:mealique/data/remote/users_api.dart';
 import 'package:mealique/l10n/app_localizations.dart';
 import 'package:mealique/ui/screens/main_screen.dart';
 
@@ -66,6 +67,16 @@ class _LoginScreenState extends State<LoginScreen> {
         await _tokenStorage.saveToken(token);
         await _tokenStorage.saveServerUrl(server);
         await _tokenStorage.saveCredentials(email, password);
+
+        // Fetch and cache userId for rating endpoint etc.
+        try {
+          final user = await UsersApi().getSelfUser();
+          if (user.id.isNotEmpty) {
+            await _tokenStorage.saveUserId(user.id);
+          }
+        } catch (_) {
+          // Non-critical – rating will fall back gracefully
+        }
 
         if (mounted) {
           Navigator.of(context).pushReplacement(

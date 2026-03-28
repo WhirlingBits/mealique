@@ -49,6 +49,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logout => 'Logout';
 
   @override
+  String get confirmLogout =>
+      'Are you sure you want to log out? All local data will be deleted.';
+
+  @override
   String get invalidCredentials => 'Invalid email or password.';
 
   @override
@@ -891,5 +895,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recipeCreated => 'Recipe created successfully';
 
   @override
+  String get recipeUpdated => 'Recipe updated successfully';
+
+  @override
   String get error => 'Error';
+
+  @override
+  String get description => 'Description';
+
+  @override
+  String get discardChanges => 'Discard Changes?';
+
+  @override
+  String get discardChangesMessage =>
+      'You have unsaved changes. Do you want to discard them?';
+
+  @override
+  String get discard => 'Discard';
 }

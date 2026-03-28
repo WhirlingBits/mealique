@@ -119,6 +119,37 @@ class RecipesApi {
     return Recipe.fromJson(response.data);
   }
 
+  /// Sets user rating for a recipe via the Mealie ratings endpoint.
+  /// Endpoint: POST /api/users/{userId}/ratings/{slug}
+  /// Body: {"rating": 4, "isFavorite": null}
+  Future<void> setRating(String slug, double rating) async {
+    final userId = await _tokenStorage.getUserId();
+    if (userId == null || userId.isEmpty) {
+      debugPrint('setRating: No userId cached, cannot set rating');
+      return;
+    }
+    debugPrint('POST /api/users/$userId/ratings/$slug – rating=$rating');
+    await _dio.post(
+      'api/users/$userId/ratings/$slug',
+      data: {
+        'rating': rating,
+        'isFavorite': null,
+      },
+    );
+    debugPrint('Rating set successfully for $slug');
+  }
+
+  /// Fetches the current user's profile and caches the userId.
+  /// Returns the userId on success, throws on failure.
+  Future<String> fetchAndCacheUserId() async {
+    final response = await _dio.get('api/users/self');
+    final userId = response.data['id']?.toString() ?? '';
+    if (userId.isNotEmpty) {
+      await _tokenStorage.saveUserId(userId);
+    }
+    return userId;
+  }
+
   Future<List<ShoppingItemUnit>> getUnits() async {
     try {
       final response = await _dio.get('api/units');

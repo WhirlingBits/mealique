@@ -49,6 +49,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get logout => 'Logout';
 
   @override
+  String get confirmLogout =>
+      'Bist du sicher, dass du dich abmelden möchtest? Alle lokalen Daten werden gelöscht.';
+
+  @override
   String get invalidCredentials => 'Ungültige E-Mail oder Passwort.';
 
   @override
@@ -900,5 +904,21 @@ class AppLocalizationsDe extends AppLocalizations {
   String get recipeCreated => 'Rezept erfolgreich erstellt';
 
   @override
+  String get recipeUpdated => 'Rezept erfolgreich aktualisiert';
+
+  @override
   String get error => 'Fehler';
+
+  @override
+  String get description => 'Beschreibung';
+
+  @override
+  String get discardChanges => 'Änderungen verwerfen?';
+
+  @override
+  String get discardChangesMessage =>
+      'Du hast ungespeicherte Änderungen. Möchtest du diese verwerfen?';
+
+  @override
+  String get discard => 'Verwerfen';
 }

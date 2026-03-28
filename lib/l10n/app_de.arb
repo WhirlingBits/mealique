@@ -12,6 +12,7 @@
     "settings": "Einstellungen",
     "shopping": "Einkaufen",
     "logout": "Logout",
+    "confirmLogout": "Bist du sicher, dass du dich abmelden möchtest? Alle lokalen Daten werden gelöscht.",
     "invalidCredentials": "Ungültige E-Mail oder Passwort.",
     "networkError": "Netzwerkfehler. Bitte versuche es später erneut.",
     "recipe": "Rezept",
@@ -362,5 +363,10 @@
     "removeTag": "Entfernen",
     "rating": "Bewertung",
     "recipeCreated": "Rezept erfolgreich erstellt",
-    "error": "Fehler"
+    "recipeUpdated": "Rezept erfolgreich aktualisiert",
+    "error": "Fehler",
+    "description": "Beschreibung",
+    "discardChanges": "Änderungen verwerfen?",
+    "discardChangesMessage": "Du hast ungespeicherte Änderungen. Möchtest du diese verwerfen?",
+    "discard": "Verwerfen"
 }

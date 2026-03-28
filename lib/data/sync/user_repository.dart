@@ -18,6 +18,7 @@ class UserRepository {
     if (token == AppConstants.demoToken) {
       // Return hard-coded demo user data
       return UserSelf(
+        id: 'demo-user-id',
         admin: false,
         email: AppConstants.demoEmail,
         fullName: 'Demo User',

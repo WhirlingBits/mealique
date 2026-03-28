@@ -12,6 +12,7 @@
     "settings": "Settings",
     "shopping": "Shopping",
     "logout": "Logout",
+    "confirmLogout": "Are you sure you want to log out? All local data will be deleted.",
     "invalidCredentials": "Invalid email or password.",
     "networkError": "Network error. Please try again later.",
     "recipe": "Recipe",
@@ -362,5 +363,10 @@
     "removeTag": "Remove",
     "rating": "Rating",
     "recipeCreated": "Recipe created successfully",
-    "error": "Error"
+    "recipeUpdated": "Recipe updated successfully",
+    "error": "Error",
+    "description": "Description",
+    "discardChanges": "Discard Changes?",
+    "discardChangesMessage": "You have unsaved changes. Do you want to discard them?",
+    "discard": "Discard"
 }

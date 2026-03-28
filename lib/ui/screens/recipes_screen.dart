@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
+import 'package:mealique/ui/screens/edit_recipe_screen.dart';
 import 'package:mealique/ui/screens/recipe_detail_screen.dart';
 import 'package:mealique/ui/widgets/recipe_actions_menu.dart';
 import 'package:mealique/ui/widgets/sort_dialog.dart';
@@ -42,6 +43,67 @@ class _RecipesScreenState extends State<RecipesScreen> {
         orderDirection: _sortDirection,
       );
     });
+  }
+
+  Future<void> _editRecipe(Recipe recipe) async {
+    try {
+      final fullRecipe = await _recipeRepository.getRecipe(recipe.slug);
+      if (!mounted) return;
+      final result = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => EditRecipeScreen(recipe: fullRecipe),
+        ),
+      );
+      if (result == true) {
+        _loadRecipes();
+      }
+    } catch (e) {
+      if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.errorUpdating(e.toString())), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteRecipe(Recipe recipe) async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.deleteRecipe),
+        content: Text(l10n.confirmDeleteRecipe),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        await _recipeRepository.deleteRecipe(recipe.slug);
+        _loadRecipes();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.itemDeletedSuccess(recipe.name)), backgroundColor: Colors.green),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.errorDeleting(e.toString())), backgroundColor: Colors.red),
+          );
+        }
+      }
+    }
   }
 
   void _showSortDialog() async {
@@ -263,18 +325,14 @@ class _RecipesScreenState extends State<RecipesScreen> {
           children: [
             SlidableAction(
               flex: 1,
-              onPressed: (context) {
-                // TODO: Bearbeiten Logik
-              },
+              onPressed: (context) => _editRecipe(recipe),
               backgroundColor: const Color(0xFFE58325),
               foregroundColor: Colors.white,
               icon: Icons.edit,
             ),
             SlidableAction(
               flex: 1,
-              onPressed: (context) {
-                // TODO: Löschen Logik
-              },
+              onPressed: (context) => _deleteRecipe(recipe),
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
               icon: Icons.delete,
@@ -348,6 +406,22 @@ class _RecipesScreenState extends State<RecipesScreen> {
                           ),
                         ],
                       ),
+                      if (recipe.rating > 0) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: List.generate(5, (i) {
+                            return Icon(
+                              i < recipe.rating
+                                  ? Icons.star_rounded
+                                  : Icons.star_border_rounded,
+                              size: 16,
+                              color: i < recipe.rating
+                                  ? Colors.amber
+                                  : Colors.grey[400],
+                            );
+                          }),
+                        ),
+                      ],
                     ],
                   ),
                 ),

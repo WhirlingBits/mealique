@@ -168,11 +168,6 @@ class RecipeRepository {
     if (recipeData['description'] != null && recipeData['description'].toString().isNotEmpty) {
       fullRecipe['description'] = recipeData['description'];
     }
-    if (recipeData['rating'] != null) {
-      final ratingValue = recipeData['rating'];
-      fullRecipe['rating'] = ratingValue is int ? ratingValue : int.tryParse(ratingValue.toString()) ?? 0;
-      debugPrint('Setting rating to: ${fullRecipe['rating']}');
-    }
 
     // Yield / servings
     final servings = recipeData['servings']?.toString() ?? '';
@@ -245,8 +240,24 @@ class RecipeRepository {
 
     debugPrint('Sending PUT with keys: ${fullRecipe.keys}');
 
+    // Remove rating from PUT body – Mealie ignores it; ratings are per-user.
+    fullRecipe.remove('rating');
+
     // Step 4: PUT /api/recipes/{slug} with the complete merged object
     final recipe = await _api.updateRecipe(slug, fullRecipe);
+
+    // Set user rating via the dedicated endpoint if provided
+    if (recipeData['rating'] != null) {
+      final ratingValue = recipeData['rating'];
+      final ratingDouble = (ratingValue is int ? ratingValue : int.tryParse(ratingValue.toString()) ?? 0).toDouble();
+      if (ratingDouble > 0) {
+        try {
+          await setRating(slug, ratingDouble);
+        } catch (e) {
+          debugPrint('Warning: Failed to set user rating on create: $e');
+        }
+      }
+    }
 
     // Cache the new recipe locally
     try {
@@ -254,6 +265,163 @@ class RecipeRepository {
     } catch (_) {}
 
     return recipe;
+  }
+
+
+  /// Updates an existing recipe: GET raw → merge form data → PUT back.
+  Future<Recipe> updateExistingRecipe(String slug, Map<String, dynamic> recipeData) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      return Recipe(
+        id: recipeData['id'] ?? '',
+        name: recipeData['name'] ?? '',
+        slug: slug,
+        description: recipeData['description'],
+        servings: int.tryParse(recipeData['servings']?.toString() ?? '') ?? 0,
+        ingredients: [],
+        instructions: [],
+      );
+    }
+
+    // GET the full recipe object so we have all server fields
+    final fullRecipe = await _api.getRecipeRaw(slug);
+
+    // Merge form data
+    if (recipeData['name'] != null) fullRecipe['name'] = recipeData['name'];
+    if (recipeData['description'] != null) {
+      fullRecipe['description'] = recipeData['description'];
+    }
+    if (recipeData.containsKey('rating')) {
+      final rv = recipeData['rating'];
+      final ratingValue = rv is int ? rv : int.tryParse(rv.toString()) ?? 0;
+      fullRecipe['rating'] = ratingValue;
+      debugPrint('Setting rating to: $ratingValue (original: $rv)');
+    }
+
+    final servings = recipeData['servings']?.toString() ?? '';
+    final recipeYield = recipeData['recipeYield']?.toString() ?? '';
+    if (servings.isNotEmpty) {
+      final servingsInt = int.tryParse(servings) ?? 0;
+      fullRecipe['recipeServings'] = servingsInt;
+      if (recipeYield.isEmpty) {
+        fullRecipe['recipeYield'] = servings;
+      }
+    }
+    if (recipeYield.isNotEmpty) {
+      fullRecipe['recipeYield'] = recipeYield;
+    }
+
+    if (recipeData['totalTime'] != null) fullRecipe['totalTime'] = recipeData['totalTime'];
+    if (recipeData['prepTime'] != null) fullRecipe['prepTime'] = recipeData['prepTime'];
+    if (recipeData['cookTime'] != null) fullRecipe['performTime'] = recipeData['cookTime'];
+
+    // Ingredients – only overwrite if provided
+    if (recipeData.containsKey('recipeIngredient')) {
+      final formIngredients = recipeData['recipeIngredient'] as List? ?? [];
+      fullRecipe['recipeIngredient'] = formIngredients.map((ing) {
+        final entry = <String, dynamic>{
+          'quantity': ing['quantity'] ?? 1,
+          'note': ing['note'] ?? '',
+        };
+        if (ing['foodId'] != null) {
+          entry['food'] = {'id': ing['foodId'], 'name': ing['foodName'] ?? ''};
+        }
+        if (ing['unitId'] != null) {
+          entry['unit'] = {'id': ing['unitId'], 'name': ing['unitName'] ?? ''};
+        }
+        return entry;
+      }).toList();
+    }
+
+    // Instructions – only overwrite if provided
+    if (recipeData.containsKey('recipeInstructions')) {
+      final instructionSteps = recipeData['recipeInstructions'] as List? ?? [];
+      fullRecipe['recipeInstructions'] = instructionSteps
+          .where((s) => s.toString().trim().isNotEmpty)
+          .map((s) => {'text': s.toString().trim()})
+          .toList();
+    }
+
+    // Categories – only overwrite if provided
+    if (recipeData.containsKey('recipeCategory')) {
+      final categories = recipeData['recipeCategory'] as List? ?? [];
+      fullRecipe['recipeCategory'] = categories.map((c) => {'name': c}).toList();
+    }
+
+    // Tags – only overwrite if provided
+    if (recipeData.containsKey('tags')) {
+      final tags = recipeData['tags'] as List? ?? [];
+      fullRecipe['tags'] = tags.map((t) => {'name': t}).toList();
+    }
+
+    // Tools – only overwrite if provided
+    if (recipeData.containsKey('tools')) {
+      final tools = recipeData['tools'] as List? ?? [];
+      fullRecipe['tools'] = tools.map((t) => {'name': t}).toList();
+    }
+
+    // Notes – only overwrite if provided
+    if (recipeData.containsKey('notes')) {
+      final notes = recipeData['notes']?.toString() ?? '';
+      if (notes.isNotEmpty) {
+        fullRecipe['notes'] = [{'title': '', 'text': notes}];
+      } else {
+        fullRecipe['notes'] = [];
+      }
+    }
+
+    // Remove rating from PUT body – Mealie ignores it on recipe PUT;
+    // ratings are stored per-user via a separate endpoint.
+    fullRecipe.remove('rating');
+
+    debugPrint('PUT update recipe $slug');
+    final recipe = await _api.updateRecipe(slug, fullRecipe);
+
+    // Mealie stores ratings per-user via a separate endpoint
+    if (recipeData.containsKey('rating')) {
+      final ratingValue = recipeData['rating'];
+      final ratingDouble = (ratingValue is int ? ratingValue : int.tryParse(ratingValue.toString()) ?? 0).toDouble();
+      debugPrint('Setting user rating to $ratingDouble for recipe $slug (id=${recipe.id})');
+      try {
+        await setRating(slug, ratingDouble);
+      } catch (e) {
+        debugPrint('Warning: Failed to set user rating: $e');
+      }
+    }
+
+    try {
+      await _storage.saveRecipe(recipe);
+    } catch (_) {}
+
+    return recipe;
+  }
+
+  /// Sets the user rating for a recipe via the dedicated Mealie ratings
+  /// endpoint (POST /api/users/{userId}/ratings/{slug}).
+  /// This does NOT do a full recipe GET+PUT cycle.
+  Future<void> setRating(String slug, double rating) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) return;
+
+    // Ensure we have a userId cached; fetch it if missing.
+    var userId = await _tokenStorage.getUserId();
+    if (userId == null || userId.isEmpty) {
+      debugPrint('setRating: userId not cached, fetching from /api/users/self');
+      try {
+        final response = await _api.fetchAndCacheUserId();
+        userId = response;
+      } catch (e) {
+        debugPrint('setRating: Failed to fetch userId: $e');
+        return;
+      }
+    }
+
+    try {
+      await _api.setRating(slug, rating);
+    } catch (e) {
+      debugPrint('setRating: Failed to set rating: $e');
+      rethrow;
+    }
   }
 
   Future<List<ShoppingItemUnit>> getUnits() async {

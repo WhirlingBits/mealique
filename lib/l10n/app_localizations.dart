@@ -176,6 +176,12 @@ abstract class AppLocalizations {
   /// **'Logout'**
   String get logout;
 
+  /// No description provided for @confirmLogout.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to log out? All local data will be deleted.'**
+  String get confirmLogout;
+
   /// No description provided for @invalidCredentials.
   ///
   /// In en, this message translates to:
@@ -1736,11 +1742,41 @@ abstract class AppLocalizations {
   /// **'Recipe created successfully'**
   String get recipeCreated;
 
+  /// No description provided for @recipeUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe updated successfully'**
+  String get recipeUpdated;
+
   /// No description provided for @error.
   ///
   /// In en, this message translates to:
   /// **'Error'**
   String get error;
+
+  /// No description provided for @description.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get description;
+
+  /// No description provided for @discardChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard Changes?'**
+  String get discardChanges;
+
+  /// No description provided for @discardChangesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You have unsaved changes. Do you want to discard them?'**
+  String get discardChangesMessage;
+
+  /// No description provided for @discard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get discard;
 }
 
 class _AppLocalizationsDelegate
