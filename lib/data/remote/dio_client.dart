@@ -35,7 +35,7 @@ class ErrorInterceptor extends Interceptor {
     ApiException apiException;
 
     // Helper to extract detail message from response data
-    String? _extractDetail(dynamic data) {
+    String? extractDetail(dynamic data) {
       if (data is Map<String, dynamic>) {
         final detail = data['detail'];
         if (detail is String) return detail;
@@ -70,7 +70,7 @@ class ErrorInterceptor extends Interceptor {
         apiException = NetworkException('Please check your internet connection.');
         break;
       case DioExceptionType.badResponse:
-        final detail = _extractDetail(err.response?.data);
+        final detail = extractDetail(err.response?.data);
         switch (err.response?.statusCode) {
           case 401:
             apiException = UnauthorizedException();

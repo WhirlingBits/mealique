@@ -353,7 +353,7 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
                         _buildToastBanner(),
                         if (widget.shoppingListId == null) ...[
                           DropdownButtonFormField<String>(
-                            value: _selectedListId,
+                            initialValue: _selectedListId,
                             decoration: InputDecoration(labelText: l10n.shoppingList, border: const OutlineInputBorder(), isDense: true),
                             items: formData.lists.map((list) => DropdownMenuItem(value: list.id, child: Text(list.name))).toList(),
                             onChanged: (value) => setState(() => _selectedListId = value),
