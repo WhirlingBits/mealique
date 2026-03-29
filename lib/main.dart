@@ -30,6 +30,7 @@ class MyApp extends StatelessWidget {
       child: Consumer<SettingsProvider>(
         builder: (context, settings, child) {
           return MaterialApp(
+            debugShowCheckedModeBanner: false,
             title: 'Mealie',
             navigatorKey: navigatorKey,
             theme: ThemeData.light(),
