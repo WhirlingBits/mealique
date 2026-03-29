@@ -1,10 +1,14 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:mealique/data/remote/auth_api.dart';
+import 'package:mealique/data/remote/recipes_api.dart';
 import 'package:mealique/l10n/app_localizations.dart';
 import 'package:mealique/services/sync_service.dart';
 import '../widgets/navigation_bar.dart';
 import 'dashboard_screen.dart';
+import 'login_screen.dart';
 import 'recipes_screen.dart';
 import 'shopping_list_screen.dart';
 import 'settings_screen.dart';
@@ -22,11 +26,14 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   int _selectedIndex = 0;
   late bool _isOffline;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   final SyncService _syncService = SyncService();
+
+  // Zeitpunkt, zu dem die App zuletzt im Vordergrund war
+  DateTime? _lastResumeTime;
 
   // Track which tabs have been visited to enable lazy loading
   final Set<int> _visitedTabs = {0};
@@ -53,6 +60,10 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _isOffline = widget.isOffline;
+    _lastResumeTime = DateTime.now();
+
+    // Lifecycle-Observer registrieren (Standby-Erkennung)
+    WidgetsBinding.instance.addObserver(this);
 
     // Initialise the sync service (starts its own connectivity listener)
     _syncService.init();
@@ -125,8 +136,50 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _connectivitySubscription?.cancel();
     super.dispose();
+  }
+
+  /// Wird aufgerufen, wenn die App in den Vorder-/Hintergrund wechselt.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      final now = DateTime.now();
+      final last = _lastResumeTime;
+      _lastResumeTime = now;
+
+      // Nach mehr als 15 Minuten Standby Token still im Hintergrund prüfen
+      final longStandby = last == null ||
+          now.difference(last) > const Duration(minutes: 15);
+      if (longStandby) {
+        _silentTokenCheck();
+      }
+    }
+  }
+
+  /// Prüft das Token im Hintergrund. Navigiert nur bei echtem 401 zum Login.
+  Future<void> _silentTokenCheck() async {
+    try {
+      final api = RecipesApi();
+      await api.getRecipes(page: 1, perPage: 1);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        // Token abgelaufen → versuche still zu erneuern
+        final newToken = await AuthApi().refreshToken();
+        if (newToken == null && mounted) {
+          // Erneuerung gescheitert → zum Login
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            (route) => false,
+          );
+        }
+      }
+      // Bei anderen Fehlern (Netz weg etc.) nichts tun – Offline-Banner reicht
+    } catch (_) {
+      // Nicht-kritisch – App läuft weiter
+    }
   }
 
   void _showOfflineSnackBar() {

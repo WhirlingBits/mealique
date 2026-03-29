@@ -5,8 +5,8 @@ class AuthApi {
   final Dio _dio;
 
   AuthApi() : _dio = Dio() {
-    _dio.options.connectTimeout = const Duration(seconds: 10);
-    _dio.options.receiveTimeout = const Duration(seconds: 10);
+    _dio.options.connectTimeout = const Duration(seconds: 15);
+    _dio.options.receiveTimeout = const Duration(seconds: 15);
     // Note: We are not including the central error interceptor from DioClient here
     // because we need to handle the login error case specifically.
   }
