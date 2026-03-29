@@ -119,24 +119,84 @@ class RecipesApi {
     return Recipe.fromJson(response.data);
   }
 
-  /// Sets user rating for a recipe via the Mealie ratings endpoint.
-  /// Endpoint: POST /api/users/{userId}/ratings/{slug}
-  /// Body: {"rating": 4, "isFavorite": null}
+  /// Fetches all user ratings/favorites at once via GET /api/users/{id}/favorites.
+  /// Returns a Map<recipeId, isFavorite>.
+  Future<Map<String, bool>> getUserFavorites() async {
+    final userId = await _tokenStorage.getUserId();
+    if (userId == null || userId.isEmpty) return {};
+    try {
+      final response = await _dio.get('api/users/$userId/favorites');
+      final ratings = response.data['ratings'] as List? ?? [];
+      return {
+        for (final r in ratings)
+          if (r['recipeId'] != null)
+            r['recipeId'].toString(): (r['isFavorite'] as bool?) ?? false,
+      };
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return {};
+      rethrow;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  /// Fetches the user's current rating entry (rating + isFavorite).
+  /// Returns an empty map when no entry exists yet (404 is treated as empty).
+  Future<Map<String, dynamic>> _getUserRatingEntry(String slug) async {
+    final userId = await _tokenStorage.getUserId();
+    if (userId == null || userId.isEmpty) return {};
+    try {
+      final response = await _dio.get('api/users/$userId/ratings/$slug');
+      return (response.data as Map<String, dynamic>?) ?? {};
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return {};
+      rethrow;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  /// Sets user rating – preserves the existing isFavorite value.
   Future<void> setRating(String slug, double rating) async {
     final userId = await _tokenStorage.getUserId();
     if (userId == null || userId.isEmpty) {
       debugPrint('setRating: No userId cached, cannot set rating');
       return;
     }
-    debugPrint('POST /api/users/$userId/ratings/$slug – rating=$rating');
+    final current = await _getUserRatingEntry(slug);
+    debugPrint('POST /api/users/$userId/ratings/$slug – rating=$rating, isFavorite=${current['isFavorite']}');
     await _dio.post(
       'api/users/$userId/ratings/$slug',
       data: {
         'rating': rating,
-        'isFavorite': null,
+        'isFavorite': current['isFavorite'],
       },
     );
     debugPrint('Rating set successfully for $slug');
+  }
+
+  /// Returns the user's favorite status for a recipe.
+  Future<bool> getFavoriteStatus(String slug) async {
+    final entry = await _getUserRatingEntry(slug);
+    return (entry['isFavorite'] as bool?) ?? false;
+  }
+
+  /// Sets the favorite flag – preserves the existing rating value.
+  Future<void> setFavorite(String slug, {required bool isFavorite}) async {
+    final userId = await _tokenStorage.getUserId();
+    if (userId == null || userId.isEmpty) {
+      debugPrint('setFavorite: No userId cached');
+      return;
+    }
+    final current = await _getUserRatingEntry(slug);
+    debugPrint('POST /api/users/$userId/ratings/$slug – isFavorite=$isFavorite, rating=${current['rating']}');
+    await _dio.post(
+      'api/users/$userId/ratings/$slug',
+      data: {
+        'rating': current['rating'],
+        'isFavorite': isFavorite,
+      },
+    );
   }
 
   /// Fetches the current user's profile and caches the userId.

@@ -65,6 +65,7 @@ class Recipe {
   final int servings;
   final String? recipeYield;
   final int rating;
+  final bool isFavorite;
   final List<RecipeIngredient> ingredients;
   final List<RecipeInstruction> instructions;
   final List<String> recipeCategory;
@@ -84,6 +85,7 @@ class Recipe {
     required this.servings,
     this.recipeYield,
     this.rating = 0,
+    this.isFavorite = false,
     required this.ingredients,
     required this.instructions,
     this.recipeCategory = const [],
@@ -104,6 +106,48 @@ class Recipe {
     return 0;
   }
 
+  Recipe copyWith({
+    String? id,
+    String? name,
+    String? slug,
+    String? image,
+    String? description,
+    String? totalTime,
+    String? prepTime,
+    String? performTime,
+    int? servings,
+    String? recipeYield,
+    int? rating,
+    bool? isFavorite,
+    List<RecipeIngredient>? ingredients,
+    List<RecipeInstruction>? instructions,
+    List<String>? recipeCategory,
+    List<String>? tags,
+    List<String>? tools,
+    List<RecipeNote>? notes,
+  }) {
+    return Recipe(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      slug: slug ?? this.slug,
+      image: image ?? this.image,
+      description: description ?? this.description,
+      totalTime: totalTime ?? this.totalTime,
+      prepTime: prepTime ?? this.prepTime,
+      performTime: performTime ?? this.performTime,
+      servings: servings ?? this.servings,
+      recipeYield: recipeYield ?? this.recipeYield,
+      rating: rating ?? this.rating,
+      isFavorite: isFavorite ?? this.isFavorite,
+      ingredients: ingredients ?? this.ingredients,
+      instructions: instructions ?? this.instructions,
+      recipeCategory: recipeCategory ?? this.recipeCategory,
+      tags: tags ?? this.tags,
+      tools: tools ?? this.tools,
+      notes: notes ?? this.notes,
+    );
+  }
+
   factory Recipe.fromJson(Map<String, dynamic> json) {
     return Recipe(
       id: json['id']?.toString() ?? '',
@@ -117,6 +161,7 @@ class Recipe {
       servings: _parseServings(json['recipeServings'] ?? json['recipeYield']),
       recipeYield: json['recipeYield']?.toString(),
       rating: (json['rating'] as num?)?.toInt() ?? 0,
+      isFavorite: (json['isFavorite'] as bool?) ?? false,
       ingredients: (json['recipeIngredient'] as List? ?? [])
           .map((i) => RecipeIngredient.fromJson(i))
           .toList(),

@@ -41,7 +41,26 @@ class RecipeRepository {
           final data = response.data;
           if (data != null && data['items'] is List) {
             final items = data['items'] as List;
-            return items.map((item) => Recipe.fromJson(item)).toList();
+            final recipes =
+                items.map((item) => Recipe.fromJson(item)).toList();
+
+            // Enrich recipes with up-to-date favorite status from dedicated
+            // GET /api/users/{id}/favorites endpoint.
+            try {
+              final favoritesMap = await _api.getUserFavorites();
+              if (favoritesMap.isNotEmpty) {
+                return recipes.map((r) {
+                  if (favoritesMap.containsKey(r.id)) {
+                    return r.copyWith(isFavorite: favoritesMap[r.id]);
+                  }
+                  return r;
+                }).toList();
+              }
+            } catch (e) {
+              debugPrint('getRecipes: Could not fetch favorites: $e');
+            }
+
+            return recipes;
           }
         }
         return [];
@@ -422,6 +441,41 @@ class RecipeRepository {
       debugPrint('setRating: Failed to set rating: $e');
       rethrow;
     }
+  }
+
+  /// Returns the current favorite status for a recipe.
+  Future<bool> getFavoriteStatus(String slug) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) return false;
+
+    var userId = await _tokenStorage.getUserId();
+    if (userId == null || userId.isEmpty) {
+      try {
+        userId = await _api.fetchAndCacheUserId();
+      } catch (_) {
+        return false;
+      }
+    }
+
+    return _api.getFavoriteStatus(slug);
+  }
+
+  /// Sets or clears the favorite flag for a recipe.
+  Future<void> setFavorite(String slug, {required bool isFavorite}) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) return;
+
+    var userId = await _tokenStorage.getUserId();
+    if (userId == null || userId.isEmpty) {
+      try {
+        userId = await _api.fetchAndCacheUserId();
+      } catch (e) {
+        debugPrint('setFavorite: Failed to fetch userId: $e');
+        return;
+      }
+    }
+
+    await _api.setFavorite(slug, isFavorite: isFavorite);
   }
 
   Future<List<ShoppingItemUnit>> getUnits() async {

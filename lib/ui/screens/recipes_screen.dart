@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -24,8 +25,17 @@ class RecipesScreen extends StatefulWidget {
 class _RecipesScreenState extends State<RecipesScreen> {
   late Future<List<Recipe>> _recipesFuture;
   final RecipeRepository _recipeRepository = RecipeRepository();
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
+
   String? _sortField;
   String _sortDirection = 'asc';
+
+  // Lokale Favoriten-Overrides: slug → isFavorite
+  final Map<String, bool> _favoriteOverrides = {};
+  final Set<String> _favoriteLoading = {};
+
+  static const _accent = Color(0xFFE58325);
 
   @override
   void initState() {
@@ -34,6 +44,19 @@ class _RecipesScreenState extends State<RecipesScreen> {
     _sortField = settings.recipeSortField;
     _sortDirection = settings.recipeSortDirection;
     _loadRecipes();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), _loadRecipes);
   }
 
   void _loadRecipes() {
@@ -41,28 +64,60 @@ class _RecipesScreenState extends State<RecipesScreen> {
       _recipesFuture = _recipeRepository.getRecipes(
         sort: _sortField,
         orderDirection: _sortDirection,
+        searchQuery: _searchController.text.trim().isEmpty
+            ? null
+            : _searchController.text.trim(),
       );
     });
   }
+
+  // ─── Favoriten ──────────────────────────────────────────────────────────
+
+  bool _isFavorite(Recipe recipe) =>
+      _favoriteOverrides[recipe.slug] ?? recipe.isFavorite;
+
+  Future<void> _toggleFavorite(Recipe recipe) async {
+    if (_favoriteLoading.contains(recipe.slug)) return;
+    final current = _isFavorite(recipe);
+    final newValue = !current;
+
+    setState(() {
+      _favoriteOverrides[recipe.slug] = newValue;
+      _favoriteLoading.add(recipe.slug);
+    });
+
+    try {
+      await _recipeRepository.setFavorite(recipe.slug, isFavorite: newValue);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _favoriteOverrides[recipe.slug] = current);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppLocalizations.of(context)!.errorUpdating(e.toString())),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _favoriteLoading.remove(recipe.slug));
+    }
+  }
+
+  // ─── Edit / Delete ───────────────────────────────────────────────────────
 
   Future<void> _editRecipe(Recipe recipe) async {
     try {
       final fullRecipe = await _recipeRepository.getRecipe(recipe.slug);
       if (!mounted) return;
       final result = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(
-          builder: (_) => EditRecipeScreen(recipe: fullRecipe),
-        ),
+        MaterialPageRoute(builder: (_) => EditRecipeScreen(recipe: fullRecipe)),
       );
-      if (result == true) {
-        _loadRecipes();
-      }
+      if (result == true) _loadRecipes();
     } catch (e) {
       if (mounted) {
-        final l10n = AppLocalizations.of(context)!;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.errorUpdating(e.toString())), backgroundColor: Colors.red),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppLocalizations.of(context)!.errorUpdating(e.toString())),
+          backgroundColor: Colors.red,
+        ));
       }
     }
   }
@@ -75,10 +130,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
         title: Text(l10n.deleteRecipe),
         content: Text(l10n.confirmDeleteRecipe),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.cancel),
-          ),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             child: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
@@ -86,25 +138,28 @@ class _RecipesScreenState extends State<RecipesScreen> {
         ],
       ),
     );
-
     if (confirmed == true && mounted) {
       try {
         await _recipeRepository.deleteRecipe(recipe.slug);
         _loadRecipes();
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.itemDeletedSuccess(recipe.name)), backgroundColor: Colors.green),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(l10n.itemDeletedSuccess(recipe.name)),
+            backgroundColor: Colors.green,
+          ));
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.errorDeleting(e.toString())), backgroundColor: Colors.red),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(l10n.errorDeleting(e.toString())),
+            backgroundColor: Colors.red,
+          ));
         }
       }
     }
   }
+
+  // ─── Sort / Add ─────────────────────────────────────────────────────────
 
   void _showSortDialog() async {
     final l10n = AppLocalizations.of(context)!;
@@ -120,7 +175,6 @@ class _RecipesScreenState extends State<RecipesScreen> {
       currentField: _sortField,
       currentDirection: _sortDirection,
     );
-
     if (result != null) {
       _sortField = result.field;
       _sortDirection = result.direction;
@@ -141,35 +195,27 @@ class _RecipesScreenState extends State<RecipesScreen> {
             Navigator.pop(ctx);
             final l10n = AppLocalizations.of(context)!;
             try {
-              final data = Map<String, dynamic>.from(
-                  jsonDecode(recipeJson) as Map);
+              final data = Map<String, dynamic>.from(jsonDecode(recipeJson) as Map);
               await _recipeRepository.createRecipe(data);
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.recipeCreated)),
-                );
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text(l10n.recipeCreated)));
                 _loadRecipes();
               }
             } on DioException catch (e) {
-              debugPrint('DioException creating recipe: ${e.response?.statusCode} - ${e.response?.data}');
               if (mounted) {
                 final detail = e.response?.data?['detail'] ?? e.message;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${l10n.error}: $detail'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text('${l10n.error}: $detail'),
+                  backgroundColor: Colors.red,
+                ));
               }
             } catch (e) {
-              debugPrint('Error creating recipe: $e');
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${l10n.error}: $e'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text('${l10n.error}: $e'),
+                  backgroundColor: Colors.red,
+                ));
               }
             }
           },
@@ -180,35 +226,30 @@ class _RecipesScreenState extends State<RecipesScreen> {
 
   Widget _buildErrorWidget(Object error, VoidCallback onRetry) {
     final l10n = AppLocalizations.of(context)!;
-    String errorMessage;
-
+    String msg;
     if (error is DioException && error.error is ApiException) {
-      final apiError = error.error as ApiException;
-      if (apiError is NetworkException) {
-        errorMessage = l10n.checkInternetConnection;
-      } else if (apiError is ServerException) {
-        errorMessage = l10n.serverError;
+      final e = error.error as ApiException;
+      if (e is NetworkException) {
+        msg = l10n.checkInternetConnection;
+      } else if (e is ServerException) {
+        msg = l10n.serverError;
       } else {
-        errorMessage = apiError.message;
+        msg = e.message;
       }
     } else {
-      errorMessage = l10n.unexpectedError;
+      msg = l10n.unexpectedError;
     }
-
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.error_outline, color: Colors.red, size: 48),
             const SizedBox(height: 16),
-            Text(errorMessage, textAlign: TextAlign.center),
+            Text(msg, textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: onRetry,
-              child: Text(l10n.tryAgain),
-            ),
+            ElevatedButton(onPressed: onRetry, child: Text(l10n.tryAgain)),
           ],
         ),
       ),
@@ -221,7 +262,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFFE58325),
+        backgroundColor: _accent,
         foregroundColor: Colors.white,
         title: Text(l10n.recipes),
         actions: [
@@ -235,40 +276,81 @@ class _RecipesScreenState extends State<RecipesScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            // ── Suchzeile ────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
               child: Row(
                 children: [
                   Expanded(
                     child: TextField(
+                      controller: _searchController,
+                      textInputAction: TextInputAction.search,
+                      style: const TextStyle(color: Colors.black),
                       decoration: InputDecoration(
                         hintText: l10n.search,
-                        prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                        hintStyle:
+                            TextStyle(color: _accent.withValues(alpha: 0.6)),
+                        prefixIcon: const Icon(Icons.search, color: _accent),
+                        suffixIcon: ListenableBuilder(
+                          listenable: _searchController,
+                          builder: (_, __) =>
+                              _searchController.text.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear,
+                                          size: 18, color: Colors.grey),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        _loadRecipes();
+                                      },
+                                    )
+                                  : const SizedBox.shrink(),
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
+                          borderSide:
+                              const BorderSide(color: _accent, width: 1.5),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              const BorderSide(color: _accent, width: 1.5),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              const BorderSide(color: _accent, width: 2),
                         ),
                         filled: true,
-                        fillColor: Theme.of(context).cardColor,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                        fillColor: _accent.withValues(alpha: 0.08),
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 0),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
+                  const SizedBox(width: 10),
+                  // Sortier-Button – öffnet Sort-Dialog
+                  Tooltip(
+                    message: l10n.sort,
+                    child: InkWell(
+                      onTap: _showSortDialog,
                       borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.tune),
-                      onPressed: () {},
-                      tooltip: l10n.filter,
+                      child: Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: _accent, width: 1.5),
+                          borderRadius: BorderRadius.circular(12),
+                          color: _accent.withValues(alpha: 0.08),
+                        ),
+                        child: const Icon(Icons.sort, color: _accent),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
+
+            // ── Rezept-Grid ──────────────────────────────────────────
             Expanded(
               child: FutureBuilder<List<Recipe>>(
                 future: _recipesFuture,
@@ -280,21 +362,20 @@ class _RecipesScreenState extends State<RecipesScreen> {
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return Center(child: Text(l10n.noRecipesFound));
                   }
-
                   final recipes = snapshot.data!;
                   return SlidableAutoCloseBehavior(
                     child: GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
                         childAspectRatio: 0.8,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
                       ),
                       itemCount: recipes.length,
-                      itemBuilder: (context, index) {
-                        return _buildRecipeCard(context, recipes[index]);
-                      },
+                      itemBuilder: (context, index) =>
+                          _buildRecipeCard(context, recipes[index]),
                     ),
                   );
                 },
@@ -306,7 +387,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddRecipeSheet(context),
         tooltip: l10n.addRecipe,
-        backgroundColor: Colors.green, // Changed to green
+        backgroundColor: Colors.green,
         foregroundColor: Colors.white,
         shape: const CircleBorder(),
         child: const Icon(Icons.add),
@@ -315,6 +396,9 @@ class _RecipesScreenState extends State<RecipesScreen> {
   }
 
   Widget _buildRecipeCard(BuildContext context, Recipe recipe) {
+    final fav = _isFavorite(recipe);
+    final favBusy = _favoriteLoading.contains(recipe.slug);
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: Slidable(
@@ -325,14 +409,14 @@ class _RecipesScreenState extends State<RecipesScreen> {
           children: [
             SlidableAction(
               flex: 1,
-              onPressed: (context) => _editRecipe(recipe),
-              backgroundColor: const Color(0xFFE58325),
+              onPressed: (_) => _editRecipe(recipe),
+              backgroundColor: _accent,
               foregroundColor: Colors.white,
               icon: Icons.edit,
             ),
             SlidableAction(
               flex: 1,
-              onPressed: (context) => _deleteRecipe(recipe),
+              onPressed: (_) => _deleteRecipe(recipe),
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
               icon: Icons.delete,
@@ -342,84 +426,122 @@ class _RecipesScreenState extends State<RecipesScreen> {
         child: Card(
           margin: EdgeInsets.zero,
           clipBehavior: Clip.antiAlias,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 2,
           child: InkWell(
-            onTap: () {
-              showModalBottomSheet(
+            onTap: () async {
+              await showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
                 useSafeArea: true,
                 backgroundColor: Colors.transparent,
-                builder: (context) => RecipeDetailScreen(recipeSlug: recipe.slug),
+                builder: (_) =>
+                    RecipeDetailScreen(recipeSlug: recipe.slug),
               );
+              // Favoriten-Status nach Schließen des Detail-Screens sync.
+              if (mounted) {
+                try {
+                  final updated = await _recipeRepository
+                      .getFavoriteStatus(recipe.slug);
+                  if (mounted) {
+                    setState(
+                        () => _favoriteOverrides[recipe.slug] = updated);
+                  }
+                } catch (_) {}
+              }
             },
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // ── Bild + Herz ──────────────────────────────────────
                 Expanded(
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
                       Container(
-                        width: double.infinity,
-                        color: Colors.grey[300],
-                        // TODO: Use recipe image
-                        child: const Icon(Icons.image, size: 50, color: Colors.white),
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.restaurant_menu,
+                            size: 48, color: Colors.white),
                       ),
                       Positioned(
-                        top: 8,
-                        right: 8,
-                        child: IconButton(
-                          icon: const Icon(Icons.favorite_border, color: Colors.white),
-                          onPressed: () {
-                            // TODO: Toggle favorite
-                          },
+                        top: 4,
+                        right: 4,
+                        child: Material(
+                          color: Colors.black26,
+                          shape: const CircleBorder(),
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: () => _toggleFavorite(recipe),
+                            child: Padding(
+                              padding: const EdgeInsets.all(6),
+                              child: favBusy
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Icon(
+                                      fav
+                                          ? Icons.favorite
+                                          : Icons.favorite_border,
+                                      size: 18,
+                                      color: fav
+                                          ? Colors.red[300]
+                                          : Colors.white,
+                                    ),
+                            ),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
+
+                // ── Rezept-Infos ─────────────────────────────────────
                 Padding(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         recipe.name,
                         style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                        maxLines: 1,
+                            fontWeight: FontWeight.bold, fontSize: 14),
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
                           const Icon(Icons.access_time,
-                              size: 16, color: Colors.grey),
-                          const SizedBox(width: 4),
+                              size: 13, color: Colors.grey),
+                          const SizedBox(width: 3),
                           Text(
-                            recipe.totalTime ?? '- m',
-                            style: const TextStyle(color: Colors.grey),
+                            recipe.totalTime ?? '–',
+                            style: const TextStyle(
+                                color: Colors.grey, fontSize: 12),
                           ),
                         ],
                       ),
                       if (recipe.rating > 0) ...[
                         const SizedBox(height: 4),
                         Row(
-                          children: List.generate(5, (i) {
-                            return Icon(
+                          children: List.generate(
+                            5,
+                            (i) => Icon(
                               i < recipe.rating
                                   ? Icons.star_rounded
                                   : Icons.star_border_rounded,
-                              size: 16,
+                              size: 14,
                               color: i < recipe.rating
                                   ? Colors.amber
-                                  : Colors.grey[400],
-                            );
-                          }),
+                                  : Colors.grey[300],
+                            ),
+                          ),
                         ),
                       ],
                     ],

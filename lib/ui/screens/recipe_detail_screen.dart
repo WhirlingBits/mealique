@@ -22,6 +22,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   final RecipeRepository _recipeRepository = RecipeRepository();
   late Future<Recipe> _recipeFuture;
 
+  // Favoriten-Status wird separat geladen/gespeichert
+  bool? _isFavorite; // null = noch nicht geladen
+  bool _favoriteLoading = false;
+
   static const Color _accentColor = Color(0xFFE58325);
 
   @override
@@ -32,8 +36,61 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
   void _loadRecipe() {
     setState(() {
-      _recipeFuture = _recipeRepository.getRecipe(widget.recipeSlug);
+      _isFavorite = null; // zurücksetzen beim Neu-Laden
+      _recipeFuture = _recipeRepository.getRecipe(widget.recipeSlug).then((recipe) {
+        // Favoriten-Status im Hintergrund nachladen
+        _loadFavoriteStatus(recipe.slug);
+        return recipe;
+      });
     });
+  }
+
+  Future<void> _loadFavoriteStatus(String slug) async {
+    try {
+      final status = await _recipeRepository.getFavoriteStatus(slug);
+      if (mounted) setState(() => _isFavorite = status);
+    } catch (_) {
+      if (mounted) setState(() => _isFavorite = false);
+    }
+  }
+
+  Future<void> _toggleFavorite(Recipe recipe) async {
+    if (_favoriteLoading) return;
+    final current = _isFavorite ?? false;
+    final newValue = !current;
+
+    // Optimistisches Update sofort zeigen
+    setState(() {
+      _isFavorite = newValue;
+      _favoriteLoading = true;
+    });
+
+    try {
+      await _recipeRepository.setFavorite(recipe.slug, isFavorite: newValue);
+      if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              newValue ? l10n.addToFavorites : l10n.removeFromFavorites,
+            ),
+            backgroundColor: newValue ? Colors.green : Colors.grey[700],
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        );
+      }
+    } catch (e) {
+      // Rollback bei Fehler
+      if (mounted) {
+        setState(() => _isFavorite = current);
+        final l10n = AppLocalizations.of(context)!;
+        _showError(l10n.errorUpdating(e.toString()));
+      }
+    } finally {
+      if (mounted) setState(() => _favoriteLoading = false);
+    }
   }
 
   Future<void> _confirmDeleteRecipe(Recipe recipe) async {
@@ -437,12 +494,33 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               return Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.favorite_border),
-                    onPressed: () {
-                      // TODO: Favoriten Logik
-                    },
-                  ),
+                  if (_favoriteLoading)
+                    const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      ),
+                    )
+                  else
+                    IconButton(
+                      icon: Icon(
+                        (_isFavorite ?? false)
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color: (_isFavorite ?? false)
+                            ? Colors.red[300]
+                            : Colors.white,
+                      ),
+                      tooltip: (_isFavorite ?? false)
+                          ? AppLocalizations.of(context)!.removeFromFavorites
+                          : AppLocalizations.of(context)!.addToFavorites,
+                      onPressed: () => _toggleFavorite(recipe),
+                    ),
                   RecipeDetailActionsMenu(
                     onEdit: () => _showEditRecipeSheet(recipe),
                     onDelete: () => _confirmDeleteRecipe(recipe),
