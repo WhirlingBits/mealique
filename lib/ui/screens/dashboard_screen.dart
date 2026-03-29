@@ -337,15 +337,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     builder: (context) => const RecipeSearchScreen(initialQuery: ''),
                   );
                 },
+                style: const TextStyle(color: Colors.black), // <-- explizit schwarz
                 decoration: InputDecoration(
                   hintText: l10n.recipeSearch,
-                  prefixIcon: const Icon(Icons.search),
+                  hintStyle: TextStyle(color: const Color(0xFFE58325).withOpacity(0.6)),
+                  prefixIcon: const Icon(Icons.search, color: Color(0xFFE58325)),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+                    borderSide: const BorderSide(color: Color(0xFFE58325), width: 1.5),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE58325), width: 1.5),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE58325), width: 2),
                   ),
                   filled: true,
-                  fillColor: theme.cardColor,
+                  fillColor: const Color(0xFFE58325).withOpacity(0.08),
                   contentPadding: const EdgeInsets.symmetric(vertical: 0),
                 ),
               ),
