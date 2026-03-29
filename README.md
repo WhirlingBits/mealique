@@ -34,7 +34,17 @@ Mealique is an unofficial Flutter client for Mealie, the self-hosted recipe mana
 
 ## Installation
 
-Currently, installation is only possible manually. You can build the app from source or install the APK directly if available.
+### Google Play (Closed Testing)
+
+The app is available as a closed test on Google Play:
+
+<a href="https://play.google.com/store/apps/details?id=de.mealique.app">
+  <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" width="200" />
+</a>
+
+### Build from Source
+
+You can also build the app from source or install the APK directly if available.
 
 1.  **Clone the repository:**
     ```bash
