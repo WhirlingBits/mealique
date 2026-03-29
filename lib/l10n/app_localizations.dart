@@ -1777,6 +1777,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Discard'**
   String get discard;
+
+  /// No description provided for @editShoppingItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Item'**
+  String get editShoppingItem;
+
+  /// No description provided for @displayName.
+  ///
+  /// In en, this message translates to:
+  /// **'Display Name'**
+  String get displayName;
+
+  /// No description provided for @displayNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'How this item appears in the list'**
+  String get displayNameHint;
+
+  /// No description provided for @checkedStatus_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get checkedStatus_label;
+
+  /// No description provided for @itemSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Item saved successfully'**
+  String get itemSaved;
+
+  /// No description provided for @noChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'No changes to save'**
+  String get noChanges;
+
+  /// No description provided for @listUpdatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" was updated'**
+  String listUpdatedSuccess(String name);
+
+  /// No description provided for @listName.
+  ///
+  /// In en, this message translates to:
+  /// **'List name'**
+  String get listName;
+
+  /// No description provided for @details.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get details;
+
+  /// No description provided for @createdAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Created at'**
+  String get createdAt;
+
+  /// No description provided for @updatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated at'**
+  String get updatedAt;
+
+  /// No description provided for @items.
+  ///
+  /// In en, this message translates to:
+  /// **'Items'**
+  String get items;
 }
 
 class _AppLocalizationsDelegate

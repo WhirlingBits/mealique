@@ -164,11 +164,27 @@ class ShoppingList {
       'name': name,
       'extras': extras,
       'createdAt': createdAt,
-      'updatedAt': updatedAt,
+      'update_at': updatedAt,
       'groupId': groupId,
       'userId': userId,
       'id': id,
       'listItems': listItems.map((item) => item.toJson()).toList(),
+    };
+  }
+
+  /// Minimal JSON for PUT /api/households/shopping/lists/{id}.
+  /// Only sends the fields the Mealie update schema requires
+  /// and avoids sending full nested listItems (which cause 422).
+  Map<String, dynamic> toUpdateJson() {
+    return {
+      'name': name,
+      'extras': extras,
+      'createdAt': createdAt,
+      'update_at': updatedAt,
+      'groupId': groupId,
+      'userId': userId,
+      'id': id,
+      'listItems': [],
     };
   }
 

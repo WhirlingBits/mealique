@@ -10,6 +10,7 @@ import '../../models/shopping_list_model.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers/settings_provider.dart';
 import '../widgets/add_shopping_list_form.dart';
+import 'edit_shopping_list_screen.dart';
 import 'shopping_list_detail_screen.dart';
 
 class ShoppingListScreen extends StatefulWidget {
@@ -152,52 +153,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     }
   }
 
-  void _editList(ShoppingList list) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: AddShoppingListForm(
-          initialName: list.name,
-          onAddList: (newName) async {
-            final l10n = AppLocalizations.of(this.context)!;
-            try {
-              await _repository.updateShoppingListName(list.id, newName);
-              _loadLists();
-              if (mounted) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(this.context)
-                  ..clearSnackBars()
-                  ..showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.listCreatedSuccess(newName)),
-                      backgroundColor: Colors.green,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  );
-              }
-            } catch (e) {
-              if (mounted) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(this.context)
-                  ..clearSnackBars()
-                  ..showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.errorUpdating(e.toString())),
-                      backgroundColor: Colors.red,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      duration: const Duration(seconds: 4),
-                    ),
-                  );
-              }
-            }
-          },
-        ),
+  void _editList(ShoppingList list) async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditShoppingListScreen(shoppingList: list),
       ),
     );
+    if (result == true) {
+      _loadLists();
+    }
   }
 
   Widget _buildErrorWidget(Object error, VoidCallback onRetry) {

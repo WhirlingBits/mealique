@@ -368,5 +368,20 @@
     "description": "Description",
     "discardChanges": "Discard Changes?",
     "discardChangesMessage": "You have unsaved changes. Do you want to discard them?",
-    "discard": "Discard"
+    "discard": "Discard",
+    "editShoppingItem": "Edit Item",
+    "displayName": "Display Name",
+    "displayNameHint": "How this item appears in the list",
+    "checkedStatus_label": "Status",
+    "itemSaved": "Item saved successfully",
+    "noChanges": "No changes to save",
+    "listUpdatedSuccess": "\"{name}\" was updated",
+    "@listUpdatedSuccess": {
+        "placeholders": { "name": { "type": "String" } }
+    },
+    "listName": "List name",
+    "details": "Details",
+    "createdAt": "Created at",
+    "updatedAt": "Updated at",
+    "items": "Items"
 }

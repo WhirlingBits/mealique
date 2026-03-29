@@ -912,4 +912,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get discard => 'Discard';
+
+  @override
+  String get editShoppingItem => 'Edit Item';
+
+  @override
+  String get displayName => 'Display Name';
+
+  @override
+  String get displayNameHint => 'How this item appears in the list';
+
+  @override
+  String get checkedStatus_label => 'Status';
+
+  @override
+  String get itemSaved => 'Item saved successfully';
+
+  @override
+  String get noChanges => 'No changes to save';
+
+  @override
+  String listUpdatedSuccess(String name) {
+    return '\"$name\" was updated';
+  }
+
+  @override
+  String get listName => 'List name';
+
+  @override
+  String get details => 'Details';
+
+  @override
+  String get createdAt => 'Created at';
+
+  @override
+  String get updatedAt => 'Updated at';
+
+  @override
+  String get items => 'Items';
 }

@@ -6,13 +6,16 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/providers/settings_provider.dart';
 import 'package:mealique/ui/screens/shopping_list_item_detail_screen.dart';
+import 'package:mealique/ui/screens/edit_shopping_list_item_screen.dart';
 import 'package:mealique/ui/widgets/shopping_list_detail_actions_menu.dart';
 import 'package:mealique/ui/widgets/sort_dialog.dart';
 import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../data/sync/household_repository.dart';
 import '../../models/shopping_item_model.dart';
+import '../../models/shopping_list_model.dart';
 import '../widgets/add_shopping_list_item_form.dart';
+import 'edit_shopping_list_screen.dart';
 
 class ShoppingListDetailScreen extends StatefulWidget {
   final String listId;
@@ -88,57 +91,28 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
     settings.setShowCategories(widget.listId, !settings.showCategoriesForList(widget.listId));
   }
 
-  void _handleEditList() {
-    final l10n = AppLocalizations.of(context)!;
-    final controller = TextEditingController(text: widget.listName);
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.renameList),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: InputDecoration(hintText: l10n.enterNewName),
-          onSubmitted: (_) {
-            if (controller.text.trim().isNotEmpty) {
-              Navigator.pop(ctx, controller.text.trim());
-            }
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () {
-              if (controller.text.trim().isNotEmpty) {
-                Navigator.pop(ctx, controller.text.trim());
-              }
-            },
-            child: Text(l10n.save),
-          ),
-        ],
+  void _handleEditList() async {
+    // Build a minimal ShoppingList object for the edit screen
+    final shoppingList = ShoppingList(
+      id: widget.listId,
+      name: widget.listName,
+      extras: {},
+      createdAt: '',
+      updatedAt: '',
+      recipeReferences: [],
+      labelSettings: [],
+      listItems: await _itemsFuture,
+    );
+    if (!mounted) return;
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditShoppingListScreen(shoppingList: shoppingList),
       ),
-    ).then((newName) async {
-      if (newName != null && newName is String && mounted) {
-        try {
-          await _repository.updateShoppingListName(widget.listId, newName);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(l10n.listCreatedSuccess(newName)),
-                backgroundColor: Colors.green,
-              ),
-            );
-          }
-        } catch (e) {
-          if (mounted) {
-            _showError(l10n.errorUpdating(e.toString()));
-          }
-        }
-      }
-    });
+    );
+    if (result == true) {
+      _loadItems();
+    }
   }
 
   Future<void> _handleUncheckAll() async {
@@ -367,40 +341,16 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
   }
 
   void _showEditItemDialog(ShoppingItem item) {
-    final controller = TextEditingController(text: item.display);
-    final l10n = AppLocalizations.of(context)!;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.editItem),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          onSubmitted: (_) {
-            if (controller.text.isNotEmpty) {
-              _editItem(item, controller.text);
-              Navigator.pop(context);
-            }
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () {
-              if (controller.text.isNotEmpty) {
-                _editItem(item, controller.text);
-                Navigator.pop(context);
-              }
-            },
-            child: Text(l10n.save),
-          ),
-        ],
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditShoppingListItemScreen(item: item),
       ),
-    );
+    ).then((hasChanged) {
+      if (hasChanged == true) {
+        _loadItems();
+      }
+    });
   }
 
   Map<String, List<ShoppingItem>> _groupItemsByCategory(

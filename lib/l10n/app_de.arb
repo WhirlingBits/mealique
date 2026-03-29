@@ -368,5 +368,20 @@
     "description": "Beschreibung",
     "discardChanges": "Änderungen verwerfen?",
     "discardChangesMessage": "Du hast ungespeicherte Änderungen. Möchtest du diese verwerfen?",
-    "discard": "Verwerfen"
+    "discard": "Verwerfen",
+    "editShoppingItem": "Artikel bearbeiten",
+    "displayName": "Anzeigename",
+    "displayNameHint": "Wie dieser Artikel in der Liste angezeigt wird",
+    "checkedStatus_label": "Status",
+    "itemSaved": "Artikel erfolgreich gespeichert",
+    "noChanges": "Keine Änderungen zum Speichern",
+    "listUpdatedSuccess": "\"{name}\" wurde aktualisiert",
+    "@listUpdatedSuccess": {
+        "placeholders": { "name": { "type": "String" } }
+    },
+    "listName": "Listenname",
+    "details": "Details",
+    "createdAt": "Erstellt am",
+    "updatedAt": "Aktualisiert am",
+    "items": "Artikel"
 }

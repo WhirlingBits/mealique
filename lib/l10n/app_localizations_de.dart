@@ -921,4 +921,43 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get discard => 'Verwerfen';
+
+  @override
+  String get editShoppingItem => 'Artikel bearbeiten';
+
+  @override
+  String get displayName => 'Anzeigename';
+
+  @override
+  String get displayNameHint =>
+      'Wie dieser Artikel in der Liste angezeigt wird';
+
+  @override
+  String get checkedStatus_label => 'Status';
+
+  @override
+  String get itemSaved => 'Artikel erfolgreich gespeichert';
+
+  @override
+  String get noChanges => 'Keine Änderungen zum Speichern';
+
+  @override
+  String listUpdatedSuccess(String name) {
+    return '\"$name\" wurde aktualisiert';
+  }
+
+  @override
+  String get listName => 'Listenname';
+
+  @override
+  String get details => 'Details';
+
+  @override
+  String get createdAt => 'Erstellt am';
+
+  @override
+  String get updatedAt => 'Aktualisiert am';
+
+  @override
+  String get items => 'Artikel';
 }
