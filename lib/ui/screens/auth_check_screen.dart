@@ -148,15 +148,19 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // App-Logo als Splash
-            Icon(Icons.restaurant_menu, size: 72, color: Color(0xFFE58325)),
-            SizedBox(height: 24),
-            SizedBox(
+            // Mealique-Logo als Splash
+            Image.asset(
+              'assets/mealique.png',
+              width: 120,
+              height: 120,
+            ),
+            const SizedBox(height: 24),
+            const SizedBox(
               width: 32,
               height: 32,
               child: CircularProgressIndicator(

@@ -6,6 +6,7 @@ import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/data/sync/recipe_repository.dart';
 import 'package:mealique/models/recipes_model.dart';
 import 'package:mealique/ui/screens/recipe_detail_screen.dart';
+import 'package:mealique/ui/widgets/recipe_image.dart';
 import '../../l10n/app_localizations.dart';
 
 class RecipeSearchScreen extends StatefulWidget {
@@ -148,14 +149,17 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
         ),
         child: ListTile(
           contentPadding: const EdgeInsets.all(8),
-          leading: Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(8),
+          leading: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: SizedBox(
+              width: 56,
+              height: 56,
+              child: RecipeImage(
+                recipeSlug: recipe.slug,
+                imageHint: recipe.image,
+                fit: BoxFit.cover,
+              ),
             ),
-            child: const Icon(Icons.image, color: Colors.white),
           ),
           title: Text(recipe.name, style: const TextStyle(fontWeight: FontWeight.bold)),
           subtitle: Text(recipe.totalTime ?? '- min'),
@@ -204,7 +208,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
               style: const TextStyle(color: accentColor),
               decoration: InputDecoration(
                 hintText: AppLocalizations.of(context)!.searchRecipesHint,
-                hintStyle: TextStyle(color: accentColor.withOpacity(0.7)),
+                hintStyle: TextStyle(color: accentColor.withValues(alpha: 0.7)),
                 prefixIcon: const Icon(Icons.search, color: accentColor),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear, color: accentColor),

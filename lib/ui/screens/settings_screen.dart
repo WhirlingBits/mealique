@@ -63,10 +63,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               padding: const EdgeInsets.symmetric(vertical: 32.0),
               child: Column(
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 40,
-                    backgroundColor: Colors.blueAccent,
-                    child: Icon(Icons.person, size: 40, color: Colors.white),
+                    backgroundColor: const Color(0xFFE58325).withValues(alpha: 0.15),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/mealique.png',
+                        width: 56,
+                        height: 56,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Text(

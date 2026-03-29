@@ -7,6 +7,7 @@ import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/ui/screens/edit_recipe_screen.dart';
 import 'package:mealique/ui/screens/recipe_detail_screen.dart';
 import 'package:mealique/ui/widgets/recipe_actions_menu.dart';
+import 'package:mealique/ui/widgets/recipe_image.dart';
 import 'package:mealique/ui/widgets/sort_dialog.dart';
 import 'package:provider/provider.dart';
 import '../../data/sync/recipe_repository.dart';
@@ -459,10 +460,10 @@ class _RecipesScreenState extends State<RecipesScreen> {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Container(
-                        color: Colors.grey[200],
-                        child: const Icon(Icons.restaurant_menu,
-                            size: 48, color: Colors.white),
+                      RecipeImage(
+                        recipeSlug: recipe.slug,
+                        imageHint: recipe.image,
+                        fit: BoxFit.cover,
                       ),
                       Positioned(
                         top: 4,

@@ -14,6 +14,7 @@ import 'package:mealique/models/user_self_model.dart';
 import 'package:mealique/ui/screens/recipe_search_screen.dart';
 import 'package:mealique/ui/screens/recipe_detail_screen.dart';
 import 'package:mealique/ui/widgets/dashboard_actions_menu.dart';
+import 'package:mealique/ui/widgets/recipe_image.dart';
 import '../widgets/add_recipe_form.dart';
 import '../widgets/add_shopping_list_form.dart';
 import '../widgets/add_shopping_list_item_form.dart';
@@ -560,14 +561,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  // TODO: Use recipe image once available
-                  color: Colors.orangeAccent, // Placeholder color
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Center(
-                  child: Icon(Icons.image, color: Colors.white54, size: 40),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: RecipeImage(
+                  recipeSlug: recipe.slug,
+                  imageHint: recipe.image,
+                  fit: BoxFit.cover,
                 ),
               ),
             ),

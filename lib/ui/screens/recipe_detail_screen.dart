@@ -7,6 +7,7 @@ import 'package:mealique/data/local/token_storage.dart';
 import 'package:mealique/models/recipes_model.dart';
 import 'package:mealique/ui/screens/edit_recipe_screen.dart';
 import 'package:mealique/ui/widgets/recipe_detail_actions_menu.dart';
+import 'package:mealique/ui/widgets/recipe_image.dart';
 import '../../l10n/app_localizations.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
@@ -368,9 +369,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    color: Colors.grey[300],
-                    child: const Icon(Icons.image, size: 80, color: Colors.white54),
+                  child: RecipeImage(
+                    recipeSlug: recipe.slug,
+                    imageHint: recipe.image,
+                    fit: BoxFit.cover,
                   ),
                 ),
                 Positioned(
