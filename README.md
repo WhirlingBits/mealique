@@ -20,9 +20,17 @@ Mealique is an unofficial Flutter client for Mealie, the self-hosted recipe mana
 
 ## Screenshots
 
-| <img src="images/login_screen.png" width="300" /> | <img src="images/shopping_list.png" width="300" /> |
-|:--:|:--:|
-| *Login Screen* | *Shopping List* |
+### Smartphone
+
+| <img src="images/smartphone_login.png" width="300" /> | <img src="images/smartphone_dashboard.png" width="300" /> | <img src="images/smartphone_planner.png" width="300" /> |
+|:-----------------------------------------------------:|:---------------------------------------------------------:|:-------------------------------------------------------:|
+|                    *Login Screen*                     |                        *Dashboard*                        |                        *Planner*                        |
+
+
+| <img src="images/smartphone_recipes.png" width="300" /> | <img src="images/smartphone_shopping_list.png" width="300" /> | <img src="images/smartphone_shopping_list_details.png" width="300" /> |
+|:-------------------------------------------------------:|:-------------------------------------------------------------:|:---------------------------------------------------------------------:|
+|                        *Recipes*                        |                        *Shopping List*                        |                        *Shopping List Details*                        |
+### Tablet
 
 ## Installation
 
@@ -53,19 +61,19 @@ Currently, installation is only possible manually. You can build the app from so
 - [ ] **Shopping List**
   - [x] View and manage multiple shopping lists
   - [ ] Add recipes to a shopping list
-  - [ ] Mark items as completed
-  - [ ] Add and edit Shopping List items
-- [ ] **Meal Planner**
-  - [ ] View the weekly meal plan
-  - [ ] Add/remove recipes from the meal plan
+  - [x] Mark items as completed
+  - [x] Add and edit Shopping List items
+- [x] **Meal Planner**
+  - [x] View the weekly meal plan
+  - [x] Add/remove recipes from the meal plan
   - [ ] Automatically generate shopping list from the plan
 - [ ] **User Experience**
   - [x] Implement localization (EN, DE)
   - [ ] Full Dark Mode
   - [ ] Tablet-optimized UI
-  - [ ] Advanced recipe filtering (by category, tag, etc.)
+  - [x] Advanced recipe filtering (by category, tag, etc.)
 - [ ] **Advanced Features**
-  - [ ] Create and edit recipes within the app
+  - [x] Create and edit recipes within the app
   - [ ] Manage Mealie user settings and preferences
   - [ ] Pantry management
   - [ ] Notifications
