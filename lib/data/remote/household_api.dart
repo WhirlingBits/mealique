@@ -272,7 +272,7 @@ class HouseholdApi {
   Future<ShoppingList> updateShoppingList(String itemId, ShoppingList shoppingList) async {
     final response = await _dio.put(
       'api/households/shopping/lists/$itemId',
-      data: shoppingList.toJson(),
+      data: shoppingList.toUpdateJson(),
     );
     return ShoppingList.fromJson(response.data);
   }

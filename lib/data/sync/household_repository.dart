@@ -184,6 +184,7 @@ class HouseholdRepository {
       apiCall: () async {
         final list = await _api.getShoppingList(listId);
         final updatedList = list.copyWith(name: newName);
+        debugPrint('updateShoppingListName: sending PUT with body: ${updatedList.toUpdateJson()}');
         await _api.updateShoppingList(list.id, updatedList);
         if (list.labelSettings.isNotEmpty) {
           await _api.updateShoppingListLabelSettings(list.id, list.labelSettings);
