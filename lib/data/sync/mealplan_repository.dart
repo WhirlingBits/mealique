@@ -249,42 +249,98 @@ class MealplanRepository {
         msg.contains('timeout');
   }
 
-  // Helper for demo data
-  LinkedHashMap<DateTime, List<MealplanEntry>> _getDemoMealplans(DateTime start, DateTime end) {
-    final today = DateTime.now();
-    final dayKey = DateTime.utc(today.year, today.month, today.day);
+  // ─── Demo-Daten für den Planner (ganze Woche) ────────────────────────────
+
+  /// Statische Tages-Vorlage: Index 0 = Montag … 6 = Sonntag.
+  static const List<List<_DemoMeal>> _weekTemplate = [
+    // Montag
+    [
+      _DemoMeal(PlanEntryType.breakfast, 'Overnight Oats',      '101', 'overnight-oats'),
+      _DemoMeal(PlanEntryType.lunch,     'Tomatensuppe',        '102', 'tomatensuppe'),
+      _DemoMeal(PlanEntryType.dinner,    'Pasta Bolognese',     '103', 'pasta-bolognese'),
+    ],
+    // Dienstag
+    [
+      _DemoMeal(PlanEntryType.breakfast, 'Rührei mit Toast',    '104', 'ruehrei-toast'),
+      _DemoMeal(PlanEntryType.snack,     'Apfel & Nüsse',       '105', 'apfel-nuesse'),
+      _DemoMeal(PlanEntryType.dinner,    'Hähnchen-Curry',      '106', 'haehnchen-curry'),
+    ],
+    // Mittwoch
+    [
+      _DemoMeal(PlanEntryType.breakfast, 'Müsli mit Beeren',    '107', 'muesli-beeren'),
+      _DemoMeal(PlanEntryType.lunch,     'Caesar Salad',        '108', 'caesar-salad'),
+      _DemoMeal(PlanEntryType.dinner,    'Lachs mit Gemüse',    '109', 'lachs-gemuese'),
+    ],
+    // Donnerstag
+    [
+      _DemoMeal(PlanEntryType.breakfast, 'Pancakes',            '110', 'fluffy-pancakes'),
+      _DemoMeal(PlanEntryType.lunch,     'Chicken Wrap',        '111', 'chicken-wrap'),
+      _DemoMeal(PlanEntryType.dinner,    'Pizza Margherita',    '112', 'pizza-margherita'),
+    ],
+    // Freitag
+    [
+      _DemoMeal(PlanEntryType.breakfast, 'Avocado Toast',       '113', 'avocado-toast'),
+      _DemoMeal(PlanEntryType.snack,     'Smoothie Bowl',       '114', 'smoothie-bowl'),
+      _DemoMeal(PlanEntryType.dinner,    'Spaghetti Carbonara', '115', 'spaghetti-carbonara'),
+    ],
+    // Samstag
+    [
+      _DemoMeal(PlanEntryType.breakfast, 'Französische Crepes', '116', 'french-crepes'),
+      _DemoMeal(PlanEntryType.lunch,     'Burger mit Salat',    '117', 'burger-salat'),
+      _DemoMeal(PlanEntryType.dinner,    'Rinderbraten',        '118', 'rinderbraten'),
+      _DemoMeal(PlanEntryType.dessert,   'Tiramisu',            '119', 'tiramisu'),
+    ],
+    // Sonntag
+    [
+      _DemoMeal(PlanEntryType.breakfast, 'Eggs Benedict',       '120', 'eggs-benedict'),
+      _DemoMeal(PlanEntryType.lunch,     'Gemüsecurry',         '121', 'gemuesecurry'),
+      _DemoMeal(PlanEntryType.dinner,    'Roastbeef',           '122', 'roastbeef'),
+    ],
+  ];
+
+  LinkedHashMap<DateTime, List<MealplanEntry>> _getDemoMealplans(
+      DateTime start, DateTime end) {
     final demoData = LinkedHashMap<DateTime, List<MealplanEntry>>(
-      equals: (a, b) => a.year == b.year && a.month == b.month && a.day == b.day,
+      equals: (a, b) =>
+          a.year == b.year && a.month == b.month && a.day == b.day,
       hashCode: (key) => key.day * 1000000 + key.month * 10000 + key.year,
     );
 
-    // Only add data if 'today' is within the requested range
-    if (!today.isBefore(start) && !today.isAfter(end)) {
-        demoData[dayKey] = [
-        MealplanEntry(
-          id: 1,
-          date: today.toIso8601String(),
-          entryType: PlanEntryType.breakfast,
-          title: 'Pancakes',
-          recipe: MealplanRecipe(id: '3', name: 'Fluffy Pancakes', slug: 'fluffy-pancakes'),
-        ),
-        MealplanEntry(
-          id: 2,
-          date: today.toIso8601String(),
-          entryType: PlanEntryType.lunch,
-          title: 'Chicken Salad',
-          recipe: MealplanRecipe(id: '4', name: 'Classic Chicken Salad', slug: 'classic-chicken-salad'),
-        ),
-         MealplanEntry(
-          id: 3,
-          date: today.toIso8601String(),
-          entryType: PlanEntryType.dinner,
-          title: 'Pasta Bolognese',
-          recipe: MealplanRecipe(id: '1', name: 'Pasta Bolognese', slug: 'pasta-bolognese'),
-        ),
-      ];
+    // Alle Tage im angefragten Bereich befüllen
+    DateTime current = DateTime.utc(start.year, start.month, start.day);
+    final endUtc = DateTime.utc(end.year, end.month, end.day);
+    int idCounter = 1;
+
+    while (!current.isAfter(endUtc)) {
+      // weekday: 1=Mo … 7=So  →  Index 0–6
+      final idx = current.weekday - 1;
+      final meals = _weekTemplate[idx];
+      final dateStr = current.toIso8601String();
+
+      demoData[current] = meals.map((m) {
+        return MealplanEntry(
+          id: idCounter++,
+          date: dateStr,
+          entryType: m.type,
+          title: m.title,
+          recipe: MealplanRecipe(id: m.recipeId, name: m.title, slug: m.slug),
+        );
+      }).toList();
+
+      current = current.add(const Duration(days: 1));
     }
-    
+
     return demoData;
   }
 }
+
+/// Einfacher Daten-Container für die Demo-Wochenvorlage.
+class _DemoMeal {
+  final PlanEntryType type;
+  final String title;
+  final String recipeId;
+  final String slug;
+
+  const _DemoMeal(this.type, this.title, this.recipeId, this.slug);
+}
+
