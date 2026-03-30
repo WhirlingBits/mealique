@@ -6,6 +6,14 @@
 
 Mealique is an unofficial Flutter client for Mealie, the self-hosted recipe manager and meal planner. It connects to your Mealie server to organize meals, sync and discover recipes, and create shopping lists. With an intuitive interface and powerful features, Mealique makes planning and managing meals from Mealie easy and enjoyable on mobile devices.
 
+### Google Play (Closed Testing)
+
+The app is available as a closed test on Google Play:
+
+<a href="https://play.google.com/apps/testing/de.mealique.app">
+  <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" width="200" />
+</a>
+
 > [!WARNING]
 > **This project is in an early development stage.** Features may be incomplete, and bugs are to be expected. Use with caution in production environments.
 
@@ -33,14 +41,6 @@ Mealique is an unofficial Flutter client for Mealie, the self-hosted recipe mana
 ### Tablet
 
 ## Installation
-
-### Google Play (Closed Testing)
-
-The app is available as a closed test on Google Play:
-
-<a href="https://play.google.com/apps/testing/de.mealique.app">
-  <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" width="200" />
-</a>
 
 ### Build from Source
 
