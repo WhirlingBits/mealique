@@ -383,5 +383,12 @@
     "details": "Details",
     "createdAt": "Created at",
     "updatedAt": "Updated at",
-    "items": "Items"
+    "items": "Items",
+    "updateAvailable": "Update Available",
+    "updateAvailableMessage": "A new version ({version}) is available. Would you like to update now?",
+    "@updateAvailableMessage": {
+        "placeholders": { "version": { "type": "String" } }
+    },
+    "updateNow": "Update Now",
+    "later": "Later"
 }

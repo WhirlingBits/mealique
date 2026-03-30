@@ -960,4 +960,18 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get items => 'Artikel';
+
+  @override
+  String get updateAvailable => 'Update verfügbar';
+
+  @override
+  String updateAvailableMessage(String version) {
+    return 'Eine neue Version ($version) ist verfügbar. Möchtest du jetzt aktualisieren?';
+  }
+
+  @override
+  String get updateNow => 'Jetzt aktualisieren';
+
+  @override
+  String get later => 'Später';
 }

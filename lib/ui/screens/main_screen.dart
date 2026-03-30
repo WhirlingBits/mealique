@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:app_version_update/app_version_update.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:mealique/data/remote/auth_api.dart';
 import 'package:mealique/data/remote/recipes_api.dart';
 import 'package:mealique/l10n/app_localizations.dart';
 import 'package:mealique/services/sync_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../widgets/navigation_bar.dart';
 import 'dashboard_screen.dart';
 import 'login_screen.dart';
@@ -34,6 +36,9 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
   // Zeitpunkt, zu dem die App zuletzt im Vordergrund war
   DateTime? _lastResumeTime;
+
+  // Zeitpunkt der letzten Update-Prüfung (max. 1× pro Stunde Dialog zeigen)
+  DateTime? _lastUpdateCheck;
 
   // Track which tabs have been visited to enable lazy loading
   final Set<int> _visitedTabs = {0};
@@ -67,6 +72,9 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
     // Initialise the sync service (starts its own connectivity listener)
     _syncService.init();
+
+    // Check for app update in Play Store
+    _checkForUpdate();
 
     if (_isOffline) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -150,6 +158,9 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       final last = _lastResumeTime;
       _lastResumeTime = now;
 
+      // Bei jedem Öffnen der App auf Updates prüfen
+      _checkForUpdate();
+
       // Nach mehr als 15 Minuten Standby Token still im Hintergrund prüfen
       final longStandby = last == null ||
           now.difference(last) > const Duration(minutes: 15);
@@ -157,6 +168,59 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         _silentTokenCheck();
       }
     }
+  }
+
+  /// Prüft ob im Play Store ein Update verfügbar ist.
+  /// Dialog wird maximal einmal pro Stunde angezeigt.
+  Future<void> _checkForUpdate() async {
+    final now = DateTime.now();
+    if (_lastUpdateCheck != null &&
+        now.difference(_lastUpdateCheck!) < const Duration(hours: 1)) {
+      return; // Innerhalb der letzten Stunde bereits geprüft
+    }
+
+    try {
+      final result = await AppVersionUpdate.checkForUpdates(
+        playStoreId: 'de.mealique.app',
+      );
+      _lastUpdateCheck = DateTime.now();
+      if (result.canUpdate == true && mounted) {
+        _showUpdateDialog(result.storeVersion ?? '', result.storeUrl ?? '');
+      }
+    } catch (e) {
+      // App noch nicht öffentlich im Play Store → still überspringen
+      _lastUpdateCheck = DateTime.now();
+      debugPrint('Update check skipped: $e');
+    }
+  }
+
+  /// Zeigt einen Dialog an, wenn ein Update verfügbar ist.
+  void _showUpdateDialog(String storeVersion, String storeUrl) {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.updateAvailable),
+        content: Text(l10n.updateAvailableMessage(storeVersion)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(l10n.later),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFE58325),
+            ),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              final uri = Uri.parse(storeUrl);
+              launchUrl(uri, mode: LaunchMode.externalApplication);
+            },
+            child: Text(l10n.updateNow),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Prüft das Token im Hintergrund. Navigiert nur bei echtem 401 zum Login.

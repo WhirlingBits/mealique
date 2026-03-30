@@ -22,6 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _tokenStorage = TokenStorage();
   final _authApi = AuthApi();
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   Future<void> _login() async {
     final l10n = AppLocalizations.of(context)!;
@@ -167,8 +168,20 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: _passwordController,
-                  decoration: InputDecoration(labelText: l10n.password),
-                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: l10n.password,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
+                  ),
+                  obscureText: _obscurePassword,
                 ),
                 const SizedBox(height: 24),
                 SizedBox(

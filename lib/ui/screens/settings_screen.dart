@@ -1,9 +1,11 @@
+import 'package:app_version_update/app_version_update.dart';
 import 'package:flutter/material.dart';
 import 'package:mealique/l10n/app_localizations.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:mealique/ui/screens/appearance_settings_screen.dart';
 import 'package:mealique/ui/screens/notification_settings_screen.dart';
 import 'package:mealique/ui/screens/server_api_settings_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../data/sync/user_repository.dart';
 import '../../models/user_self_model.dart';
 
@@ -19,12 +21,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   UserSelf? _user;
   String _appVersion = '';
+  String? _storeVersion;
+  String? _storeUrl;
+  bool _checkingUpdate = false;
 
   @override
   void initState() {
     super.initState();
     _loadUser();
     _loadAppVersion();
+    _checkForUpdate();
   }
 
   Future<void> _loadAppVersion() async {
@@ -42,6 +48,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() {
         _user = user;
       });
+    }
+  }
+
+  Future<void> _checkForUpdate() async {
+    setState(() => _checkingUpdate = true);
+    try {
+      final result = await AppVersionUpdate.checkForUpdates(
+        playStoreId: 'de.mealique.app',
+      );
+      if (mounted) {
+        setState(() {
+          _storeVersion = result.canUpdate == true ? result.storeVersion : null;
+          _storeUrl = result.canUpdate == true ? result.storeUrl : null;
+          _checkingUpdate = false;
+        });
+      }
+    } catch (e) {
+      // App not yet available on the Play Store → skip for now
+      debugPrint('Update check skipped: $e');
+      if (mounted) {
+        setState(() {
+          _storeVersion = null;
+          _storeUrl = null;
+          _checkingUpdate = false;
+        });
+      }
     }
   }
 
@@ -149,14 +181,67 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const Divider(height: 1),
 
-            // App-Version
+            // App-Version & Update
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24.0),
-              child: Center(
-                child: Text(
-                  '${l10n.appVersion}: $_appVersion',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 13),
-                ),
+              padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+              child: Column(
+                children: [
+                  Text(
+                    '${l10n.appVersion}: $_appVersion',
+                    style: TextStyle(color: Colors.grey[500], fontSize: 13),
+                  ),
+                  if (_checkingUpdate)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 12.0),
+                      child: SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  else if (_storeVersion != null) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE58325).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFFE58325).withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.system_update, color: Color(0xFFE58325)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              l10n.updateAvailableMessage(_storeVersion!),
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFFE58325),
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                            ),
+                            onPressed: () {
+                              if (_storeUrl != null) {
+                                final uri = Uri.parse(_storeUrl!);
+                                launchUrl(uri, mode: LaunchMode.externalApplication);
+                              }
+                            },
+                            child: Text(
+                              l10n.updateNow,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ],
