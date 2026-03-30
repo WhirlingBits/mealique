@@ -38,7 +38,7 @@ Mealique is an unofficial Flutter client for Mealie, the self-hosted recipe mana
 
 The app is available as a closed test on Google Play:
 
-<a href="https://play.google.com/store/apps/details?id=de.mealique.app">
+<a href="https://play.google.com/apps/testing/de.mealique.app">
   <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" width="200" />
 </a>
 
