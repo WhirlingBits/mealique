@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:app_version_update/app_version_update.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
@@ -6,8 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:mealique/data/remote/auth_api.dart';
 import 'package:mealique/data/remote/recipes_api.dart';
 import 'package:mealique/l10n/app_localizations.dart';
+import 'package:mealique/services/quick_actions_service.dart';
 import 'package:mealique/services/sync_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../widgets/add_recipe_form.dart';
+import '../widgets/add_shopping_list_form.dart';
+import '../widgets/add_shopping_list_item_form.dart';
 import '../widgets/navigation_bar.dart';
 import 'dashboard_screen.dart';
 import 'login_screen.dart';
@@ -76,6 +81,9 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     // Check for app update in Play Store
     _checkForUpdate();
 
+    // Initialize quick actions (Android app-icon long-press shortcuts)
+    _initQuickActions();
+
     if (_isOffline) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showOfflineSnackBar();
@@ -100,6 +108,133 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         }
       }
     });
+  }
+
+  /// Initialises Android quick actions (app icon long-press shortcuts).
+  void _initQuickActions() {
+    if (!Platform.isAndroid) return;
+
+    final quickActions = QuickActionsService.instance;
+
+    // Register callback for warm-start (app already running)
+    quickActions.onShortcutTapped = _handleShortcut;
+
+    // Process any cold-start shortcut (app was not running)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final pending = quickActions.consumePendingShortcut();
+      if (pending != null) {
+        _handleShortcut(pending);
+      }
+
+      // Register the shortcut items (needs l10n context)
+      final l10n = AppLocalizations.of(context)!;
+      quickActions.initialize(
+        createRecipeLabel: l10n.addRecipe,
+        createShoppingListLabel: l10n.createList,
+        createShoppingListItemLabel: l10n.addItem,
+      );
+    });
+  }
+
+  /// Handles a quick-action shortcut tap by navigating to the right tab and
+  /// opening the corresponding bottom-sheet form.
+  void _handleShortcut(String shortcutType) {
+    if (!mounted) return;
+    switch (shortcutType) {
+      case ShortcutTypes.createRecipe:
+        // Navigate to recipes tab, then show create form
+        setState(() {
+          _visitedTabs.add(1);
+          _selectedIndex = 1;
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showAddRecipeSheet();
+        });
+        break;
+      case ShortcutTypes.createShoppingList:
+        // Navigate to shopping tab, then show create form
+        setState(() {
+          _visitedTabs.add(3);
+          _selectedIndex = 3;
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showAddShoppingListSheet();
+        });
+        break;
+      case ShortcutTypes.createShoppingListItem:
+        // Navigate to shopping tab, then show add-item form
+        setState(() {
+          _visitedTabs.add(3);
+          _selectedIndex = 3;
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showAddShoppingListItemSheet();
+        });
+        break;
+    }
+  }
+
+  void _showAddRecipeSheet() {
+    final l10n = AppLocalizations.of(context)!;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        child: AddRecipeForm(
+          onAddRecipe: (recipeJson) async {
+            Navigator.pop(ctx);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(l10n.recipeCreated)),
+              );
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showAddShoppingListSheet() {
+    final l10n = AppLocalizations.of(context)!;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => AddShoppingListForm(
+        onAddList: (name) {
+          Navigator.pop(ctx);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(l10n.listCreatedSuccess(name))),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  void _showAddShoppingListItemSheet() {
+    final l10n = AppLocalizations.of(context)!;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => AddShoppingListItemForm(
+        onAddItem: (item) async {
+          Navigator.pop(ctx);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(l10n.itemAddedSuccess(item.foodName)),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        },
+      ),
+    );
   }
 
   /// Processes the offline queue and shows status snackbars.

@@ -42,6 +42,7 @@ dependencies:
   calendar_date_picker2: ^2.0.1
   app_version_update: ^6.2.0
   url_launcher: ^6.3.2
+  quick_actions_android: ^1.0.28
 
 dev_dependencies:
   flutter_test:
