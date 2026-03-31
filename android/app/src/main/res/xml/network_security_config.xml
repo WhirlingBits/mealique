@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Network Security Configuration for Mealique.
+  Allows cleartext (HTTP) traffic because self-hosted Mealie servers may run
+  without TLS, especially on local networks (e.g. http://192.168.x.x:9000).
+  HTTPS is always preferred when available.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <!-- Trust pre-installed system CAs -->
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
+
