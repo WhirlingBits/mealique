@@ -277,7 +277,7 @@ class _EditShoppingListItemScreenState
                     color: _checked ? Colors.green : Colors.grey,
                   ),
                   value: _checked,
-                  activeColor: _accent,
+                  activeThumbColor: _accent,
                   onChanged: (val) => setState(() => _checked = val),
                 ),
               ),
@@ -354,7 +354,7 @@ class _EditShoppingListItemScreenState
       );
     }
     return DropdownButtonFormField<String?>(
-      value: _selectedUnitId,
+      initialValue: _selectedUnitId,
       isExpanded: true,
       decoration: InputDecoration(
         labelText: l10n.unit,
