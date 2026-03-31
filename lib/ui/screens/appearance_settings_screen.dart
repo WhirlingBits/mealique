@@ -11,6 +11,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final settings = Provider.of<SettingsProvider>(context);
     final l10n = AppLocalizations.of(context)!;
+    final currentLocale = Localizations.localeOf(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -67,7 +68,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  (settings.locale?.languageCode == 'de') ? l10n.german : l10n.english,
+                  (currentLocale.languageCode == 'de') ? l10n.german : l10n.english,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                 ),
                 const SizedBox(width: 8),
