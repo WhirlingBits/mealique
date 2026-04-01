@@ -11,6 +11,7 @@ import '../../l10n/app_localizations.dart';
 import '../../models/mealplan_model.dart';
 import '../widgets/horizontal_date_picker.dart';
 import '../widgets/add_meal_form.dart';
+import 'recipe_detail_screen.dart';
 
 bool isSameDay(DateTime a, DateTime b) {
   return a.year == b.year && a.month == b.month && a.day == b.day;
@@ -522,6 +523,22 @@ class _PlannerScreenState extends State<PlannerScreen> {
                                       leading: Text(
                                           toBeginningOfSentenceCase(meal.entryType.name) ?? '',
                                           style: const TextStyle(fontWeight: FontWeight.bold)),
+                                      trailing: meal.recipeId != null
+                                          ? const Icon(Icons.chevron_right, color: Colors.grey)
+                                          : null,
+                                      onTap: meal.recipeId != null && meal.recipe?.slug != null
+                                          ? () {
+                                              showModalBottomSheet(
+                                                context: context,
+                                                isScrollControlled: true,
+                                                useSafeArea: true,
+                                                backgroundColor: Colors.transparent,
+                                                builder: (context) => RecipeDetailScreen(
+                                                  recipeSlug: meal.recipe!.slug,
+                                                ),
+                                              );
+                                            }
+                                          : null,
                                     ),
                                   ),
                                 );
