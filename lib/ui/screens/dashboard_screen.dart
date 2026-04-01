@@ -564,8 +564,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: RecipeImage(
-                  recipeSlug: recipe.slug,
+                  recipeId: recipe.id,
                   imageHint: recipe.image,
+                  size: RecipeImageSize.min,
                   fit: BoxFit.cover,
                 ),
               ),

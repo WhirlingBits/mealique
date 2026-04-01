@@ -370,8 +370,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: RecipeImage(
-                    recipeSlug: recipe.slug,
+                    recipeId: recipe.id,
                     imageHint: recipe.image,
+                    size: RecipeImageSize.original,
                     fit: BoxFit.cover,
                   ),
                 ),

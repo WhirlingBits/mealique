@@ -461,8 +461,9 @@ class _RecipesScreenState extends State<RecipesScreen> {
                     fit: StackFit.expand,
                     children: [
                       RecipeImage(
-                        recipeSlug: recipe.slug,
+                        recipeId: recipe.id,
                         imageHint: recipe.image,
+                        size: RecipeImageSize.min,
                         fit: BoxFit.cover,
                       ),
                       Positioned(

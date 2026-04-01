@@ -155,8 +155,9 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
               width: 56,
               height: 56,
               child: RecipeImage(
-                recipeSlug: recipe.slug,
+                recipeId: recipe.id,
                 imageHint: recipe.image,
+                size: RecipeImageSize.tiny,
                 fit: BoxFit.cover,
               ),
             ),

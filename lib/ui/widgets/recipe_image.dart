@@ -2,16 +2,32 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:mealique/data/local/token_storage.dart';
 
+/// Bildgröße für Rezeptbilder
+enum RecipeImageSize {
+  /// Vollauflösung
+  original('original.webp'),
+  /// Mittlere Auflösung (empfohlen für Listen)
+  min('min-original.webp'),
+  /// Kleine Auflösung (Thumbnails)
+  tiny('tiny-original.webp');
+
+  final String fileName;
+  const RecipeImageSize(this.fileName);
+}
+
 /// Lädt das Bild eines Rezepts vom Mealie-Server.
 /// Falls kein Bild vorhanden oder der Ladevorgang fehlschlägt,
 /// wird das Mealique-Logo als Platzhalter angezeigt.
 class RecipeImage extends StatelessWidget {
-  /// Slug oder ID des Rezepts (wird für die Bild-URL genutzt).
-  final String recipeSlug;
+  /// ID des Rezepts (wird für die Bild-URL genutzt).
+  final String recipeId;
 
-  /// Optional: `recipe.image` Wert aus dem API-Response.
-  /// Wenn null, wird trotzdem versucht, das Standardbild zu laden.
+  /// Gibt an, ob das Rezept ein Bild hat (aus recipe.image).
+  /// Wenn null oder leer, wird das Fallback-Bild angezeigt.
   final String? imageHint;
+
+  /// Bildgröße - bestimmt welche Datei geladen wird
+  final RecipeImageSize size;
 
   final BoxFit fit;
   final double? width;
@@ -19,12 +35,23 @@ class RecipeImage extends StatelessWidget {
 
   const RecipeImage({
     super.key,
-    required this.recipeSlug,
+    required this.recipeId,
     this.imageHint,
+    this.size = RecipeImageSize.min,
     this.fit = BoxFit.cover,
     this.width,
     this.height,
   });
+
+  Future<Map<String, String>> _loadConfig() async {
+    final storage = TokenStorage();
+    final serverUrl = await storage.getServerUrl();
+    final token = await storage.getToken();
+    return {
+      'serverUrl': serverUrl ?? '',
+      'token': token ?? '',
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,25 +60,30 @@ class RecipeImage extends StatelessWidget {
       return _buildFallback(width: width, height: height);
     }
 
-    return FutureBuilder<String?>(
-      future: TokenStorage().getServerUrl(),
+    return FutureBuilder<Map<String, String>>(
+      future: _loadConfig(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data == null) {
+        if (!snapshot.hasData || snapshot.data!['serverUrl']!.isEmpty) {
           return _buildFallback(width: width, height: height);
         }
 
-        final serverUrl = snapshot.data!.replaceAll(RegExp(r'/$'), '');
+        final serverUrl = snapshot.data!['serverUrl']!.replaceAll(RegExp(r'/$'), '');
+        final token = snapshot.data!['token']!;
+        // API URL: /api/media/recipes/{recipe_id}/images/{file_name}
+        // file_name: original.webp, min-original.webp, tiny-original.webp
         final imageUrl =
-            '$serverUrl/api/media/recipes/$recipeSlug/images/original.webp';
+            '$serverUrl/api/media/recipes/$recipeId/images/${size.fileName}';
 
         return CachedNetworkImage(
           imageUrl: imageUrl,
+          httpHeaders: token.isNotEmpty
+              ? {'Authorization': 'Bearer $token'}
+              : null,
           fit: fit,
           width: width,
           height: height,
           placeholder: (_, __) => _buildLoading(),
-          errorWidget: (_, __, ___) =>
-              _buildFallback(width: width, height: height),
+          errorWidget: (_, __, ___) => _buildFallback(width: width, height: height),
         );
       },
     );
