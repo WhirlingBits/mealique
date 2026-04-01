@@ -48,7 +48,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final now = DateTime.now();
     final today = DateTime.utc(now.year, now.month, now.day);
     final mealsByDay = await _mealplanRepository.getMealplans(today, today);
-    return mealsByDay[today] ?? [];
+    final meals = mealsByDay[today] ?? [];
+
+    // Sort logically: breakfast -> lunch -> dinner -> rest
+    final order = {
+      PlanEntryType.breakfast: 0,
+      PlanEntryType.lunch: 1,
+      PlanEntryType.dinner: 2,
+      PlanEntryType.side: 3,
+      PlanEntryType.snack: 4,
+      PlanEntryType.drink: 5,
+      PlanEntryType.dessert: 6,
+    };
+
+    meals.sort((a, b) {
+      final aOrder = order[a.entryType] ?? 99;
+      final bOrder = order[b.entryType] ?? 99;
+      return aOrder.compareTo(bOrder);
+    });
+
+    return meals;
   }
 
   Future<List<Recipe>> _fetchPopularRecipes() async {
