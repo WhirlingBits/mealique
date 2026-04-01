@@ -24,10 +24,19 @@ class RecipesScreen extends StatefulWidget {
 }
 
 class _RecipesScreenState extends State<RecipesScreen> {
-  late Future<List<Recipe>> _recipesFuture;
   final RecipeRepository _recipeRepository = RecipeRepository();
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   Timer? _debounce;
+
+  // Pagination
+  List<Recipe> _recipes = [];
+  int _currentPage = 1;
+  bool _isLoading = false;
+  bool _hasMore = true;
+  bool _initialLoading = true;
+  Object? _error;
+  static const int _perPage = 20;
 
   String? _sortField;
   String _sortDirection = 'asc';
@@ -46,30 +55,88 @@ class _RecipesScreenState extends State<RecipesScreen> {
     _sortDirection = settings.recipeSortDirection;
     _loadRecipes();
     _searchController.addListener(_onSearchChanged);
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   void _onSearchChanged() {
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 400), _loadRecipes);
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      _resetAndLoad();
+    });
   }
 
-  void _loadRecipes() {
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      _loadMoreRecipes();
+    }
+  }
+
+  void _resetAndLoad() {
     setState(() {
-      _recipesFuture = _recipeRepository.getRecipes(
+      _recipes = [];
+      _currentPage = 1;
+      _hasMore = true;
+      _error = null;
+      _initialLoading = true;
+    });
+    _loadRecipes();
+  }
+
+  Future<void> _loadRecipes() async {
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final newRecipes = await _recipeRepository.getRecipes(
+        page: _currentPage,
+        perPage: _perPage,
         sort: _sortField,
         orderDirection: _sortDirection,
         searchQuery: _searchController.text.trim().isEmpty
             ? null
             : _searchController.text.trim(),
       );
-    });
+
+      if (mounted) {
+        setState(() {
+          _recipes.addAll(newRecipes);
+          _hasMore = newRecipes.length >= _perPage;
+          _isLoading = false;
+          _initialLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e;
+          _isLoading = false;
+          _initialLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadMoreRecipes() async {
+    if (_isLoading || !_hasMore) return;
+    _currentPage++;
+    await _loadRecipes();
+  }
+
+  void _refreshRecipes() {
+    _resetAndLoad();
   }
 
   // ─── Favoriten ──────────────────────────────────────────────────────────
@@ -112,7 +179,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
       final result = await Navigator.of(context).push<bool>(
         MaterialPageRoute(builder: (_) => EditRecipeScreen(recipe: fullRecipe)),
       );
-      if (result == true) _loadRecipes();
+      if (result == true) _refreshRecipes();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -142,7 +209,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
     if (confirmed == true && mounted) {
       try {
         await _recipeRepository.deleteRecipe(recipe.slug);
-        _loadRecipes();
+        _refreshRecipes();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(l10n.itemDeletedSuccess(recipe.name)),
@@ -181,7 +248,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
       _sortDirection = result.direction;
       Provider.of<SettingsProvider>(context, listen: false)
           .setRecipeSort(result.field, result.direction);
-      _loadRecipes();
+      _refreshRecipes();
     }
   }
 
@@ -201,7 +268,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
               if (mounted) {
                 ScaffoldMessenger.of(context)
                     .showSnackBar(SnackBar(content: Text(l10n.recipeCreated)));
-                _loadRecipes();
+                _refreshRecipes();
               }
             } on DioException catch (e) {
               if (mounted) {
@@ -219,6 +286,53 @@ class _RecipesScreenState extends State<RecipesScreen> {
                 ));
               }
             }
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecipeGrid(AppLocalizations l10n) {
+    // Initial loading
+    if (_initialLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    // Error state
+    if (_error != null && _recipes.isEmpty) {
+      return _buildErrorWidget(_error!, _refreshRecipes);
+    }
+
+    // Empty state
+    if (_recipes.isEmpty) {
+      return Center(child: Text(l10n.noRecipesFound));
+    }
+
+    // Recipe grid with infinite scroll
+    return RefreshIndicator(
+      onRefresh: () async => _refreshRecipes(),
+      child: SlidableAutoCloseBehavior(
+        child: GridView.builder(
+          controller: _scrollController,
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 0.8,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+          ),
+          itemCount: _recipes.length + (_hasMore ? 1 : 0),
+          itemBuilder: (context, index) {
+            // Loading indicator at the end
+            if (index >= _recipes.length) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+            return _buildRecipeCard(context, _recipes[index]);
           },
         ),
       ),
@@ -270,7 +384,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
           RecipeActionsMenu(
             onAddRecipe: () => _showAddRecipeSheet(context),
             onSort: _showSortDialog,
-            onRefresh: _loadRecipes,
+            onRefresh: _refreshRecipes,
           ),
         ],
       ),
@@ -301,7 +415,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
                                           size: 18, color: Colors.grey),
                                       onPressed: () {
                                         _searchController.clear();
-                                        _loadRecipes();
+                                        _resetAndLoad();
                                       },
                                     )
                                   : const SizedBox.shrink(),
@@ -353,34 +467,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
 
             // ── Rezept-Grid ──────────────────────────────────────────
             Expanded(
-              child: FutureBuilder<List<Recipe>>(
-                future: _recipesFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return _buildErrorWidget(snapshot.error!, _loadRecipes);
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(child: Text(l10n.noRecipesFound));
-                  }
-                  final recipes = snapshot.data!;
-                  return SlidableAutoCloseBehavior(
-                    child: GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.8,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                      ),
-                      itemCount: recipes.length,
-                      itemBuilder: (context, index) =>
-                          _buildRecipeCard(context, recipes[index]),
-                    ),
-                  );
-                },
-              ),
+              child: _buildRecipeGrid(l10n),
             ),
           ],
         ),
