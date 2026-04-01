@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import 'package:mealique/data/local/token_storage.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/data/sync/household_repository.dart';
@@ -27,7 +26,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   final RecipeRepository _recipeRepository = RecipeRepository();
   final HouseholdRepository _householdRepository = HouseholdRepository();
   late Future<Recipe> _recipeFuture;
-  bool _isFavorite = false;
+  bool? _isFavorite; // null = noch nicht geladen
   bool _favoriteLoading = false;
 
   static const Color _accentColor = Color(0xFFE58325);
@@ -40,19 +39,32 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
   void _loadRecipe() {
     setState(() {
+      _isFavorite = null; // zurücksetzen beim Neu-Laden
       _recipeFuture = _recipeRepository.getRecipe(widget.recipeSlug).then((recipe) {
-        setState(() {
-          _isFavorite = recipe.isFavorite;
-        });
+        // Favoriten-Status separat nachladen (wird per-user gespeichert)
+        // Nutze recipeId für effizienteren API-Call
+        _loadFavoriteStatus(recipe.id);
         return recipe;
       });
     });
   }
 
+  Future<void> _loadFavoriteStatus(String recipeId) async {
+    try {
+      debugPrint('Loading favorite status for recipeId: $recipeId');
+      final status = await _recipeRepository.getFavoriteStatusById(recipeId);
+      debugPrint('Favorite status loaded: $status');
+      if (mounted) setState(() => _isFavorite = status);
+    } catch (e) {
+      debugPrint('Error loading favorite status: $e');
+      if (mounted) setState(() => _isFavorite = false);
+    }
+  }
+
   Future<void> _toggleFavorite(Recipe recipe) async {
     if (_favoriteLoading) return;
 
-    final current = _isFavorite;
+    final current = _isFavorite ?? false;
     final newValue = !current;
 
     setState(() {
@@ -509,13 +521,27 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   ),
                 ),
                 actions: [
-                  IconButton(
-                    icon: Icon(
-                      _isFavorite ? Icons.favorite : Icons.favorite_border,
-                      color: _isFavorite ? Colors.red : Colors.white,
+                  // Favoriten-Button mit Ladezustand
+                  if (_isFavorite == null)
+                    const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      ),
+                    )
+                  else
+                    IconButton(
+                      icon: Icon(
+                        (_isFavorite ?? false) ? Icons.favorite : Icons.favorite_border,
+                        color: (_isFavorite ?? false) ? Colors.red : Colors.white,
+                      ),
+                      onPressed: () => _toggleFavorite(recipe),
                     ),
-                    onPressed: () => _toggleFavorite(recipe),
-                  ),
                   RecipeDetailActionsMenu(
                     onEdit: () => _showEditRecipeSheet(recipe),
                     onDelete: () => _confirmDeleteRecipe(recipe),

@@ -140,18 +140,44 @@ class RecipesApi {
     }
   }
 
-  /// Fetches the user's current rating entry (rating + isFavorite).
+  /// Fetches the user's current rating entry (rating + isFavorite) by recipe slug.
+  /// Uses GET /api/users/self/ratings/{recipe_id} where recipe_id is the UUID.
   /// Returns an empty map when no entry exists yet (404 is treated as empty).
   Future<Map<String, dynamic>> _getUserRatingEntry(String slug) async {
-    final userId = await _tokenStorage.getUserId();
-    if (userId == null || userId.isEmpty) return {};
+    // First we need the recipe ID (UUID) from the slug
     try {
-      final response = await _dio.get('api/users/$userId/ratings/$slug');
+      final recipe = await getRecipe(slug);
+      final recipeId = recipe.id;
+
+      debugPrint('_getUserRatingEntry: slug=$slug, recipeId=$recipeId');
+
+      // Use the /api/users/self/ratings/{recipe_id} endpoint
+      final response = await _dio.get('api/users/self/ratings/$recipeId');
+      debugPrint('_getUserRatingEntry response: ${response.data}');
       return (response.data as Map<String, dynamic>?) ?? {};
     } on DioException catch (e) {
+      debugPrint('_getUserRatingEntry DioException: ${e.response?.statusCode} - ${e.response?.data}');
       if (e.response?.statusCode == 404) return {};
       rethrow;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('_getUserRatingEntry error: $e');
+      return {};
+    }
+  }
+
+  /// Fetches the user's current rating entry by recipe ID (UUID).
+  Future<Map<String, dynamic>> _getUserRatingEntryById(String recipeId) async {
+    try {
+      debugPrint('_getUserRatingEntryById: recipeId=$recipeId');
+      final response = await _dio.get('api/users/self/ratings/$recipeId');
+      debugPrint('_getUserRatingEntryById response: ${response.data}');
+      return (response.data as Map<String, dynamic>?) ?? {};
+    } on DioException catch (e) {
+      debugPrint('_getUserRatingEntryById DioException: ${e.response?.statusCode}');
+      if (e.response?.statusCode == 404) return {};
+      rethrow;
+    } catch (e) {
+      debugPrint('_getUserRatingEntryById error: $e');
       return {};
     }
   }
@@ -175,10 +201,20 @@ class RecipesApi {
     debugPrint('Rating set successfully for $slug');
   }
 
-  /// Returns the user's favorite status for a recipe.
+  /// Returns the user's favorite status for a recipe by slug.
   Future<bool> getFavoriteStatus(String slug) async {
     final entry = await _getUserRatingEntry(slug);
-    return (entry['isFavorite'] as bool?) ?? false;
+    final isFavorite = (entry['isFavorite'] as bool?) ?? false;
+    debugPrint('getFavoriteStatus($slug): $isFavorite');
+    return isFavorite;
+  }
+
+  /// Returns the user's favorite status for a recipe by ID (UUID).
+  Future<bool> getFavoriteStatusById(String recipeId) async {
+    final entry = await _getUserRatingEntryById(recipeId);
+    final isFavorite = (entry['isFavorite'] as bool?) ?? false;
+    debugPrint('getFavoriteStatusById($recipeId): $isFavorite');
+    return isFavorite;
   }
 
   /// Sets the favorite flag – preserves the existing rating value.

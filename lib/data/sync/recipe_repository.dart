@@ -443,7 +443,7 @@ class RecipeRepository {
     }
   }
 
-  /// Returns the current favorite status for a recipe.
+  /// Returns the current favorite status for a recipe by slug.
   Future<bool> getFavoriteStatus(String slug) async {
     final token = await _tokenStorage.getToken();
     if (token == AppConstants.demoToken) return false;
@@ -458,6 +458,24 @@ class RecipeRepository {
     }
 
     return _api.getFavoriteStatus(slug);
+  }
+
+  /// Returns the current favorite status for a recipe by ID (UUID).
+  /// More efficient than getFavoriteStatus when you already have the recipeId.
+  Future<bool> getFavoriteStatusById(String recipeId) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) return false;
+
+    var userId = await _tokenStorage.getUserId();
+    if (userId == null || userId.isEmpty) {
+      try {
+        userId = await _api.fetchAndCacheUserId();
+      } catch (_) {
+        return false;
+      }
+    }
+
+    return _api.getFavoriteStatusById(recipeId);
   }
 
   /// Sets or clears the favorite flag for a recipe.
