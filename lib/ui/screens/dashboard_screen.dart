@@ -530,11 +530,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildMealRow(String title, String trailingText) {
     return Row(
       children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
-        const Spacer(),
+        const SizedBox(width: 12),
         Text(
           trailingText,
           style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
