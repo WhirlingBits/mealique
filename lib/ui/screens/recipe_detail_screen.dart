@@ -370,15 +370,17 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
   Widget _buildEmptyState() {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.restaurant_menu, size: 80, color: Colors.grey[400]),
+          Icon(Icons.restaurant_menu, size: 80, color: isDark ? Colors.grey[600] : Colors.grey[400]),
           const SizedBox(height: 24),
           Text(
             l10n.recipeNotFound,
-            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 18, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7)),
           ),
         ],
       ),
@@ -386,16 +388,18 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   }
 
   Widget _buildInfoChip(IconData icon, String label) {
+    final theme = Theme.of(context);
+    final textColor = theme.textTheme.bodyLarge?.color;
     return Row(
       children: [
-        Icon(icon, size: 20, color: Colors.grey[700]),
+        Icon(icon, size: 20, color: textColor?.withOpacity(0.7)),
         const SizedBox(width: 8),
         Text(
           label,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: Colors.grey[800],
+            color: textColor,
           ),
         ),
       ],
@@ -404,12 +408,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
   Widget _buildRatingRow(Recipe recipe) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
           l10n.rating,
-          style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+          style: TextStyle(fontSize: 14, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7)),
         ),
         const SizedBox(width: 8),
         ...List.generate(5, (i) {
@@ -424,7 +430,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     : Icons.star_border_rounded,
                 color: starIndex <= recipe.rating
                     ? Colors.amber
-                    : Colors.grey[400],
+                    : isDark ? Colors.grey[600] : Colors.grey[400],
                 size: 32,
               ),
             ),
@@ -562,14 +568,17 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         recipe.name,
                         style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
                             ),
                       ),
                       if (recipe.description != null && recipe.description!.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Text(
                           recipe.description!,
-                          style: TextStyle(fontSize: 16, color: Colors.grey[600], height: 1.4),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                            height: 1.4,
+                          ),
                         ),
                       ],
 
@@ -611,7 +620,11 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                 Expanded(
                                   child: Text(
                                     ingredient.displayText,
-                                    style: const TextStyle(fontSize: 16, height: 1.3),
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      height: 1.3,
+                                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -645,6 +658,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           itemCount: recipe.instructions.length,
                           itemBuilder: (context, index) {
                             final instruction = recipe.instructions[index];
+                            final isDark = Theme.of(context).brightness == Brightness.dark;
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 16),
                               child: Row(
@@ -652,7 +666,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                 children: [
                                   CircleAvatar(
                                     radius: 12,
-                                    backgroundColor: _accentColor.withOpacity(0.1),
+                                    backgroundColor: _accentColor.withValues(alpha: isDark ? 0.3 : 0.1),
                                     child: Text(
                                       '${index + 1}',
                                       style: const TextStyle(
@@ -666,7 +680,11 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                   Expanded(
                                     child: Text(
                                       instruction.text,
-                                      style: const TextStyle(fontSize: 16, height: 1.5),
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        height: 1.5,
+                                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -679,28 +697,40 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       // Notes Section
                       if (recipe.notes.isNotEmpty) ...[
                         _buildSectionTitle(l10n.notes),
-                        ...recipe.notes.map((note) => Card(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              color: Colors.amber[50],
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8)),
-                              child: Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    if (note.title.isNotEmpty)
-                                      Text(
-                                        note.title,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.bold, fontSize: 14),
+                        ...recipe.notes.map((note) {
+                          final isDark = Theme.of(context).brightness == Brightness.dark;
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            color: isDark ? Colors.amber[900]?.withValues(alpha: 0.3) : Colors.amber[50],
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (note.title.isNotEmpty)
+                                    Text(
+                                      note.title,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                        color: Theme.of(context).textTheme.bodyLarge?.color,
                                       ),
-                                    Text(note.text, style: const TextStyle(height: 1.4)),
-                                  ],
-                                ),
+                                    ),
+                                  Text(
+                                    note.text,
+                                    style: TextStyle(
+                                      height: 1.4,
+                                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            )),
+                            ),
+                          );
+                        }),
                       ],
 
                       const SizedBox(height: 40),
