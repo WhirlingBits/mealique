@@ -390,5 +390,12 @@
         "placeholders": { "version": { "type": "String" } }
     },
     "updateNow": "Jetzt aktualisieren",
-    "later": "Später"
+    "later": "Später",
+    "selectShoppingList": "Einkaufsliste auswählen",
+    "noShoppingListsFound": "Keine Einkaufslisten gefunden. Bitte erstelle zuerst eine.",
+    "noIngredientsToAdd": "Dieses Rezept hat keine Zutaten zum Hinzufügen.",
+    "ingredientsAddedToList": "Zutaten zu {listName} hinzugefügt",
+    "@ingredientsAddedToList": {
+        "placeholders": { "listName": { "type": "String" } }
+    }
 }

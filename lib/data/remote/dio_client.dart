@@ -52,7 +52,7 @@ class ErrorInterceptor extends Interceptor {
         }
         if (detail != null) return detail.toString();
         // Mealie error format: {message: "...", error: true, exception: "..."}
-        if (data['message'] is String) return data.toString();
+        if (data['message'] is String) return data['message'];
       }
       if (data is String && data.isNotEmpty) {
         return data;
@@ -67,7 +67,7 @@ class ErrorInterceptor extends Interceptor {
         apiException = NetworkException('Connection timeout');
         break;
       case DioExceptionType.unknown:
-        apiException = NetworkException('Please check your internet connection.');
+        apiException = NetworkException(err.message ?? 'Please check your internet connection.');
         break;
       case DioExceptionType.badResponse:
         final detail = extractDetail(err.response?.data);
@@ -98,7 +98,7 @@ class ErrorInterceptor extends Interceptor {
         }
         break;
       default:
-        apiException = ApiException(message: 'An unexpected error occurred');
+        apiException = ApiException(message: err.message ?? 'An unexpected error occurred');
         break;
     }
 
@@ -249,4 +249,3 @@ class TokenRefreshInterceptor extends Interceptor {
     }
   }
 }
-

@@ -974,4 +974,20 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get later => 'Später';
+
+  @override
+  String get selectShoppingList => 'Einkaufsliste auswählen';
+
+  @override
+  String get noShoppingListsFound =>
+      'Keine Einkaufslisten gefunden. Bitte erstelle zuerst eine.';
+
+  @override
+  String get noIngredientsToAdd =>
+      'Dieses Rezept hat keine Zutaten zum Hinzufügen.';
+
+  @override
+  String ingredientsAddedToList(String listName) {
+    return 'Zutaten zu $listName hinzugefügt';
+  }
 }

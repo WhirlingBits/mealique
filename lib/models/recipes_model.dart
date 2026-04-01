@@ -1,5 +1,7 @@
 class RecipeIngredient {
+  final String? referenceId;
   final String note;
+  final String display;
   final double quantity;
   final String? unitId;
   final String? unit;
@@ -7,7 +9,9 @@ class RecipeIngredient {
   final String? food;
 
   RecipeIngredient({
+    this.referenceId,
     required this.note,
+    this.display = '',
     required this.quantity,
     this.unitId,
     this.unit,
@@ -15,9 +19,47 @@ class RecipeIngredient {
     this.food,
   });
 
+  /// Gibt den anzuzeigenden Text für die Zutat zurück.
+  /// Priorisiert: display > zusammengesetzt aus quantity/unit/food > note
+  String get displayText {
+    // Wenn display vorhanden ist, diesen verwenden
+    if (display.isNotEmpty) return display;
+
+    // Zusammensetzen aus Menge, Einheit und Lebensmittel
+    final parts = <String>[];
+    if (quantity > 0) {
+      // Formatiere Menge (keine Dezimalstellen wenn ganze Zahl)
+      final qtyStr = quantity == quantity.roundToDouble()
+          ? quantity.toInt().toString()
+          : quantity.toString();
+      parts.add(qtyStr);
+    }
+    if (unit != null && unit!.isNotEmpty) {
+      parts.add(unit!);
+    }
+    if (food != null && food!.isNotEmpty) {
+      parts.add(food!);
+    }
+
+    if (parts.isNotEmpty) {
+      final composed = parts.join(' ');
+      // Wenn note zusätzliche Info enthält, anhängen
+      if (note.isNotEmpty && note != composed && !composed.contains(note)) {
+        return '$composed ($note)';
+      }
+      return composed;
+    }
+
+    // Fallback auf note
+    return note.isNotEmpty ? note : '(Keine Angabe)';
+  }
+
   factory RecipeIngredient.fromJson(Map<String, dynamic> json) {
     return RecipeIngredient(
+      // Mealie uses 'id' for ingredient reference, but we call it referenceId internally
+      referenceId: json['id'] as String? ?? json['referenceId'] as String?,
       note: json['note'] ?? '',
+      display: json['display'] ?? '',
       quantity: (json['quantity'] as num?)?.toDouble() ?? 0.0,
       unitId: json['unit']?['id'] as String?,
       unit: json['unit']?['name'] as String?,

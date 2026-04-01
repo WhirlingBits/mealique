@@ -15,10 +15,10 @@ class ShoppingListLabel {
 
   factory ShoppingListLabel.fromJson(Map<String, dynamic> json) {
     return ShoppingListLabel(
-      name: json['name'],
-      color: json['color'],
-      groupId: json['groupId'],
-      id: json['id'],
+      name: json['name'] ?? '',
+      color: json['color'] ?? '',
+      groupId: json['groupId'] ?? '',
+      id: json['id'] ?? '',
     );
   }
 }
@@ -42,7 +42,7 @@ class ShoppingListLabelSetting {
     return ShoppingListLabelSetting(
       shoppingListId: json['shoppingListId'] ?? '',
       labelId: json['labelId'] ?? '',
-      position: json['position'] ?? 0,
+      position: (json['position'] as num?)?.toInt() ?? 0,
       id: json['id'] ?? '',
       label: json['label'] != null ? ShoppingListLabel.fromJson(json['label']) : null,
     );
@@ -73,10 +73,10 @@ class ShoppingListRecipe {
 
   factory ShoppingListRecipe.fromJson(Map<String, dynamic> json) {
     return ShoppingListRecipe(
-      id: json['id'],
-      name: json['name'],
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
       slug: json['slug'] ?? '',
-      recipeServings: json['recipeServings'] ?? 0,
+      recipeServings: (json['recipeServings'] as num?)?.toInt() ?? 0,
     );
   }
 }
@@ -98,11 +98,11 @@ class ShoppingListRecipeReference {
 
   factory ShoppingListRecipeReference.fromJson(Map<String, dynamic> json) {
     return ShoppingListRecipeReference(
-      id: json['id'],
-      shoppingListId: json['shoppingListId'],
-      recipeId: json['recipeId'],
-      recipeQuantity: json['recipeQuantity'] ?? 0,
-      recipe: ShoppingListRecipe.fromJson(json['recipe']),
+      id: json['id'] ?? '',
+      shoppingListId: json['shoppingListId'] ?? '',
+      recipeId: json['recipeId'] ?? '',
+      recipeQuantity: (json['recipeQuantity'] as num?)?.toInt() ?? 0,
+      recipe: ShoppingListRecipe.fromJson(json['recipe'] ?? {}),
     );
   }
 }
@@ -138,13 +138,13 @@ class ShoppingList {
 
   factory ShoppingList.fromJson(Map<String, dynamic> json) {
     return ShoppingList(
-      name: json['name'],
+      name: json['name'] ?? '',
       extras: json['extras'] as Map<String, dynamic>? ?? {},
-      createdAt: json['createdAt'],
-      updatedAt: json['updatedAt'],
+      createdAt: json['createdAt'] ?? '',
+      updatedAt: json['updatedAt'] ?? json['update_at'] ?? '',
       groupId: json['groupId'],
       userId: json['userId'],
-      id: json['id'],
+      id: json['id'] ?? '',
       householdId: json['householdId'],
       recipeReferences: (json['recipeReferences'] as List? ?? [])
           .map((i) => ShoppingListRecipeReference.fromJson(i))
@@ -155,7 +155,6 @@ class ShoppingList {
       listItems: (json['listItems'] as List? ?? [])
           .map((i) => ShoppingItem.fromJson(i))
           .toList(),
-      // Item count is not from JSON, will be set manually
     );
   }
 
@@ -240,11 +239,11 @@ class ShoppingListResponse {
 
   factory ShoppingListResponse.fromJson(Map<String, dynamic> json) {
     return ShoppingListResponse(
-      page: json['page'],
-      perPage: json['per_page'],
-      total: json['total'],
-      totalPages: json['total_pages'],
-      items: (json['items'] as List)
+      page: (json['page'] as num?)?.toInt() ?? 1,
+      perPage: (json['per_page'] as num?)?.toInt() ?? 10,
+      total: (json['total'] as num?)?.toInt() ?? 0,
+      totalPages: (json['total_pages'] as num?)?.toInt() ?? 0,
+      items: (json['items'] as List? ?? [])
           .map((i) => ShoppingList.fromJson(i))
           .toList(),
       next: json['next'],

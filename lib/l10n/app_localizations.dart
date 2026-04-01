@@ -1873,6 +1873,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Later'**
   String get later;
+
+  /// No description provided for @selectShoppingList.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Shopping List'**
+  String get selectShoppingList;
+
+  /// No description provided for @noShoppingListsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No shopping lists found. Please create one first.'**
+  String get noShoppingListsFound;
+
+  /// No description provided for @noIngredientsToAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'This recipe has no ingredients to add.'**
+  String get noIngredientsToAdd;
+
+  /// No description provided for @ingredientsAddedToList.
+  ///
+  /// In en, this message translates to:
+  /// **'Ingredients added to {listName}'**
+  String ingredientsAddedToList(String listName);
 }
 
 class _AppLocalizationsDelegate

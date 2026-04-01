@@ -293,10 +293,17 @@ class HouseholdApi {
 
   Future<ShoppingList> addRecipeToShoppingList(
       String itemId, List<AddRecipeToListPayload> payload) async {
+    final jsonData = payload.map((p) => p.toJson()).toList();
+    debugPrint('addRecipeToShoppingList: POST to api/households/shopping/lists/$itemId/recipe');
+    debugPrint('addRecipeToShoppingList payload (${jsonData.length} items):');
+    for (var i = 0; i < jsonData.length; i++) {
+      debugPrint('  Item $i: ${jsonData[i]}');
+    }
     final response = await _dio.post(
       'api/households/shopping/lists/$itemId/recipe',
-      data: payload.map((p) => p.toJson()).toList(),
+      data: jsonData,
     );
+    debugPrint('addRecipeToShoppingList response: ${response.statusCode}');
     return ShoppingList.fromJson(response.data);
   }
 

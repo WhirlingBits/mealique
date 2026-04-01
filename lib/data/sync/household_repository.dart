@@ -5,6 +5,7 @@ import 'package:mealique/data/local/household_storage.dart';
 import 'package:mealique/data/local/sync_queue_storage.dart';
 import 'package:mealique/data/local/token_storage.dart';
 import 'package:mealique/data/remote/household_api.dart';
+import 'package:mealique/models/add_recipe_to_list_payload.dart';
 import 'package:mealique/models/shopping_item_model.dart';
 import 'package:mealique/models/shopping_list_model.dart';
 
@@ -217,6 +218,30 @@ class HouseholdRepository {
       return _getDemoShoppingLists().firstWhere((l) => l.id == listId);
     }
     return await _api.updateShoppingListLabelSettings(listId, labelSettings);
+  }
+
+  /// Fügt die Zutaten eines Rezepts zu einer Einkaufsliste hinzu.
+  /// Wenn [ingredients] null ist, werden alle Zutaten des Rezepts hinzugefügt.
+  Future<ShoppingList> addRecipeIngredientsToShoppingList({
+    required String listId,
+    required String recipeId,
+    List<RecipeIngredientRef>? ingredients,
+    int quantity = 1,
+  }) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      return _getDemoShoppingLists().firstWhere((l) => l.id == listId);
+    }
+
+    final payload = [
+      AddRecipeToListPayload(
+        recipeId: recipeId,
+        recipeIncrementQuantity: quantity,
+        recipeIngredients: ingredients,
+      ),
+    ];
+
+    return await _api.addRecipeToShoppingList(listId, payload);
   }
 
   // ─── Shopping List Items ───────────────────────────────────────────

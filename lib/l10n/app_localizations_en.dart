@@ -964,4 +964,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get later => 'Later';
+
+  @override
+  String get selectShoppingList => 'Select Shopping List';
+
+  @override
+  String get noShoppingListsFound =>
+      'No shopping lists found. Please create one first.';
+
+  @override
+  String get noIngredientsToAdd => 'This recipe has no ingredients to add.';
+
+  @override
+  String ingredientsAddedToList(String listName) {
+    return 'Ingredients added to $listName';
+  }
 }

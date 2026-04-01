@@ -390,5 +390,12 @@
         "placeholders": { "version": { "type": "String" } }
     },
     "updateNow": "Update Now",
-    "later": "Later"
+    "later": "Later",
+    "selectShoppingList": "Select Shopping List",
+    "noShoppingListsFound": "No shopping lists found. Please create one first.",
+    "noIngredientsToAdd": "This recipe has no ingredients to add.",
+    "ingredientsAddedToList": "Ingredients added to {listName}",
+    "@ingredientsAddedToList": {
+        "placeholders": { "listName": { "type": "String" } }
+    }
 }

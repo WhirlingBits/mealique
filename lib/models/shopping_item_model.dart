@@ -13,10 +13,10 @@ class ShoppingItemLabel {
 
   factory ShoppingItemLabel.fromJson(Map<String, dynamic> json) {
     return ShoppingItemLabel(
-      name: json['name'],
-      color: json['color'],
-      groupId: json['groupId'],
-      id: json['id'],
+      name: json['name'] ?? '',
+      color: json['color'] ?? '',
+      groupId: json['groupId'] ?? '',
+      id: json['id'] ?? '',
     );
   }
 }
@@ -29,8 +29,8 @@ class ShoppingItemUnit {
 
   factory ShoppingItemUnit.fromJson(Map<String, dynamic> json) {
     return ShoppingItemUnit(
-      id: json['id'],
-      name: json['name'],
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
     );
   }
 }
@@ -44,8 +44,8 @@ class ShoppingItemFood {
 
   factory ShoppingItemFood.fromJson(Map<String, dynamic> json) {
     return ShoppingItemFood(
-      id: json['id'],
-      name: json['name'],
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
       label: json['label'] != null ? ShoppingItemLabel.fromJson(json['label']) : null,
     );
   }
@@ -93,7 +93,7 @@ class ShoppingItem {
       display: json['display'] ?? '',
       shoppingListId: json['shoppingListId'] ?? '',
       checked: json['checked'] ?? false,
-      position: json['position'] ?? 0,
+      position: (json['position'] as num?)?.toInt() ?? 0,
       foodId: json['foodId'],
       unitId: json['unitId'],
       labelId: json['labelId'],
@@ -282,14 +282,14 @@ class ShoppingItemResponse {
   });
 
   factory ShoppingItemResponse.fromJson(Map<String, dynamic> json) {
-    var itemsList = json['items'] as List;
+    var itemsList = (json['items'] as List?) ?? [];
     List<ShoppingItem> shoppingItems = itemsList.map((i) => ShoppingItem.fromJson(i)).toList();
 
     return ShoppingItemResponse(
-      page: json['page'],
-      perPage: json['per_page'],
-      total: json['total'],
-      totalPages: json['total_pages'],
+      page: (json['page'] as num?)?.toInt() ?? 1,
+      perPage: (json['per_page'] as num?)?.toInt() ?? 10,
+      total: (json['total'] as num?)?.toInt() ?? 0,
+      totalPages: (json['total_pages'] as num?)?.toInt() ?? 0,
       items: shoppingItems,
       next: json['next'],
       previous: json['previous'],
