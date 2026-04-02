@@ -188,15 +188,23 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
     if (_formData == null) return;
     final l10n = AppLocalizations.of(context)!;
     try {
-      final foodToCreate = Food(id: '', name: foodName, pluralName: foodName, description: '', extras: {}, aliases: [], householdsWithIngredientFood: [], createdAt: '', updatedAt: '', label: null, labelId: null);
-      final newFood = await _recipeRepo.createFood(foodToCreate);
-      
-      final newFoodList = List<Food>.from(_formData!.foods)..add(newFood);
+      // Use getOrCreateFood which handles duplicates gracefully
+      final food = await _recipeRepo.getOrCreateFood(foodName);
+
+      // Check if food already exists in local list
+      final existingIndex = _formData!.foods.indexWhere((f) => f.id == food.id);
+      List<Food> newFoodList;
+      if (existingIndex == -1) {
+        newFoodList = List<Food>.from(_formData!.foods)..add(food);
+      } else {
+        newFoodList = _formData!.foods;
+      }
 
       setState(() {
         _formData = _formData!.copyWith(foods: newFoodList);
-        _selectedFoodId = newFood.id;
-        _foodController.text = newFood.name;
+        _selectedFoodId = food.id;
+        _foodController.text = food.name;
+        _showAddFoodButton = false;
       });
 
       _showToast(l10n.foodCreatedSuccess(foodName), backgroundColor: Colors.green);
@@ -265,7 +273,9 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
 
   Future<void> _handleSubmit() async {
     final l10n = AppLocalizations.of(context)!;
-    final quantity = int.tryParse(_quantityController.text);
+    final quantityText = _quantityController.text.trim();
+    final quantity = int.tryParse(quantityText);
+    
     if (quantity == null || quantity <= 0) {
       _showToast(l10n.pleaseEnterValidQuantity);
       return;
@@ -284,7 +294,23 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
       if (existingFood != null) {
         _selectedFoodId = existingFood.id;
       } else {
-        await _handleCreateAndSelectFood(text);
+        // Use getOrCreateFood to handle duplicates gracefully
+        try {
+          final food = await _recipeRepo.getOrCreateFood(text);
+          _selectedFoodId = food.id;
+
+          // Update local food list
+          final existingIndex = _formData!.foods.indexWhere((f) => f.id == food.id);
+          if (existingIndex == -1) {
+            final newFoodList = List<Food>.from(_formData!.foods)..add(food);
+            setState(() {
+              _formData = _formData!.copyWith(foods: newFoodList);
+            });
+          }
+        } catch (e) {
+          _showToast(l10n.errorCreatingFood(e.toString()), backgroundColor: Colors.red);
+          return;
+        }
       }
     }
 
@@ -302,7 +328,16 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
         unitId: _selectedUnitId,
         categoryId: _selectedCategoryId,
         notes: _notesController.text.trim());
-    debugPrint('Submitting shopping item: listId=${newItem.listId}, foodId=${newItem.foodId}, foodName=${newItem.foodName}, qty=${newItem.quantity}');
+    
+    debugPrint('DEBUG: _handleSubmit - NewShoppingItem created:');
+    debugPrint('  - listId: ${newItem.listId}');
+    debugPrint('  - foodId: ${newItem.foodId}');
+    debugPrint('  - foodName: ${newItem.foodName}');
+    debugPrint('  - quantity: ${newItem.quantity}');
+    debugPrint('  - unitId: ${newItem.unitId}');
+    debugPrint('  - categoryId: ${newItem.categoryId}');
+    debugPrint('  - notes: ${newItem.notes}');
+    
     widget.onAddItem(newItem);
   }
 
@@ -353,7 +388,7 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
                         _buildToastBanner(),
                         if (widget.shoppingListId == null) ...[
                           DropdownButtonFormField<String>(
-                            initialValue: _selectedListId,
+                            value: _selectedListId,
                             decoration: InputDecoration(labelText: l10n.shoppingList, border: const OutlineInputBorder(), isDense: true),
                             items: formData.lists.map((list) => DropdownMenuItem(value: list.id, child: Text(list.name))).toList(),
                             onChanged: (value) => setState(() => _selectedListId = value),

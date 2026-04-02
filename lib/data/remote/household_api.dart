@@ -329,20 +329,39 @@ class HouseholdApi {
 
   Future<ShoppingItem> createShoppingItem(ShoppingItem shoppingItem) async {
     final jsonData = shoppingItem.toJson();
-    debugPrint('Sending to API: $jsonData');
-    final response = await _dio.post(
-      'api/households/shopping/items',
-      data: jsonData,
-    );
-    debugPrint('API Response status: ${response.statusCode}, data: ${response.data}');
-    final parsed = CreateShoppingItemResponse.fromJson(response.data);
-    if (parsed.createdItems.isNotEmpty) {
-      return parsed.createdItems.first;
+    debugPrint('DEBUG: HouseholdApi.createShoppingItem - Final Payload: $jsonData');
+
+    try {
+      final response = await _dio.post(
+        'api/households/shopping/items',
+        data: jsonData, // Mealie API expects a single object, not an array
+      );
+      
+      debugPrint('DEBUG: HouseholdApi.createShoppingItem - Response status: ${response.statusCode}');
+      debugPrint('DEBUG: HouseholdApi.createShoppingItem - Response data: ${response.data}');
+      
+      // Response can be either a single item or a CreateShoppingItemResponse structure
+      if (response.data is Map && response.data['createdItems'] != null) {
+        final parsed = CreateShoppingItemResponse.fromJson(response.data);
+        if (parsed.createdItems.isNotEmpty) {
+          return parsed.createdItems.first;
+        }
+        if (parsed.updatedItems.isNotEmpty) {
+          return parsed.updatedItems.first;
+        }
+      }
+      // If response is a direct item object
+      return ShoppingItem.fromJson(response.data);
+    } on DioException catch (e) {
+      debugPrint('DEBUG: HouseholdApi.createShoppingItem - DioException caught!');
+      debugPrint('  - Status Code: ${e.response?.statusCode}');
+      debugPrint('  - Response Data: ${e.response?.data}');
+      debugPrint('  - Message: ${e.message}');
+      rethrow;
+    } catch (e) {
+      debugPrint('DEBUG: HouseholdApi.createShoppingItem - Unknown Error: $e');
+      rethrow;
     }
-    if (parsed.updatedItems.isNotEmpty) {
-      return parsed.updatedItems.first;
-    }
-    return ShoppingItem.fromJson(jsonData); // fallback
   }
 
   Future<CreateShoppingItemResponse> updateShoppingItems(List<ShoppingItem> shoppingItems) async {
@@ -377,6 +396,15 @@ class HouseholdApi {
 
   Future<void> deleteShoppingItem(String itemId) async {
     await _dio.delete('api/households/shopping/items/$itemId');
+  }
+
+  Future<void> updateShoppingItemStatus(String itemId, bool checked) async {
+    debugPrint('DEBUG: HouseholdApi.updateShoppingItemStatus(itemId: $itemId, checked: $checked)');
+    final response = await _dio.put(
+      'api/households/shopping/items/$itemId',
+      data: {'checked': checked},
+    );
+    debugPrint('DEBUG: HouseholdApi.updateShoppingItemStatus response: ${response.statusCode}');
   }
 
   Future<HouseholdWebhookResponse> getHouseholdWebhooks(int page, int perPage) async {

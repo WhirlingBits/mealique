@@ -79,12 +79,54 @@ class RecipesApi {
     return FoodResponse.fromJson(response.data);
   }
 
+  /// Searches for a food by exact name (case-insensitive).
+  /// Returns the food if found, null otherwise.
+  Future<Food?> searchFoodByName(String name) async {
+    try {
+      // Search with the food name as query
+      final response = await _dio.get(
+        'api/foods',
+        queryParameters: {
+          'search': name,
+          'per_page': 50,
+        },
+      );
+      final foodResponse = FoodResponse.fromJson(response.data);
+
+      // Find exact match (case-insensitive)
+      final normalizedName = name.toLowerCase().trim();
+      for (final food in foodResponse.items) {
+        if (food.name.toLowerCase().trim() == normalizedName) {
+          debugPrint('searchFoodByName: Found exact match for "$name" -> ${food.id}');
+          return food;
+        }
+      }
+      debugPrint('searchFoodByName: No exact match found for "$name"');
+      return null;
+    } catch (e) {
+      debugPrint('searchFoodByName error: $e');
+      return null;
+    }
+  }
+
   Future<Food> createFood(Food food) async {
-    final response = await _dio.post(
-      'api/foods',
-      data: food.toJson(),
-    );
-    return Food.fromJson(response.data);
+    final jsonData = food.toJson();
+    debugPrint('DEBUG: POST /api/foods - Payload: $jsonData');
+    try {
+      final response = await _dio.post(
+        'api/foods',
+        data: jsonData,
+      );
+      debugPrint('DEBUG: POST /api/foods - Response status: ${response.statusCode}');
+      debugPrint('DEBUG: POST /api/foods - Response data: ${response.data}');
+      return Food.fromJson(response.data);
+    } on DioException catch (e) {
+      debugPrint('DEBUG: POST /api/foods - DioException: ${e.response?.statusCode} - ${e.response?.data}');
+      rethrow;
+    } catch (e) {
+      debugPrint('DEBUG: POST /api/foods - Error: $e');
+      rethrow;
+    }
   }
 
   Future<void> deleteFood(String foodId) async {

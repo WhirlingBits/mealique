@@ -107,11 +107,19 @@ class ShoppingItem {
     final bool isNewItem = id.isEmpty;
     final Map<String, dynamic> data = {
       'quantity': quantity,
-      'note': note.isNotEmpty ? note : '',
       'shoppingListId': shoppingListId,
       'checked': checked,
-      'position': position,
     };
+
+    // Only include note if it has content
+    if (note.isNotEmpty) {
+      data['note'] = note;
+    }
+
+    // Only include position for existing items (updates) - API auto-assigns for new items
+    if (!isNewItem) {
+      data['position'] = position;
+    }
 
     // Only include id for existing items (updates)
     if (!isNewItem) {

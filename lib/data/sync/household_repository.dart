@@ -314,6 +314,14 @@ class HouseholdRepository {
     String? unitId,
     String? categoryId,
   }) async {
+    debugPrint('DEBUG: HouseholdRepository.createShoppingItem called');
+    debugPrint('DEBUG:   listId: $listId');
+    debugPrint('DEBUG:   foodId: $foodId');
+    debugPrint('DEBUG:   foodName: $foodName');
+    debugPrint('DEBUG:   quantity: $quantity');
+    debugPrint('DEBUG:   unitId: $unitId');
+    debugPrint('DEBUG:   categoryId: $categoryId');
+
     final token = await _tokenStorage.getToken();
     if (token == AppConstants.demoToken) {
       final newItem = ShoppingItem(
@@ -347,14 +355,16 @@ class HouseholdRepository {
       checked: false,
       position: 0,
     );
-    debugPrint('Creating shopping item JSON: ${item.toJson()}');
+    debugPrint('DEBUG: Creating shopping item object: ${item.toJson()}');
 
     final wasOffline = await withOfflineWriteFallback(
       apiCall: () async {
+        debugPrint('DEBUG: Calling HouseholdApi.createShoppingItem');
         final result = await _api.createShoppingItem(item);
-        debugPrint('Shopping item created successfully: ${result.id}');
+        debugPrint('DEBUG: Shopping item created successfully via API: ${result.id}');
       },
       localWrite: () async {
+        debugPrint('DEBUG: Saving shopping item to local cache (offline mode)');
         // Create a local-only item with a temporary ID
         final localItem = item.copyWith(
           id: 'local_${DateTime.now().millisecondsSinceEpoch}',
@@ -362,14 +372,17 @@ class HouseholdRepository {
         );
         await _addItemToLocalCache(listId, localItem);
       },
-      enqueue: () => _syncQueue.enqueue(
-        actionType: 'create',
-        entityType: 'shopping_item',
-        payload: item.toCacheJson(),
-      ),
+      enqueue: () {
+        debugPrint('DEBUG: Enqueueing sync task for createShoppingItem');
+        return _syncQueue.enqueue(
+          actionType: 'create',
+          entityType: 'shopping_item',
+          payload: item.toCacheJson(),
+        );
+      },
     );
     if (wasOffline) {
-      debugPrint('Shopping item saved locally (offline)');
+      debugPrint('DEBUG: Shopping item saved locally (offline)');
     }
   }
 

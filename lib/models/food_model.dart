@@ -44,14 +44,26 @@ class Food {
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    final Map<String, dynamic> data = {
       'name': name,
-      'pluralName': pluralName,
-      'description': description ?? '',
-      'extras': extras,
-      'labelId': labelId,
-      'aliases': aliases,
     };
+    // Only include optional fields if they have values
+    if (pluralName.isNotEmpty && pluralName != name) {
+      data['pluralName'] = pluralName;
+    }
+    if (description != null && description!.isNotEmpty) {
+      data['description'] = description;
+    }
+    if (extras.isNotEmpty) {
+      data['extras'] = extras;
+    }
+    if (labelId != null && labelId!.isNotEmpty) {
+      data['labelId'] = labelId;
+    }
+    if (aliases.isNotEmpty) {
+      data['aliases'] = aliases;
+    }
+    return data;
   }
 }
 

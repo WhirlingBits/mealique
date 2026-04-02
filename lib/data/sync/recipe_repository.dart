@@ -142,6 +142,60 @@ class RecipeRepository {
     return _api.createFood(food);
   }
 
+  /// Gets an existing food by name or creates a new one if it doesn't exist.
+  /// This handles the case where the food already exists (UniqueViolation error).
+  Future<Food> getOrCreateFood(String foodName) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      return Food(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: foodName,
+        pluralName: foodName,
+        description: '',
+        extras: {},
+        aliases: [],
+        householdsWithIngredientFood: [],
+        createdAt: DateTime.now().toIso8601String(),
+        updatedAt: DateTime.now().toIso8601String(),
+      );
+    }
+
+    // First, try to find the existing food by searching
+    final existingFood = await _api.searchFoodByName(foodName);
+    if (existingFood != null) {
+      debugPrint('getOrCreateFood: Found existing food "${existingFood.name}" with id ${existingFood.id}');
+      return existingFood;
+    }
+
+    // Food doesn't exist, try to create it
+    try {
+      final newFood = Food(
+        id: '',
+        name: foodName,
+        pluralName: foodName,
+        description: '',
+        extras: {},
+        aliases: [],
+        householdsWithIngredientFood: [],
+        createdAt: '',
+        updatedAt: '',
+      );
+      return await _api.createFood(newFood);
+    } catch (e) {
+      // If we get a UniqueViolation error, the food was created by another
+      // client in the meantime - try to fetch it again
+      if (e.toString().contains('UniqueViolation') ||
+          e.toString().contains('duplicate key')) {
+        debugPrint('getOrCreateFood: UniqueViolation caught, searching for existing food');
+        final existingFood = await _api.searchFoodByName(foodName);
+        if (existingFood != null) {
+          return existingFood;
+        }
+      }
+      rethrow;
+    }
+  }
+
   Future<void> deleteFood(String foodId) async {
     final token = await _tokenStorage.getToken();
     if (token == AppConstants.demoToken) {
