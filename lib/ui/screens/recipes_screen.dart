@@ -400,7 +400,11 @@ class _RecipesScreenState extends State<RecipesScreen> {
                     child: TextField(
                       controller: _searchController,
                       textInputAction: TextInputAction.search,
-                      style: const TextStyle(color: Colors.black),
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : Colors.black,
+                      ),
                       decoration: InputDecoration(
                         hintText: l10n.search,
                         hintStyle:
