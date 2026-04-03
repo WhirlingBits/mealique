@@ -1897,6 +1897,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ingredients added to {listName}'**
   String ingredientsAddedToList(String listName);
+
+  /// No description provided for @addAllIngredients.
+  ///
+  /// In en, this message translates to:
+  /// **'Add all ingredients'**
+  String get addAllIngredients;
+
+  /// No description provided for @selectIngredients.
+  ///
+  /// In en, this message translates to:
+  /// **'Select ingredients'**
+  String get selectIngredients;
+
+  /// No description provided for @selectIngredientsToAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Select ingredients to add'**
+  String get selectIngredientsToAdd;
+
+  /// No description provided for @selectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String selectedCount(int count);
+
+  /// No description provided for @selectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get selectAll;
+
+  /// No description provided for @deselectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Deselect all'**
+  String get deselectAll;
+
+  /// No description provided for @noIngredientsSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select at least one ingredient.'**
+  String get noIngredientsSelected;
 }
 
 class _AppLocalizationsDelegate

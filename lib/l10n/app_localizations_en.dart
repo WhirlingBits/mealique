@@ -979,4 +979,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String ingredientsAddedToList(String listName) {
     return 'Ingredients added to $listName';
   }
+
+  @override
+  String get addAllIngredients => 'Add all ingredients';
+
+  @override
+  String get selectIngredients => 'Select ingredients';
+
+  @override
+  String get selectIngredientsToAdd => 'Select ingredients to add';
+
+  @override
+  String selectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get selectAll => 'Select all';
+
+  @override
+  String get deselectAll => 'Deselect all';
+
+  @override
+  String get noIngredientsSelected => 'Please select at least one ingredient.';
 }

@@ -990,4 +990,27 @@ class AppLocalizationsDe extends AppLocalizations {
   String ingredientsAddedToList(String listName) {
     return 'Zutaten zu $listName hinzugefügt';
   }
+
+  @override
+  String get addAllIngredients => 'Alle Zutaten hinzufügen';
+
+  @override
+  String get selectIngredients => 'Zutaten auswählen';
+
+  @override
+  String get selectIngredientsToAdd => 'Zutaten zum Hinzufügen auswählen';
+
+  @override
+  String selectedCount(int count) {
+    return '$count ausgewählt';
+  }
+
+  @override
+  String get selectAll => 'Alle auswählen';
+
+  @override
+  String get deselectAll => 'Alle abwählen';
+
+  @override
+  String get noIngredientsSelected => 'Bitte wähle mindestens eine Zutat aus.';
 }

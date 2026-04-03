@@ -397,5 +397,15 @@
     "ingredientsAddedToList": "Zutaten zu {listName} hinzugefügt",
     "@ingredientsAddedToList": {
         "placeholders": { "listName": { "type": "String" } }
-    }
+    },
+    "addAllIngredients": "Alle Zutaten hinzufügen",
+    "selectIngredients": "Zutaten auswählen",
+    "selectIngredientsToAdd": "Zutaten zum Hinzufügen auswählen",
+    "selectedCount": "{count} ausgewählt",
+    "@selectedCount": {
+        "placeholders": { "count": { "type": "int" } }
+    },
+    "selectAll": "Alle auswählen",
+    "deselectAll": "Alle abwählen",
+    "noIngredientsSelected": "Bitte wähle mindestens eine Zutat aus."
 }

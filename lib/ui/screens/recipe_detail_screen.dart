@@ -277,10 +277,36 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
     debugPrint('DEBUG: Selected list: ${selectedList.name} (${selectedList.id})');
 
+    // Frage ob alle Zutaten oder Auswahl
+    final addAll = await _showIngredientSelectionModeDialog();
+    if (addAll == null || !mounted) return;
+
+    List<RecipeIngredient> selectedIngredients;
+
+    if (addAll) {
+      // Alle Zutaten verwenden
+      selectedIngredients = recipe.ingredients;
+    } else {
+      // Zutatenauswahl-Dialog anzeigen
+      final selected = await _showIngredientSelectionDialog(recipe.ingredients);
+      if (selected == null || selected.isEmpty || !mounted) {
+        if (selected != null && selected.isEmpty && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.noIngredientsSelected),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+      selectedIngredients = selected;
+    }
+
     // Zutaten zur Liste hinzufügen
     try {
       // Konvertiere Zutaten in RecipeIngredientRef mit allen erforderlichen Daten
-      final ingredientsPayload = recipe.ingredients
+      final ingredientsPayload = selectedIngredients
           .where((ing) => ing.referenceId != null && ing.referenceId!.isNotEmpty)
           .map((ing) => RecipeIngredientRef(
             referenceId: ing.referenceId!,
@@ -332,6 +358,218 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         _showError(l10n.errorAdding(e.toString()));
       }
     }
+  }
+
+  /// Zeigt einen Dialog zur Auswahl des Modus: alle Zutaten oder Auswahl
+  /// Gibt true zurück für "alle", false für "auswählen", null bei Abbruch
+  Future<bool?> _showIngredientSelectionModeDialog() async {
+    final l10n = AppLocalizations.of(context)!;
+
+    return showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[400],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: _accentColor,
+                child: Icon(Icons.select_all, color: Colors.white),
+              ),
+              title: Text(l10n.addAllIngredients),
+              onTap: () => Navigator.of(ctx).pop(true),
+            ),
+            const Divider(height: 1),
+            ListTile(
+              leading: CircleAvatar(
+                backgroundColor: Colors.grey[600],
+                child: const Icon(Icons.checklist, color: Colors.white),
+              ),
+              title: Text(l10n.selectIngredients),
+              onTap: () => Navigator.of(ctx).pop(false),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Zeigt einen Dialog zur Auswahl einzelner Zutaten
+  Future<List<RecipeIngredient>?> _showIngredientSelectionDialog(
+    List<RecipeIngredient> ingredients,
+  ) async {
+    final l10n = AppLocalizations.of(context)!;
+
+    // Set zum Tracken der ausgewählten Zutaten (per Index)
+    final selectedIndices = <int>{};
+    // Initial alle auswählen
+    for (int i = 0; i < ingredients.length; i++) {
+      selectedIndices.add(i);
+    }
+
+    return showModalBottomSheet<List<RecipeIngredient>>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final allSelected = selectedIndices.length == ingredients.length;
+
+          return Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.75,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 12),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[400],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        l10n.selectIngredientsToAdd,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        l10n.selectedCount(selectedIndices.length),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Alle auswählen/abwählen Button
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: TextButton.icon(
+                    onPressed: () {
+                      setModalState(() {
+                        if (allSelected) {
+                          selectedIndices.clear();
+                        } else {
+                          selectedIndices.clear();
+                          for (int i = 0; i < ingredients.length; i++) {
+                            selectedIndices.add(i);
+                          }
+                        }
+                      });
+                    },
+                    icon: Icon(
+                      allSelected ? Icons.deselect : Icons.select_all,
+                      size: 20,
+                    ),
+                    label: Text(allSelected ? l10n.deselectAll : l10n.selectAll),
+                  ),
+                ),
+                const Divider(),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: ingredients.length,
+                    itemBuilder: (context, index) {
+                      final ingredient = ingredients[index];
+                      final isSelected = selectedIndices.contains(index);
+
+                      return CheckboxListTile(
+                        value: isSelected,
+                        activeColor: _accentColor,
+                        title: Text(
+                          ingredient.displayText,
+                          style: TextStyle(
+                            decoration: isSelected ? null : TextDecoration.lineThrough,
+                            color: isSelected
+                              ? Theme.of(context).textTheme.bodyLarge?.color
+                              : Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.5),
+                          ),
+                        ),
+                        onChanged: (value) {
+                          setModalState(() {
+                            if (value == true) {
+                              selectedIndices.add(index);
+                            } else {
+                              selectedIndices.remove(index);
+                            }
+                          });
+                        },
+                      );
+                    },
+                  ),
+                ),
+                const Divider(),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _accentColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: selectedIndices.isEmpty
+                          ? null
+                          : () {
+                              final selected = selectedIndices
+                                  .map((i) => ingredients[i])
+                                  .toList();
+                              Navigator.of(ctx).pop(selected);
+                            },
+                      child: Text(
+                        '${l10n.add} (${selectedIndices.length})',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 
   Widget _buildErrorWidget(Object error, VoidCallback onRetry) {
