@@ -119,7 +119,7 @@ abstract class AppLocalizations {
   /// No description provided for @email.
   ///
   /// In en, this message translates to:
-  /// **'Email'**
+  /// **'Email or Username'**
   String get email;
 
   /// No description provided for @password.

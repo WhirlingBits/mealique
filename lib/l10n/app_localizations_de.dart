@@ -18,7 +18,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get serverHint => 'https://mealie.example';
 
   @override
-  String get email => 'Email';
+  String get email => 'Email oder Benutzername';
 
   @override
   String get password => 'Passwort';

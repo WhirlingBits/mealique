@@ -2,7 +2,7 @@
     "welcome": "Willkommen",
     "serverAddress": "Server Adresse",
     "serverHint": "https://mealie.example",
-    "email": "Email",
+    "email": "Email oder Benutzername",
     "password": "Passwort",
     "login": "Einloggen",
     "loginDescription": "Melde dich mit deinem Mealie-Server an, um Rezepte, Einkaufslisten und Essenspläne zu verwalten.",
