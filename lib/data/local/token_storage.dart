@@ -31,11 +31,11 @@ class TokenStorage {
   Future<String?> getPassword() => _storage.read(key: _keyPassword);
 
   /// Delete all auth-related data (for logout).
+  /// Keeps server URL and username for easier re-login.
   Future<void> clearAll() async {
     await _storage.delete(key: _keyAccess);
-    await _storage.delete(key: _keyUsername);
     await _storage.delete(key: _keyPassword);
     await _storage.delete(key: _keyUserId);
-    // Note: we keep the server URL so the user doesn't have to re-enter it.
+    // Note: we keep the server URL and username so the user doesn't have to re-enter them.
   }
 }

@@ -24,6 +24,24 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
 
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    final savedServer = await _tokenStorage.getServerUrl();
+    final savedUsername = await _tokenStorage.getUsername();
+
+    if (savedServer != null && savedServer.isNotEmpty) {
+      _serverController.text = savedServer;
+    }
+    if (savedUsername != null && savedUsername.isNotEmpty) {
+      _emailController.text = savedUsername;
+    }
+  }
+
   Future<void> _login() async {
     final l10n = AppLocalizations.of(context)!;
 
