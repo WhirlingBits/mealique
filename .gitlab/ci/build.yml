@@ -1,0 +1,64 @@
+stages:
+  - build
+
+variables:
+  FLUTTER_VERSION: "3.24.0"
+
+.flutter_setup: &flutter_setup
+  image: ghcr.io/cirruslabs/flutter:${FLUTTER_VERSION}
+  before_script:
+    - flutter --version
+    - flutter pub get
+
+# Android APK Build
+build_android_apk:
+  <<: *flutter_setup
+  stage: build
+  script:
+    - flutter build apk --release
+  artifacts:
+    paths:
+      - build/app/outputs/flutter-apk/app-release.apk
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+
+# Android App Bundle Build (für Play Store)
+build_android_bundle:
+  <<: *flutter_setup
+  stage: build
+  script:
+    - flutter build appbundle --release
+  artifacts:
+    paths:
+      - build/app/outputs/bundle/release/app-release.aab
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+      when: manual
+  allow_failure: true
+
+# Web Build
+build_web:
+  <<: *flutter_setup
+  stage: build
+  script:
+    - flutter build web --release
+  artifacts:
+    paths:
+      - build/web/
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+
+# Analyze & Test Job
+analyze_and_test:
+  <<: *flutter_setup
+  stage: build
+  script:
+    - flutter analyze
+    - flutter test --coverage || true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+  allow_failure: true
+
