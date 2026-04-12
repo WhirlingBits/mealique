@@ -56,16 +56,21 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
 
     // Kein Token / keine Server-URL → Login
     if (serverUrl == null || token == null) {
+      debugPrint('AuthCheck: No token or serverUrl, navigating to login');
       if (mounted) _navigateToLogin();
       return;
     }
 
+    debugPrint('AuthCheck: token=${token.substring(0, token.length.clamp(0, 20))}..., serverUrl=$serverUrl');
+
     // Demo-Modus: keine Netzwerkprüfung nötig
     if (token == AppConstants.demoToken) {
+      debugPrint('AuthCheck: Demo mode detected, navigating to home');
       if (mounted) _navigateToHome();
       return;
     }
 
+    debugPrint('AuthCheck: Real user, validating token...');
     // Token-Validierung mit Netzwerk-Aufruf.
     // Beim Aufwachen aus dem Standby ist das Netz manchmal kurz nicht
     // verfügbar → erst einmal kurz warten, dann validieren.

@@ -407,5 +407,17 @@
     },
     "selectAll": "Select all",
     "deselectAll": "Deselect all",
-    "noIngredientsSelected": "Please select at least one ingredient."
+    "noIngredientsSelected": "Please select at least one ingredient.",
+    "notificationPermissionRequired": "Notification permission is required to receive meal reminders.",
+    "notificationPermissionDenied": "Notification permission denied. Please enable it in settings.",
+    "enableMealReminders": "Meal Reminders",
+    "mealRemindersDescription": "Receive daily reminders for your planned meals.",
+    "mealTimes": "Reminder Times",
+    "breakfastReminder": "Time for breakfast!",
+    "lunchReminder": "Time for lunch!",
+    "dinnerReminder": "Time for dinner!",
+    "mealReminderBody": "Check your meal plan to see what's on the menu.",
+    "mealReminderInfo": "Reminders will notify you daily at the set times. Make sure to plan your meals in advance.",
+    "backgroundSyncEnabled": "Background sync enabled",
+    "backgroundSyncDescription": "Automatically sync your data when you have an internet connection."
 }

@@ -1002,4 +1002,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noIngredientsSelected => 'Please select at least one ingredient.';
+
+  @override
+  String get notificationPermissionRequired =>
+      'Notification permission is required to receive meal reminders.';
+
+  @override
+  String get notificationPermissionDenied =>
+      'Notification permission denied. Please enable it in settings.';
+
+  @override
+  String get enableMealReminders => 'Meal Reminders';
+
+  @override
+  String get mealRemindersDescription =>
+      'Receive daily reminders for your planned meals.';
+
+  @override
+  String get mealTimes => 'Reminder Times';
+
+  @override
+  String get breakfastReminder => 'Time for breakfast!';
+
+  @override
+  String get lunchReminder => 'Time for lunch!';
+
+  @override
+  String get dinnerReminder => 'Time for dinner!';
+
+  @override
+  String get mealReminderBody =>
+      'Check your meal plan to see what\'s on the menu.';
+
+  @override
+  String get mealReminderInfo =>
+      'Reminders will notify you daily at the set times. Make sure to plan your meals in advance.';
+
+  @override
+  String get backgroundSyncEnabled => 'Background sync enabled';
+
+  @override
+  String get backgroundSyncDescription =>
+      'Automatically sync your data when you have an internet connection.';
 }

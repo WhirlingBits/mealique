@@ -1013,4 +1013,46 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get noIngredientsSelected => 'Bitte wähle mindestens eine Zutat aus.';
+
+  @override
+  String get notificationPermissionRequired =>
+      'Benachrichtigungsberechtigung ist erforderlich, um Mahlzeiten-Erinnerungen zu erhalten.';
+
+  @override
+  String get notificationPermissionDenied =>
+      'Benachrichtigungsberechtigung verweigert. Bitte aktiviere sie in den Einstellungen.';
+
+  @override
+  String get enableMealReminders => 'Mahlzeiten-Erinnerungen';
+
+  @override
+  String get mealRemindersDescription =>
+      'Erhalte tägliche Erinnerungen für deine geplanten Mahlzeiten.';
+
+  @override
+  String get mealTimes => 'Erinnerungszeiten';
+
+  @override
+  String get breakfastReminder => 'Zeit für das Frühstück!';
+
+  @override
+  String get lunchReminder => 'Zeit für das Mittagessen!';
+
+  @override
+  String get dinnerReminder => 'Zeit für das Abendessen!';
+
+  @override
+  String get mealReminderBody =>
+      'Schau in deinen Essensplan, um zu sehen, was auf dem Menü steht.';
+
+  @override
+  String get mealReminderInfo =>
+      'Erinnerungen benachrichtigen dich täglich zu den eingestellten Zeiten. Plane deine Mahlzeiten im Voraus.';
+
+  @override
+  String get backgroundSyncEnabled => 'Hintergrundsynchronisierung aktiviert';
+
+  @override
+  String get backgroundSyncDescription =>
+      'Synchronisiere deine Daten automatisch, wenn du eine Internetverbindung hast.';
 }

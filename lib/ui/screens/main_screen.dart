@@ -4,11 +4,15 @@ import 'package:app_version_update/app_version_update.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:mealique/config/app_constants.dart';
+import 'package:mealique/data/local/token_storage.dart';
 import 'package:mealique/data/remote/auth_api.dart';
 import 'package:mealique/data/remote/recipes_api.dart';
 import 'package:mealique/l10n/app_localizations.dart';
+import 'package:mealique/services/background_service.dart';
 import 'package:mealique/services/quick_actions_service.dart';
 import 'package:mealique/services/sync_service.dart';
+import 'package:mealique/ui/widgets/recipe_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/add_recipe_form.dart';
 import '../widgets/add_shopping_list_form.dart';
@@ -288,10 +292,18 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.resumed) {
+
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      // App goes to background – schedule background sync if there are pending ops
+      BackgroundService.instance.scheduleSyncNow();
+    } else if (state == AppLifecycleState.resumed) {
       final now = DateTime.now();
       final last = _lastResumeTime;
       _lastResumeTime = now;
+
+      // Refresh image cache when app resumes - this ensures images load after standby
+      // Wichtig: await damit der Cache aktualisiert wird bevor Widgets rendern
+      _refreshImageCacheOnResume();
 
       // Bei jedem Öffnen der App auf Updates prüfen
       _checkForUpdate();
@@ -302,7 +314,17 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       if (longStandby) {
         _silentTokenCheck();
       }
+
+      // Process any pending sync operations when app comes back
+      _processSyncQueue();
     }
+  }
+
+  /// Aktualisiert den Image-Cache nach App-Resume
+  Future<void> _refreshImageCacheOnResume() async {
+    debugPrint('MainScreen: Refreshing image cache on resume...');
+    await RecipeImage.refreshCache();
+    debugPrint('MainScreen: Image cache refreshed');
   }
 
   /// Prüft ob im Play Store ein Update verfügbar ist.
@@ -360,6 +382,13 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
   /// Prüft das Token im Hintergrund. Navigiert nur bei echtem 401 zum Login.
   Future<void> _silentTokenCheck() async {
+    // Check if we're in demo mode - no token check needed
+    final token = await TokenStorage().getToken();
+    if (token == AppConstants.demoToken) {
+      debugPrint('Silent token check: Demo mode, skipping');
+      return;
+    }
+    
     try {
       final api = RecipesApi();
       await api.getRecipes(page: 1, perPage: 1);

@@ -407,5 +407,17 @@
     },
     "selectAll": "Alle auswählen",
     "deselectAll": "Alle abwählen",
-    "noIngredientsSelected": "Bitte wähle mindestens eine Zutat aus."
+    "noIngredientsSelected": "Bitte wähle mindestens eine Zutat aus.",
+    "notificationPermissionRequired": "Benachrichtigungsberechtigung ist erforderlich, um Mahlzeiten-Erinnerungen zu erhalten.",
+    "notificationPermissionDenied": "Benachrichtigungsberechtigung verweigert. Bitte aktiviere sie in den Einstellungen.",
+    "enableMealReminders": "Mahlzeiten-Erinnerungen",
+    "mealRemindersDescription": "Erhalte tägliche Erinnerungen für deine geplanten Mahlzeiten.",
+    "mealTimes": "Erinnerungszeiten",
+    "breakfastReminder": "Zeit für das Frühstück!",
+    "lunchReminder": "Zeit für das Mittagessen!",
+    "dinnerReminder": "Zeit für das Abendessen!",
+    "mealReminderBody": "Schau in deinen Essensplan, um zu sehen, was auf dem Menü steht.",
+    "mealReminderInfo": "Erinnerungen benachrichtigen dich täglich zu den eingestellten Zeiten. Plane deine Mahlzeiten im Voraus.",
+    "backgroundSyncEnabled": "Hintergrundsynchronisierung aktiviert",
+    "backgroundSyncDescription": "Synchronisiere deine Daten automatisch, wenn du eine Internetverbindung hast."
 }

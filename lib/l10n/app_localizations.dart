@@ -1939,6 +1939,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please select at least one ingredient.'**
   String get noIngredientsSelected;
+
+  /// No description provided for @notificationPermissionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification permission is required to receive meal reminders.'**
+  String get notificationPermissionRequired;
+
+  /// No description provided for @notificationPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification permission denied. Please enable it in settings.'**
+  String get notificationPermissionDenied;
+
+  /// No description provided for @enableMealReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Meal Reminders'**
+  String get enableMealReminders;
+
+  /// No description provided for @mealRemindersDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Receive daily reminders for your planned meals.'**
+  String get mealRemindersDescription;
+
+  /// No description provided for @mealTimes.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder Times'**
+  String get mealTimes;
+
+  /// No description provided for @breakfastReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Time for breakfast!'**
+  String get breakfastReminder;
+
+  /// No description provided for @lunchReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Time for lunch!'**
+  String get lunchReminder;
+
+  /// No description provided for @dinnerReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Time for dinner!'**
+  String get dinnerReminder;
+
+  /// No description provided for @mealReminderBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your meal plan to see what\'s on the menu.'**
+  String get mealReminderBody;
+
+  /// No description provided for @mealReminderInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders will notify you daily at the set times. Make sure to plan your meals in advance.'**
+  String get mealReminderInfo;
+
+  /// No description provided for @backgroundSyncEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Background sync enabled'**
+  String get backgroundSyncEnabled;
+
+  /// No description provided for @backgroundSyncDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically sync your data when you have an internet connection.'**
+  String get backgroundSyncDescription;
 }
 
 class _AppLocalizationsDelegate

@@ -7,6 +7,7 @@ import 'package:mealique/data/remote/auth_api.dart';
 import 'package:mealique/data/remote/users_api.dart';
 import 'package:mealique/l10n/app_localizations.dart';
 import 'package:mealique/ui/screens/main_screen.dart';
+import 'package:mealique/ui/widgets/recipe_image.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -55,6 +56,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
       await _tokenStorage.saveToken(AppConstants.demoToken);
       await _tokenStorage.saveServerUrl(AppConstants.demoServerUrl);
+      // Note: Don't save demo credentials as real credentials to prevent
+      // accidental demo login after standby/token refresh
+      // The username field is cleared for demo users
+      await _tokenStorage.saveCredentials('', '');
+
+      // Invalidate image cache for demo mode
+      RecipeImage.invalidateCache();
 
       if (mounted) {
         Navigator.of(context).pushReplacement(
@@ -86,6 +94,9 @@ class _LoginScreenState extends State<LoginScreen> {
         await _tokenStorage.saveToken(token);
         await _tokenStorage.saveServerUrl(server);
         await _tokenStorage.saveCredentials(email, password);
+
+        // Invalidate image cache so it uses new credentials
+        RecipeImage.invalidateCache();
 
         // Fetch and cache userId for rating endpoint etc.
         try {

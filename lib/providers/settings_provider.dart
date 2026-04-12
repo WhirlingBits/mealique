@@ -11,6 +11,15 @@ class SettingsProvider with ChangeNotifier {
   String? _shoppingListSortField;
   String _shoppingListSortDirection = 'asc';
 
+  // Notification settings
+  bool _notificationsEnabled = false;
+  bool _breakfastReminderEnabled = false;
+  bool _lunchReminderEnabled = false;
+  bool _dinnerReminderEnabled = false;
+  TimeOfDay _breakfastTime = const TimeOfDay(hour: 7, minute: 30);
+  TimeOfDay _lunchTime = const TimeOfDay(hour: 11, minute: 30);
+  TimeOfDay _dinnerTime = const TimeOfDay(hour: 17, minute: 30);
+
   // Per-list settings (cached in memory)
   final Map<String, bool> _showCompletedPerList = {};
   final Map<String, bool> _showCategoriesPerList = {};
@@ -26,6 +35,15 @@ class SettingsProvider with ChangeNotifier {
   String get recipeSortDirection => _recipeSortDirection;
   String? get shoppingListSortField => _shoppingListSortField;
   String get shoppingListSortDirection => _shoppingListSortDirection;
+
+  // Notification getters
+  bool get notificationsEnabled => _notificationsEnabled;
+  bool get breakfastReminderEnabled => _breakfastReminderEnabled;
+  bool get lunchReminderEnabled => _lunchReminderEnabled;
+  bool get dinnerReminderEnabled => _dinnerReminderEnabled;
+  TimeOfDay get breakfastTime => _breakfastTime;
+  TimeOfDay get lunchTime => _lunchTime;
+  TimeOfDay get dinnerTime => _dinnerTime;
 
   // Per-list getters
   bool showCompletedForList(String listId) =>
@@ -61,6 +79,15 @@ class SettingsProvider with ChangeNotifier {
     _recipeSortDirection = await _storage.getRecipeSortDirection();
     _shoppingListSortField = await _storage.getShoppingListSortField();
     _shoppingListSortDirection = await _storage.getShoppingListSortDirection();
+
+    // Load Notification preferences
+    _notificationsEnabled = await _storage.getNotificationsEnabled();
+    _breakfastReminderEnabled = await _storage.getBreakfastReminderEnabled();
+    _lunchReminderEnabled = await _storage.getLunchReminderEnabled();
+    _dinnerReminderEnabled = await _storage.getDinnerReminderEnabled();
+    _breakfastTime = await _storage.getBreakfastTime() ?? const TimeOfDay(hour: 7, minute: 30);
+    _lunchTime = await _storage.getLunchTime() ?? const TimeOfDay(hour: 11, minute: 30);
+    _dinnerTime = await _storage.getDinnerTime() ?? const TimeOfDay(hour: 17, minute: 30);
 
     _isInitialized = true;
     notifyListeners();
@@ -128,6 +155,49 @@ class SettingsProvider with ChangeNotifier {
     _showCategoriesPerList[listId] = await _storage.getShowCategories(listId);
     _shoppingItemSortFieldPerList[listId] = await _storage.getShoppingItemSortField(listId);
     _shoppingItemSortDirectionPerList[listId] = await _storage.getShoppingItemSortDirection(listId);
+    notifyListeners();
+  }
+
+  // Notification setters
+  Future<void> setNotificationsEnabled(bool value) async {
+    _notificationsEnabled = value;
+    await _storage.saveNotificationsEnabled(value);
+    notifyListeners();
+  }
+
+  Future<void> setBreakfastReminderEnabled(bool value) async {
+    _breakfastReminderEnabled = value;
+    await _storage.saveBreakfastReminderEnabled(value);
+    notifyListeners();
+  }
+
+  Future<void> setLunchReminderEnabled(bool value) async {
+    _lunchReminderEnabled = value;
+    await _storage.saveLunchReminderEnabled(value);
+    notifyListeners();
+  }
+
+  Future<void> setDinnerReminderEnabled(bool value) async {
+    _dinnerReminderEnabled = value;
+    await _storage.saveDinnerReminderEnabled(value);
+    notifyListeners();
+  }
+
+  Future<void> setBreakfastTime(TimeOfDay time) async {
+    _breakfastTime = time;
+    await _storage.saveBreakfastTime(time);
+    notifyListeners();
+  }
+
+  Future<void> setLunchTime(TimeOfDay time) async {
+    _lunchTime = time;
+    await _storage.saveLunchTime(time);
+    notifyListeners();
+  }
+
+  Future<void> setDinnerTime(TimeOfDay time) async {
+    _dinnerTime = time;
+    await _storage.saveDinnerTime(time);
     notifyListeners();
   }
 }

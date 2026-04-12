@@ -1,5 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:mealique/config/app_constants.dart';
 import 'package:mealique/data/local/token_storage.dart';
 
 /// Bildgröße für Rezeptbilder
@@ -15,10 +17,79 @@ enum RecipeImageSize {
   const RecipeImageSize(this.fileName);
 }
 
+/// Global cached config to avoid repeated secure storage reads
+class _ImageConfigCache {
+  static String? serverUrl;
+  static String? token;
+  static bool _isRefreshing = false;
+
+  /// Notifier für Änderungen - Widgets können darauf hören
+  static final ValueNotifier<int> refreshNotifier = ValueNotifier<int>(0);
+
+  static bool get hasData => serverUrl != null && token != null;
+
+  /// Force refresh the cache from storage
+  static Future<void> refresh({bool force = false}) async {
+    // Prevent concurrent refreshes
+    if (_isRefreshing && !force) return;
+    _isRefreshing = true;
+
+    final storage = TokenStorage();
+    // Retry logic for secure storage after standby
+    for (int attempt = 0; attempt < 3; attempt++) {
+      try {
+        final results = await Future.wait([
+          storage.getServerUrl(),
+          storage.getToken(),
+        ]);
+        final newServerUrl = results[0] ?? '';
+        final newToken = results[1] ?? '';
+
+        // Prüfe ob sich die Daten geändert haben
+        final hasChanged = serverUrl != newServerUrl || token != newToken;
+        
+        // Update cache values
+        serverUrl = newServerUrl;
+        token = newToken;
+        
+        debugPrint('ImageConfigCache: Refreshed - serverUrl=$serverUrl, token=${token?.substring(0, (token?.length ?? 0).clamp(0, 10))}..., hasChanged=$hasChanged, force=$force');
+
+        // Benachrichtige alle Widgets, dass sich der Cache geändert hat
+        // Bei force: true immer benachrichtigen (z.B. nach App-Resume)
+        if (hasChanged || force) {
+          refreshNotifier.value++;
+          debugPrint('ImageConfigCache: Notified listeners, new version=${refreshNotifier.value}');
+        }
+        
+        _isRefreshing = false;
+        return;
+      } on PlatformException catch (e) {
+        debugPrint('ImageConfigCache: Storage not ready (attempt ${attempt + 1}): $e');
+        if (attempt < 2) {
+          await Future.delayed(Duration(milliseconds: 300 * (attempt + 1)));
+        }
+      } catch (e) {
+        debugPrint('ImageConfigCache: Error reading storage: $e');
+        if (attempt < 2) {
+          await Future.delayed(Duration(milliseconds: 300 * (attempt + 1)));
+        }
+      }
+    }
+    _isRefreshing = false;
+  }
+
+  static void invalidate() {
+    serverUrl = null;
+    token = null;
+    refreshNotifier.value++;
+    debugPrint('ImageConfigCache: Invalidated');
+  }
+}
+
 /// Lädt das Bild eines Rezepts vom Mealie-Server.
 /// Falls kein Bild vorhanden oder der Ladevorgang fehlschlägt,
 /// wird das Mealique-Logo als Platzhalter angezeigt.
-class RecipeImage extends StatelessWidget {
+class RecipeImage extends StatefulWidget {
   /// ID des Rezepts (wird für die Bild-URL genutzt).
   final String recipeId;
 
@@ -43,48 +114,113 @@ class RecipeImage extends StatelessWidget {
     this.height,
   });
 
-  Future<Map<String, String>> _loadConfig() async {
-    final storage = TokenStorage();
-    final serverUrl = await storage.getServerUrl();
-    final token = await storage.getToken();
-    return {
-      'serverUrl': serverUrl ?? '',
-      'token': token ?? '',
-    };
+  /// Invalidates the cached config (call after login/logout)
+  static void invalidateCache() {
+    _ImageConfigCache.invalidate();
+  }
+
+  /// Refreshes the cache (call when app resumes from background)
+  static Future<void> refreshCache() async {
+    await _ImageConfigCache.refresh(force: true);
+  }
+
+  @override
+  State<RecipeImage> createState() => _RecipeImageState();
+}
+
+class _RecipeImageState extends State<RecipeImage> {
+  bool _isLoading = true;
+  String _serverUrl = '';
+  String _token = '';
+  int _cacheVersion = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _cacheVersion = _ImageConfigCache.refreshNotifier.value;
+    _ImageConfigCache.refreshNotifier.addListener(_onCacheRefresh);
+    _loadConfig();
+  }
+
+  @override
+  void dispose() {
+    _ImageConfigCache.refreshNotifier.removeListener(_onCacheRefresh);
+    super.dispose();
+  }
+
+  void _onCacheRefresh() {
+    if (!mounted) return;
+    // Cache hat sich geändert - Daten neu laden
+    final newVersion = _ImageConfigCache.refreshNotifier.value;
+    if (_cacheVersion != newVersion) {
+      debugPrint('RecipeImage[${widget.recipeId}]: Cache version changed from $_cacheVersion to $newVersion, reloading...');
+      _cacheVersion = newVersion;
+      setState(() {
+        _serverUrl = _ImageConfigCache.serverUrl ?? '';
+        _token = _ImageConfigCache.token ?? '';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadConfig() async {
+    // Always try to refresh if no data cached
+    if (!_ImageConfigCache.hasData) {
+      await _ImageConfigCache.refresh();
+    }
+
+    if (mounted) {
+      setState(() {
+        _serverUrl = _ImageConfigCache.serverUrl ?? '';
+        _token = _ImageConfigCache.token ?? '';
+        _cacheVersion = _ImageConfigCache.refreshNotifier.value;
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     // Kein Bild angegeben → direkt Mealique-Logo zeigen
-    if (imageHint == null || imageHint!.isEmpty) {
-      return _buildFallback(width: width, height: height);
+    if (widget.imageHint == null || widget.imageHint!.isEmpty) {
+      return _buildFallback(width: widget.width, height: widget.height);
     }
 
-    return FutureBuilder<Map<String, String>>(
-      future: _loadConfig(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!['serverUrl']!.isEmpty) {
-          return _buildFallback(width: width, height: height);
-        }
+    if (_isLoading) {
+      return _buildLoading();
+    }
 
-        final serverUrl = snapshot.data!['serverUrl']!.replaceAll(RegExp(r'/$'), '');
-        final token = snapshot.data!['token']!;
-        // API URL: /api/media/recipes/{recipe_id}/images/{file_name}
-        // file_name: original.webp, min-original.webp, tiny-original.webp
-        final imageUrl =
-            '$serverUrl/api/media/recipes/$recipeId/images/${size.fileName}';
+    // Demo mode or empty server - show fallback
+    if (_serverUrl.isEmpty || _serverUrl == AppConstants.demoServerUrl) {
+      return _buildFallback(width: widget.width, height: widget.height);
+    }
 
-        return CachedNetworkImage(
-          imageUrl: imageUrl,
-          httpHeaders: token.isNotEmpty
-              ? {'Authorization': 'Bearer $token'}
-              : null,
-          fit: fit,
-          width: width,
-          height: height,
-          placeholder: (_, __) => _buildLoading(),
-          errorWidget: (_, __, ___) => _buildFallback(width: width, height: height),
-        );
+    final cleanServerUrl = _serverUrl.replaceAll(RegExp(r'/$'), '');
+    // API URL: /api/media/recipes/{recipe_id}/images/{file_name}
+    final imageUrl =
+        '$cleanServerUrl/api/media/recipes/${widget.recipeId}/images/${widget.size.fileName}';
+
+    // Verwende cacheKey mit Version UND Token-Hash, um Bilder nach Cache-Refresh neu zu laden
+    // Das Token kann sich nach App-Resume geändert haben
+    final tokenHash = _token.isNotEmpty ? _token.hashCode.toString() : 'notoken';
+    final cacheKey = '${widget.recipeId}_${widget.size.fileName}_v${_cacheVersion}_$tokenHash';
+
+    debugPrint('RecipeImage[${widget.recipeId}]: Building with cacheKey=$cacheKey, serverUrl=$cleanServerUrl');
+
+    return CachedNetworkImage(
+      key: ValueKey(cacheKey),
+      cacheKey: cacheKey,
+      imageUrl: imageUrl,
+      httpHeaders: _token.isNotEmpty
+          ? {'Authorization': 'Bearer $_token'}
+          : null,
+      fit: widget.fit,
+      width: widget.width,
+      height: widget.height,
+      placeholder: (_, __) => _buildLoading(),
+      errorWidget: (_, url, error) {
+        debugPrint('RecipeImage[${widget.recipeId}]: Error loading $url - $error');
+        return _buildFallback(width: widget.width, height: widget.height);
       },
     );
   }

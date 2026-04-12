@@ -4,6 +4,7 @@ import 'package:mealique/data/local/recipe_storage.dart';
 import 'package:mealique/data/local/token_storage.dart';
 import 'package:mealique/services/sync_service.dart';
 import 'package:mealique/ui/screens/login_screen.dart';
+import 'package:mealique/ui/widgets/recipe_image.dart';
 import '../../l10n/app_localizations.dart';
 
 class ServerApiSettingsScreen extends StatefulWidget {
@@ -62,6 +63,9 @@ class _ServerApiSettingsScreenState extends State<ServerApiSettingsScreen> {
     try { await HouseholdStorage().clearAll(); } catch (e) { debugPrint('Logout: clearAll household error: $e'); }
     try { await RecipeStorage().clearAll(); } catch (e) { debugPrint('Logout: clearAll recipe error: $e'); }
     try { await SyncService().clearQueue(); } catch (e) { debugPrint('Logout: clearQueue error: $e'); }
+
+    // Invalidate image cache
+    RecipeImage.invalidateCache();
 
     if (mounted) {
       Navigator.of(context).pushAndRemoveUntil(
