@@ -144,6 +144,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: AddMealForm(
+          selectedDate: _selectedDay,
           occupiedEntryTypes: occupiedTypes,
           onAddMeal: (entryType, recipe) async {
             final l10n = AppLocalizations.of(context)!;
@@ -207,6 +208,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: AddMealForm(
+          selectedDate: _selectedDay,
           occupiedEntryTypes: occupiedTypes,
           editingEntryType: meal.entryType,
           onAddMeal: (entryType, recipe) async {

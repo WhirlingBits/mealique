@@ -1058,4 +1058,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get selectList => 'Wähle eine Liste aus';
+
+  @override
+  String get randomRecipe => 'Zufälliges Gericht';
+
+  @override
+  String get noRandomRecipeFound =>
+      'Es konnte kein zufälliges Rezept gefunden werden. Bitte versuche es erneut.';
 }

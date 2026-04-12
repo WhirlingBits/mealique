@@ -9,10 +9,12 @@ class AddMealForm extends StatefulWidget {
   final Function(PlanEntryType entryType, Recipe recipe) onAddMeal;
   final Set<PlanEntryType> occupiedEntryTypes;
   final PlanEntryType? editingEntryType;
+  final DateTime selectedDate;
 
   const AddMealForm({
     super.key,
     required this.onAddMeal,
+    required this.selectedDate,
     this.occupiedEntryTypes = const {},
     this.editingEntryType,
   });
@@ -24,6 +26,7 @@ class AddMealForm extends StatefulWidget {
 class _AddMealFormState extends State<AddMealForm> {
   final _focusScopeNode = FocusScopeNode();
   bool _isAnythingFocused = false;
+  bool _isLoadingRandom = false;
 
   PlanEntryType _selectedEntryType = PlanEntryType.breakfast;
   Recipe? _selectedRecipe;
@@ -93,6 +96,56 @@ class _AddMealFormState extends State<AddMealForm> {
         });
       }
     } catch (_) {}
+  }
+
+  Future<void> _loadRandomRecipe() async {
+    final l10n = AppLocalizations.of(context)!;
+    setState(() {
+      _isLoadingRandom = true;
+    });
+
+    try {
+      // Format date as YYYY-MM-DD
+      final dateStr = widget.selectedDate.toIso8601String().split('T').first;
+      // Convert entryType to API format (lowercase)
+      final entryTypeStr = _selectedEntryType.name;
+
+      final recipe = await _recipeRepository.getRandomRecipe(
+        date: dateStr,
+        entryType: entryTypeStr,
+      );
+      if (mounted) {
+        if (recipe != null) {
+          setState(() {
+            _selectedRecipe = recipe;
+            _recipeText = recipe.name;
+            _recipeController.text = recipe.name;
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.noRandomRecipeFound),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.noRandomRecipeFound),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingRandom = false;
+        });
+      }
+    }
   }
 
   void _onFocusChange() {
@@ -219,6 +272,23 @@ class _AddMealFormState extends State<AddMealForm> {
                     const SizedBox(height: 12),
                     // Recipe search with RawAutocomplete (like food autocomplete)
                     _buildRecipeAutocomplete(l10n),
+                    const SizedBox(height: 12),
+                    // Random recipe button
+                    OutlinedButton.icon(
+                      onPressed: _isLoadingRandom ? null : _loadRandomRecipe,
+                      icon: _isLoadingRandom
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.casino_outlined),
+                      label: Text(l10n.randomRecipe),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: accentColor,
+                        side: BorderSide(color: accentColor),
+                      ),
+                    ),
                     const SizedBox(height: 16),
                     // Submit Button
                     Align(

@@ -102,6 +102,24 @@ class RecipeRepository {
     );
   }
 
+  /// Returns a random recipe from the Mealie server.
+  /// Uses POST /api/households/mealplans/random endpoint.
+  Future<Recipe?> getRandomRecipe({
+    required String date,
+    required String entryType,
+  }) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      // Return a random demo recipe
+      final demoRecipes = _getDemoRecipes();
+      if (demoRecipes.isEmpty) return null;
+      demoRecipes.shuffle();
+      return demoRecipes.first;
+    }
+
+    return _api.getRandomRecipe(date: date, entryType: entryType);
+  }
+
   Future<List<Food>> getFoods() async {
     final token = await _tokenStorage.getToken();
     if (token == AppConstants.demoToken) {

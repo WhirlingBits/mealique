@@ -420,5 +420,7 @@
     "mealReminderInfo": "Erinnerungen benachrichtigen dich täglich zu den eingestellten Zeiten. Plane deine Mahlzeiten im Voraus.",
     "backgroundSyncEnabled": "Hintergrundsynchronisierung aktiviert",
     "backgroundSyncDescription": "Synchronisiere deine Daten automatisch, wenn du eine Internetverbindung hast.",
-    "selectList": "Wähle eine Liste aus"
+    "selectList": "Wähle eine Liste aus",
+    "randomRecipe": "Zufälliges Gericht",
+    "noRandomRecipeFound": "Es konnte kein zufälliges Rezept gefunden werden. Bitte versuche es erneut."
 }

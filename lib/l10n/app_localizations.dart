@@ -2017,6 +2017,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Select a list'**
   String get selectList;
+
+  /// No description provided for @randomRecipe.
+  ///
+  /// In en, this message translates to:
+  /// **'Random recipe'**
+  String get randomRecipe;
+
+  /// No description provided for @noRandomRecipeFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not find a random recipe. Please try again.'**
+  String get noRandomRecipeFound;
 }
 
 class _AppLocalizationsDelegate

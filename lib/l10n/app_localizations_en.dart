@@ -1047,4 +1047,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get selectList => 'Select a list';
+
+  @override
+  String get randomRecipe => 'Random recipe';
+
+  @override
+  String get noRandomRecipeFound =>
+      'Could not find a random recipe. Please try again.';
 }

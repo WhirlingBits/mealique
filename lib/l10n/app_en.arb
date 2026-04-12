@@ -420,5 +420,7 @@
     "mealReminderInfo": "Reminders will notify you daily at the set times. Make sure to plan your meals in advance.",
     "backgroundSyncEnabled": "Background sync enabled",
     "backgroundSyncDescription": "Automatically sync your data when you have an internet connection.",
-    "selectList": "Select a list"
+    "selectList": "Select a list",
+    "randomRecipe": "Random recipe",
+    "noRandomRecipeFound": "Could not find a random recipe. Please try again."
 }

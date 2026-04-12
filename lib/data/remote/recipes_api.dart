@@ -65,6 +65,31 @@ class RecipesApi {
     return Recipe.fromJson(response.data);
   }
 
+  /// POST /api/households/mealplans/random – returns a random recipe for meal planning.
+  /// Requires date (YYYY-MM-DD) and entryType (breakfast, lunch, dinner, snack, etc.)
+  Future<Recipe?> getRandomRecipe({
+    required String date,
+    required String entryType,
+  }) async {
+    try {
+      final response = await _dio.post(
+        'api/households/mealplans/random',
+        data: {
+          'date': date,
+          'entryType': entryType,
+        },
+      );
+      // The endpoint returns a mealplan entry with a nested 'recipe' object
+      if (response.data != null && response.data['recipe'] != null) {
+        return Recipe.fromJson(response.data['recipe']);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('getRandomRecipe error: $e');
+      return null;
+    }
+  }
+
   /// Returns the raw JSON map for a recipe (used for merge-then-PUT updates).
   Future<Map<String, dynamic>> getRecipeRaw(String slug) async {
     final response = await _dio.get('api/recipes/$slug');
