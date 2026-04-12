@@ -1,6 +1,6 @@
 
 variables:
-  FLUTTER_VERSION: "3.41.6"
+  FLUTTER_VERSION: "latest"
 
 .flutter_setup: &flutter_setup
   image: ghcr.io/cirruslabs/flutter:${FLUTTER_VERSION}
