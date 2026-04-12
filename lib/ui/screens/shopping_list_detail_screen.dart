@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/providers/settings_provider.dart';
@@ -42,12 +43,17 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
   late Future<List<ShoppingItem>> _itemsFuture;
   Timer? _refreshTimer;
 
+  // Scroll controller for hiding FAB on scroll
+  final ScrollController _scrollController = ScrollController();
+  bool _isFabVisible = true;
+
   final Color _accentColor = const Color(0xFFE58325);
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _scrollController.addListener(_onScroll);
     _loadItems();
     _startAutoRefresh();
     // Load per-list settings
@@ -58,8 +64,24 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
   @override
   void dispose() {
     _refreshTimer?.cancel();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  void _onScroll() {
+    // Hide FAB when scrolling down, show when scrolling up or at top
+    final isScrollingDown = _scrollController.position.userScrollDirection == ScrollDirection.reverse;
+    final isAtTop = _scrollController.offset <= 0;
+
+    if (isAtTop && !_isFabVisible) {
+      setState(() => _isFabVisible = true);
+    } else if (isScrollingDown && _isFabVisible) {
+      setState(() => _isFabVisible = false);
+    } else if (!isScrollingDown && !_isFabVisible) {
+      setState(() => _isFabVisible = true);
+    }
   }
 
   @override
@@ -559,9 +581,10 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
                 _loadItems();
               },
               child: CustomScrollView(
+                controller: _scrollController,
                 slivers: [
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
@@ -592,7 +615,8 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
                 _loadItems();
               },
               child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                controller: _scrollController,
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                 itemCount: displayItems.length,
                 itemBuilder: (context, index) => _buildItemTile(displayItems[index]),
               ),
@@ -641,13 +665,21 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
             Expanded(child: content),
           ],
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: _showAddItemSheet,
-          tooltip: l10n.addItem,
-          backgroundColor: Colors.green,
-          foregroundColor: Colors.white,
-          shape: const CircleBorder(),
-          child: const Icon(Icons.add),
+        floatingActionButton: AnimatedSlide(
+          duration: const Duration(milliseconds: 200),
+          offset: _isFabVisible ? Offset.zero : const Offset(0, 2),
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: _isFabVisible ? 1.0 : 0.0,
+            child: FloatingActionButton(
+              onPressed: _isFabVisible ? _showAddItemSheet : null,
+              tooltip: l10n.addItem,
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              shape: const CircleBorder(),
+              child: const Icon(Icons.add),
+            ),
+          ),
         ),
       );
     }
@@ -674,13 +706,21 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
         ],
       ),
       body: content,
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddItemSheet,
-        tooltip: l10n.addItem,
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add),
+      floatingActionButton: AnimatedSlide(
+        duration: const Duration(milliseconds: 200),
+        offset: _isFabVisible ? Offset.zero : const Offset(0, 2),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 200),
+          opacity: _isFabVisible ? 1.0 : 0.0,
+          child: FloatingActionButton(
+            onPressed: _isFabVisible ? _showAddItemSheet : null,
+            tooltip: l10n.addItem,
+            backgroundColor: Colors.green,
+            foregroundColor: Colors.white,
+            shape: const CircleBorder(),
+            child: const Icon(Icons.add),
+          ),
+        ),
       ),
     );
   }

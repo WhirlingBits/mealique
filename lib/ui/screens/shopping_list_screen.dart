@@ -1,10 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:mealique/core/utils/responsive_utils.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/ui/widgets/shopping_list_actions_menu.dart';
-import 'package:mealique/ui/widgets/shopping_list_detail_actions_menu.dart';
 import 'package:mealique/ui/widgets/sort_dialog.dart';
 import 'package:provider/provider.dart';
 import '../../data/sync/household_repository.dart';
@@ -24,10 +24,12 @@ class ShoppingListScreen extends StatefulWidget {
 
 class _ShoppingListScreenState extends State<ShoppingListScreen> {
   final HouseholdRepository _repository = HouseholdRepository();
+  final ScrollController _scrollController = ScrollController();
 
   late Future<List<ShoppingList>> _listsFuture;
   String? _sortField;
   String _sortDirection = 'asc';
+  bool _isFabVisible = true;
 
   // For tablet master-detail view
   ShoppingList? _selectedList;
@@ -38,7 +40,24 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     final settings = Provider.of<SettingsProvider>(context, listen: false);
     _sortField = settings.shoppingListSortField;
     _sortDirection = settings.shoppingListSortDirection;
+    _scrollController.addListener(_onScroll);
     _loadLists();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final direction = _scrollController.position.userScrollDirection;
+    if (direction == ScrollDirection.reverse && _isFabVisible) {
+      setState(() => _isFabVisible = false);
+    } else if (direction == ScrollDirection.forward && !_isFabVisible) {
+      setState(() => _isFabVisible = true);
+    }
   }
 
   void _loadLists() {
@@ -248,13 +267,21 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           return _buildPhoneLayout(lists, l10n, theme);
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddListSheet,
-        tooltip: l10n.createList,
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add),
+      floatingActionButton: AnimatedSlide(
+        duration: const Duration(milliseconds: 200),
+        offset: _isFabVisible ? Offset.zero : const Offset(0, 2),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 200),
+          opacity: _isFabVisible ? 1.0 : 0.0,
+          child: FloatingActionButton(
+            onPressed: _isFabVisible ? _showAddListSheet : null,
+            tooltip: l10n.createList,
+            backgroundColor: Colors.green,
+            foregroundColor: Colors.white,
+            shape: const CircleBorder(),
+            child: const Icon(Icons.add),
+          ),
+        ),
       ),
     );
   }
@@ -295,6 +322,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       onRefresh: _handleRefresh,
       child: SlidableAutoCloseBehavior(
         child: ListView.builder(
+          controller: _scrollController,
           padding: const EdgeInsets.all(16),
           itemCount: lists.length,
           itemBuilder: (context, index) {
@@ -364,11 +392,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         Expanded(
           child: _selectedList != null
               ? ShoppingListDetailScreen(
-                  key: ValueKey(_selectedList!.id),
-                  listId: _selectedList!.id,
-                  listName: _selectedList!.name,
-                  embedded: true,
-                )
+            key: ValueKey(_selectedList!.id),
+            listId: _selectedList!.id,
+            listName: _selectedList!.name,
+            embedded: true,
+          )
               : _buildDetailPlaceholder(l10n),
         ),
       ],
