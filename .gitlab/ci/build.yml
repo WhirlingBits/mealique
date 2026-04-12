@@ -54,11 +54,9 @@ build_windows:
   stage: build
   tags:
     - windows
-  before_script:
-    - flutter --version
-    - flutter pub get
+    - shell
   script:
-    - flutter build windows --release
+    - flutter --version && flutter pub get && flutter build windows --release
   artifacts:
     paths:
       - build/windows/x64/runner/Release/
