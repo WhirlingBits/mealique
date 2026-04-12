@@ -1055,4 +1055,7 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get backgroundSyncDescription =>
       'Synchronisiere deine Daten automatisch, wenn du eine Internetverbindung hast.';
+
+  @override
+  String get selectList => 'Wähle eine Liste aus';
 }

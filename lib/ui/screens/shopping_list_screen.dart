@@ -1,8 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:mealique/core/utils/responsive_utils.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/ui/widgets/shopping_list_actions_menu.dart';
+import 'package:mealique/ui/widgets/shopping_list_detail_actions_menu.dart';
 import 'package:mealique/ui/widgets/sort_dialog.dart';
 import 'package:provider/provider.dart';
 import '../../data/sync/household_repository.dart';
@@ -26,6 +28,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   late Future<List<ShoppingList>> _listsFuture;
   String? _sortField;
   String _sortDirection = 'asc';
+
+  // For tablet master-detail view
+  ShoppingList? _selectedList;
 
   @override
   void initState() {
@@ -206,6 +211,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final isLargeTablet = ResponsiveUtils.isLargeTablet(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -233,114 +239,13 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           final lists = snapshot.data ?? [];
 
           if (lists.isEmpty) {
-            return Center(
-                child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.shopping_cart_outlined, size: 80, color: Colors.grey[400]),
-                      const SizedBox(height: 24),
-                      Text(
-                        l10n.noListsFound,
-                        style: theme.textTheme.headlineSmall?.copyWith(color: Colors.grey[600]),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.createFirstListHint,
-                        style: theme.textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.add),
-                        onPressed: _showAddListSheet,
-                        label: Text(l10n.createFirstList),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        ),
-                      )
-                    ]));
+            return _buildEmptyState(l10n, theme);
           }
 
-          return RefreshIndicator(
-            onRefresh: _handleRefresh,
-            child: SlidableAutoCloseBehavior(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: lists.length,
-                itemBuilder: (context, index) {
-                  final list = lists[index];
-                  final String subtitle;
-                  if (list.itemCount == 0) {
-                    subtitle = l10n.allDone;
-                  } else if (list.itemCount == 1) {
-                    subtitle = l10n.openItemsSingular;
-                  } else {
-                    subtitle = l10n.openItemsPlural(list.itemCount);
-                  }
-
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Slidable(
-                      key: ValueKey(list.id),
-                      startActionPane: ActionPane(
-                        motion: const ScrollMotion(),
-                        extentRatio: 0.5,
-                        children: [
-                          SlidableAction(
-                            flex: 1,
-                            onPressed: (context) => _editList(list),
-                            backgroundColor: const Color(0xFFE58325),
-                            foregroundColor: Colors.white,
-                            icon: Icons.edit,
-                            label: l10n.edit,
-                          ),
-                          SlidableAction(
-                            flex: 1,
-                            onPressed: (context) => _deleteList(list.id),
-                            backgroundColor: Colors.red,
-                            foregroundColor: Colors.white,
-                            icon: Icons.delete,
-                            label: l10n.delete,
-                          ),
-                        ],
-                      ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        leading: CircleAvatar(
-                          backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-                          child: Icon(
-                            Icons.list_alt_rounded,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                        title: Text(
-                          list.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Text(subtitle),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ShoppingListDetailScreen(
-                                listId: list.id,
-                                listName: list.name,
-                              ),
-                            ),
-                          ).then((_) => _loadLists());
-                        },
-                        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          );
+          if (isLargeTablet) {
+            return _buildMasterDetailLayout(lists, l10n, theme);
+          }
+          return _buildPhoneLayout(lists, l10n, theme);
         },
       ),
       floatingActionButton: FloatingActionButton(
@@ -350,6 +255,217 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         foregroundColor: Colors.white,
         shape: const CircleBorder(),
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(AppLocalizations l10n, ThemeData theme) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.shopping_cart_outlined, size: 80, color: Colors.grey[400]),
+          const SizedBox(height: 24),
+          Text(
+            l10n.noListsFound,
+            style: theme.textTheme.headlineSmall?.copyWith(color: Colors.grey[600]),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.createFirstListHint,
+            style: theme.textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.add),
+            onPressed: _showAddListSheet,
+            label: Text(l10n.createFirstList),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  /// Phone Layout: Full-screen list
+  Widget _buildPhoneLayout(List<ShoppingList> lists, AppLocalizations l10n, ThemeData theme) {
+    return RefreshIndicator(
+      onRefresh: _handleRefresh,
+      child: SlidableAutoCloseBehavior(
+        child: ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: lists.length,
+          itemBuilder: (context, index) {
+            final list = lists[index];
+            return _buildListCard(list, l10n, theme, onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ShoppingListDetailScreen(
+                    listId: list.id,
+                    listName: list.name,
+                  ),
+                ),
+              ).then((_) => _loadLists());
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Tablet Layout: Master-Detail view
+  Widget _buildMasterDetailLayout(List<ShoppingList> lists, AppLocalizations l10n, ThemeData theme) {
+    // Auto-select first list if none selected
+    if (_selectedList == null && lists.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _selectedList = lists.first;
+          });
+        }
+      });
+    }
+
+    return Row(
+      children: [
+        // Master: List of shopping lists
+        SizedBox(
+          width: 320,
+          child: RefreshIndicator(
+            onRefresh: _handleRefresh,
+            child: SlidableAutoCloseBehavior(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: lists.length,
+                itemBuilder: (context, index) {
+                  final list = lists[index];
+                  final isSelected = _selectedList?.id == list.id;
+                  return _buildListCard(
+                    list,
+                    l10n,
+                    theme,
+                    isSelected: isSelected,
+                    onTap: () {
+                      setState(() {
+                        _selectedList = list;
+                      });
+                    },
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+        const VerticalDivider(width: 1),
+        // Detail: Selected list items with embedded mode
+        Expanded(
+          child: _selectedList != null
+              ? ShoppingListDetailScreen(
+                  key: ValueKey(_selectedList!.id),
+                  listId: _selectedList!.id,
+                  listName: _selectedList!.name,
+                  embedded: true,
+                )
+              : _buildDetailPlaceholder(l10n),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailPlaceholder(AppLocalizations l10n) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.touch_app_outlined,
+            size: 64,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            l10n.selectList,
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildListCard(
+    ShoppingList list,
+    AppLocalizations l10n,
+    ThemeData theme, {
+    required VoidCallback onTap,
+    bool isSelected = false,
+  }) {
+    final String subtitle;
+    if (list.itemCount == 0) {
+      subtitle = l10n.allDone;
+    } else if (list.itemCount == 1) {
+      subtitle = l10n.openItemsSingular;
+    } else {
+      subtitle = l10n.openItemsPlural(list.itemCount);
+    }
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: isSelected
+            ? BorderSide(color: const Color(0xFFE58325), width: 2)
+            : BorderSide.none,
+      ),
+      clipBehavior: Clip.antiAlias,
+      color: isSelected ? const Color(0xFFE58325).withValues(alpha: 0.08) : null,
+      child: Slidable(
+        key: ValueKey(list.id),
+        startActionPane: ActionPane(
+          motion: const ScrollMotion(),
+          extentRatio: 0.5,
+          children: [
+            SlidableAction(
+              flex: 1,
+              onPressed: (context) => _editList(list),
+              backgroundColor: const Color(0xFFE58325),
+              foregroundColor: Colors.white,
+              icon: Icons.edit,
+              label: l10n.edit,
+            ),
+            SlidableAction(
+              flex: 1,
+              onPressed: (context) => _deleteList(list.id),
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              icon: Icons.delete,
+              label: l10n.delete,
+            ),
+          ],
+        ),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16, vertical: 8),
+          leading: CircleAvatar(
+            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+            child: Icon(
+              Icons.list_alt_rounded,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          title: Text(
+            list.name,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          subtitle: Text(subtitle),
+          onTap: onTap,
+          trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+        ),
       ),
     );
   }

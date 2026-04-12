@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:mealique/core/utils/responsive_utils.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/ui/screens/edit_recipe_screen.dart';
 import 'package:mealique/ui/screens/recipe_detail_screen.dart';
@@ -312,27 +313,41 @@ class _RecipesScreenState extends State<RecipesScreen> {
     return RefreshIndicator(
       onRefresh: () async => _refreshRecipes(),
       child: SlidableAutoCloseBehavior(
-        child: GridView.builder(
-          controller: _scrollController,
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 0.8,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-          ),
-          itemCount: _recipes.length + (_hasMore ? 1 : 0),
-          itemBuilder: (context, index) {
-            // Loading indicator at the end
-            if (index >= _recipes.length) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: CircularProgressIndicator(),
-                ),
-              );
-            }
-            return _buildRecipeCard(context, _recipes[index]);
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Adaptive grid columns based on screen width
+            final crossAxisCount = ResponsiveUtils.getGridCrossAxisCount(context, minColumns: 2);
+            // Adjust aspect ratio for more columns to prevent too small cards
+            final aspectRatio = crossAxisCount > 3 ? 0.85 : 0.8;
+
+            return GridView.builder(
+              controller: _scrollController,
+              padding: EdgeInsets.fromLTRB(
+                ResponsiveUtils.getHorizontalPadding(context),
+                8,
+                ResponsiveUtils.getHorizontalPadding(context),
+                80,
+              ),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                childAspectRatio: aspectRatio,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: _recipes.length + (_hasMore ? 1 : 0),
+              itemBuilder: (context, index) {
+                // Loading indicator at the end
+                if (index >= _recipes.length) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+                return _buildRecipeCard(context, _recipes[index]);
+              },
+            );
           },
         ),
       ),

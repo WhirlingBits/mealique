@@ -5,6 +5,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:mealique/config/app_constants.dart';
+import 'package:mealique/core/utils/responsive_utils.dart';
 import 'package:mealique/data/local/token_storage.dart';
 import 'package:mealique/data/remote/auth_api.dart';
 import 'package:mealique/data/remote/recipes_api.dart';
@@ -435,22 +436,98 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     });
   }
 
+  Widget _buildNavigationRail(AppLocalizations l10n) {
+    const accentColor = Color(0xFFE58325);
+    return NavigationRail(
+      backgroundColor: accentColor,
+      selectedIndex: _selectedIndex,
+      onDestinationSelected: _onItemTapped,
+      labelType: NavigationRailLabelType.all,
+      selectedIconTheme: const IconThemeData(color: Colors.white),
+      unselectedIconTheme: IconThemeData(color: Colors.white.withOpacity(0.7)),
+      selectedLabelTextStyle: const TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.bold,
+        fontSize: 12,
+      ),
+      unselectedLabelTextStyle: TextStyle(
+        color: Colors.white.withOpacity(0.7),
+        fontSize: 11,
+      ),
+      indicatorColor: Colors.white.withOpacity(0.2),
+      leading: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: ClipOval(
+          child: Image.asset(
+            'assets/mealique.png',
+            width: 40,
+            height: 40,
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
+      destinations: [
+        NavigationRailDestination(
+          icon: const Icon(Icons.home_outlined),
+          selectedIcon: const Icon(Icons.home),
+          label: Text(l10n.home),
+        ),
+        NavigationRailDestination(
+          icon: const Icon(Icons.menu_book_outlined),
+          selectedIcon: const Icon(Icons.menu_book),
+          label: Text(l10n.recipes),
+        ),
+        NavigationRailDestination(
+          icon: const Icon(Icons.calendar_month_outlined),
+          selectedIcon: const Icon(Icons.calendar_month),
+          label: Text(l10n.planner),
+        ),
+        NavigationRailDestination(
+          icon: const Icon(Icons.shopping_cart_outlined),
+          selectedIcon: const Icon(Icons.shopping_cart),
+          label: Text(l10n.shopping),
+        ),
+        NavigationRailDestination(
+          icon: const Icon(Icons.settings_outlined),
+          selectedIcon: const Icon(Icons.settings),
+          label: Text(l10n.settings),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isTablet = ResponsiveUtils.isTablet(context);
+
+    final content = IndexedStack(
+      index: _selectedIndex,
+      children: List.generate(5, (index) {
+        if (_visitedTabs.contains(index)) {
+          return _buildScreen(index);
+        }
+        // Return a lightweight placeholder for tabs not yet visited
+        return const SizedBox.shrink();
+      }),
+    );
+
+    if (isTablet) {
+      // Tablet Layout: NavigationRail on the left
+      return Scaffold(
+        body: Row(
+          children: [
+            _buildNavigationRail(l10n),
+            const VerticalDivider(width: 1, thickness: 1),
+            Expanded(child: content),
+          ],
+        ),
+      );
+    }
+
+    // Phone Layout: Bottom Navigation Bar
     return Scaffold(
-      // Lazy IndexedStack: only build screens that have been visited.
-      // This preserves state of visited tabs while avoiding the cost of
-      // building all tabs (and their API calls) on first startup.
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: List.generate(5, (index) {
-          if (_visitedTabs.contains(index)) {
-            return _buildScreen(index);
-          }
-          // Return a lightweight placeholder for tabs not yet visited
-          return const SizedBox.shrink();
-        }),
-      ),
+      body: content,
       bottomNavigationBar: AppNavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: _onItemTapped,

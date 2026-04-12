@@ -419,5 +419,6 @@
     "mealReminderBody": "Check your meal plan to see what's on the menu.",
     "mealReminderInfo": "Reminders will notify you daily at the set times. Make sure to plan your meals in advance.",
     "backgroundSyncEnabled": "Background sync enabled",
-    "backgroundSyncDescription": "Automatically sync your data when you have an internet connection."
+    "backgroundSyncDescription": "Automatically sync your data when you have an internet connection.",
+    "selectList": "Select a list"
 }

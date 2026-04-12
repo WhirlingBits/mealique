@@ -20,11 +20,15 @@ import 'edit_shopping_list_screen.dart';
 class ShoppingListDetailScreen extends StatefulWidget {
   final String listId;
   final String listName;
+  /// If true, the screen is embedded in a master-detail layout (tablet)
+  /// and should not show its own AppBar.
+  final bool embedded;
 
   const ShoppingListDetailScreen({
     super.key,
     required this.listId,
     required this.listName,
+    this.embedded = false,
   });
 
   @override
@@ -217,17 +221,26 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
     final field = settings.shoppingItemSortFieldForList(widget.listId);
     final direction = settings.shoppingItemSortDirectionForList(widget.listId);
 
-    if (field == null) return items;
-
     final sorted = List<ShoppingItem>.from(items);
     sorted.sort((a, b) {
+      // Always show unchecked (open) items first, checked items at the bottom
+      if (a.checked != b.checked) {
+        return a.checked ? 1 : -1;
+      }
+
+      // If both have same checked status, apply secondary sort
+      if (field == null) {
+        return a.position.compareTo(b.position);
+      }
+
       int result;
       switch (field) {
         case 'name':
           result = a.display.toLowerCase().compareTo(b.display.toLowerCase());
           break;
         case 'checked':
-          result = (a.checked ? 1 : 0).compareTo(b.checked ? 1 : 0);
+          // Already sorted by checked above, use position as fallback
+          result = a.position.compareTo(b.position);
           break;
         case 'category':
           final catA = a.food?.label?.name ?? '';
@@ -507,6 +520,139 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final settings = Provider.of<SettingsProvider>(context);
+
+    // Build the main content
+    Widget content = FutureBuilder<List<ShoppingItem>>(
+      future: _itemsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return _buildErrorWidget(snapshot.error!, _loadItems);
+        }
+        final items = snapshot.data ?? [];
+        var displayItems = items.toList();
+
+        // Filter out completed items if toggle is off
+        if (!settings.showCompletedForList(widget.listId)) {
+          displayItems = displayItems.where((i) => !i.checked).toList();
+        }
+
+        // Apply sort
+        displayItems = _sortItems(displayItems);
+
+        if (displayItems.isEmpty && items.isNotEmpty) {
+          // All items are completed and hidden
+          return _buildEmptyState();
+        }
+        if (displayItems.isEmpty) {
+          return _buildEmptyState();
+        }
+
+        // Group by category or show flat list
+        if (settings.showCategoriesForList(widget.listId)) {
+          final groupedItems = _groupItemsByCategory(displayItems);
+          return SlidableAutoCloseBehavior(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                _loadItems();
+              },
+              child: CustomScrollView(
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final category = groupedItems.keys.elementAt(index);
+                          final categoryItems = groupedItems[category]!;
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionTitle(category),
+                              ...categoryItems.map((item) => _buildItemTile(item))
+                            ],
+                          );
+                        },
+                        childCount: groupedItems.length,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        } else {
+          // Flat list without categories
+          return SlidableAutoCloseBehavior(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                _loadItems();
+              },
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                itemCount: displayItems.length,
+                itemBuilder: (context, index) => _buildItemTile(displayItems[index]),
+              ),
+            ),
+          );
+        }
+      },
+    );
+
+    // In embedded mode (tablet), show header row with title and actions
+    if (widget.embedded) {
+      return Scaffold(
+        body: Column(
+          children: [
+            // Header with list name and actions menu
+            Container(
+              color: _accentColor.withValues(alpha: 0.1),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.listName,
+                      style: TextStyle(
+                        color: _accentColor,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  ShoppingListDetailActionsMenu(
+                    onRefresh: _loadItems,
+                    onEditList: _handleEditList,
+                    onUncheckAll: _handleUncheckAll,
+                    onDeleteCompleted: _handleDeleteCompleted,
+                    onDeleteList: _handleDeleteList,
+                    onSortItems: _handleSortItems,
+                    showCompleted: settings.showCompletedForList(widget.listId),
+                    onToggleShowCompleted: _handleToggleShowCompleted,
+                    showCategories: settings.showCategoriesForList(widget.listId),
+                    onToggleShowCategories: _handleToggleShowCategories,
+                  ),
+                ],
+              ),
+            ),
+            Expanded(child: content),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _showAddItemSheet,
+          tooltip: l10n.addItem,
+          backgroundColor: Colors.green,
+          foregroundColor: Colors.white,
+          shape: const CircleBorder(),
+          child: const Icon(Icons.add),
+        ),
+      );
+    }
+
+    // Normal mode (phone) with full AppBar
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFFE58325),
@@ -527,85 +673,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
           ),
         ],
       ),
-      body: FutureBuilder<List<ShoppingItem>>(
-        future: _itemsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return _buildErrorWidget(snapshot.error!, _loadItems);
-          }
-          final items = snapshot.data ?? [];
-          var displayItems = items.toList();
-
-          // Filter out completed items if toggle is off
-          if (!settings.showCompletedForList(widget.listId)) {
-            displayItems = displayItems.where((i) => !i.checked).toList();
-          }
-
-          // Apply sort
-          displayItems = _sortItems(displayItems);
-
-          if (displayItems.isEmpty && items.isNotEmpty) {
-            // All items are completed and hidden
-            return _buildEmptyState();
-          }
-          if (displayItems.isEmpty) {
-            return _buildEmptyState();
-          }
-
-          // Group by category or show flat list
-          if (settings.showCategoriesForList(widget.listId)) {
-            final groupedItems = _groupItemsByCategory(displayItems);
-            return SlidableAutoCloseBehavior(
-              child: RefreshIndicator(
-                onRefresh: () async {
-                  _loadItems();
-                },
-                child: CustomScrollView(
-                  slivers: [
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final category = groupedItems.keys.elementAt(index);
-                            final categoryItems = groupedItems[category]!;
-
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildSectionTitle(category),
-                                ...categoryItems.map((item) => _buildItemTile(item))
-                              ],
-                            );
-                          },
-                          childCount: groupedItems.length,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          } else {
-            // Flat list without categories
-            return SlidableAutoCloseBehavior(
-              child: RefreshIndicator(
-                onRefresh: () async {
-                  _loadItems();
-                },
-                child: ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-                  itemCount: displayItems.length,
-                  itemBuilder: (context, index) => _buildItemTile(displayItems[index]),
-                ),
-              ),
-            );
-          }
-        },
-      ),
+      body: content,
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddItemSheet,
         tooltip: l10n.addItem,

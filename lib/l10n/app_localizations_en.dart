@@ -1044,4 +1044,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get backgroundSyncDescription =>
       'Automatically sync your data when you have an internet connection.';
+
+  @override
+  String get selectList => 'Select a list';
 }

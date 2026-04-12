@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:mealique/core/utils/responsive_utils.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/data/sync/household_repository.dart';
 import 'package:mealique/data/sync/mealplan_repository.dart';
@@ -294,6 +295,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final isTablet = ResponsiveUtils.isTablet(context);
+    final horizontalPadding = ResponsiveUtils.getHorizontalPadding(context);
 
     return Scaffold(
        appBar: AppBar(
@@ -314,223 +317,342 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header: Begrüßung und Suche
-              FutureBuilder<UserSelf>(
-                future: _userFuture,
-                builder: (context, snapshot) {
-                  String name = 'there'; // Default name
-                  if (snapshot.connectionState == ConnectionState.done &&
-                      snapshot.hasData) {
-                    name = snapshot.data!.fullName;
-                  }
-                  return Text(
-                    _getGreeting(context, name),
-                    style: const TextStyle(
-                        fontSize: 24, fontWeight: FontWeight.bold),
-                  );
-                },
-              ),
-              const SizedBox(height: 4),
-              Text(
-                l10n.whatDoYouWantToCook,
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                readOnly: true, // Prevent keyboard from appearing
-                onTap: () {
-                  final screenHeight = MediaQuery.of(context).size.height;
-                  final topPadding = MediaQuery.of(context).padding.top;
-                  const appBarHeight = kToolbarHeight;
-
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    constraints: BoxConstraints(
-                      maxHeight: screenHeight - (topPadding + appBarHeight),
-                    ),
-                    builder: (context) => const RecipeSearchScreen(initialQuery: ''),
-                  );
-                },
-                style: const TextStyle(color: Colors.black), // <-- explizit schwarz
-                decoration: InputDecoration(
-                  hintText: l10n.recipeSearch,
-                  hintStyle: TextStyle(color: const Color(0xFFE58325).withOpacity(0.6)),
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFFE58325)),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFE58325), width: 1.5),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFE58325), width: 1.5),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFE58325), width: 2),
-                  ),
-                  filled: true,
-                  fillColor: const Color(0xFFE58325).withOpacity(0.08),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Section: Today
-              _buildSectionTitle(l10n.today.toUpperCase()),
-              const SizedBox(height: 8),
-              FutureBuilder<List<MealplanEntry>>(
-                future: _todaysMealsFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return _buildErrorWidget(snapshot.error!, () {
-                      setState(() {
-                        _todaysMealsFuture = _fetchTodaysMeals();
-                      });
-                    });
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(child: Text(l10n.noMealsPlanned));
-                  }
-
-                  final meals = snapshot.data!;
-                  return Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: List.generate(meals.length, (index) {
-                          final meal = meals[index];
-                          final entryType = toBeginningOfSentenceCase(
-                                  meal.entryType.name) ??
-                              meal.entryType.name;
-                          return Column(
-                            children: [
-                              _buildMealRow(
-                                meal.recipe?.name ??
-                                    meal.title ??
-                                    l10n.unnamedMeal,
-                                entryType,
-                              ),
-                              if (index < meals.length - 1)
-                                const Divider(height: 24),
-                            ],
-                          );
-                        }),
-                      ),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
-
-              // Section: Popluar Recipes
-              _buildSectionTitle(l10n.popularRecipes.toUpperCase()),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 150,
-                child: FutureBuilder<List<Recipe>>(
-                  future: _popularRecipesFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return _buildErrorWidget(snapshot.error!, () {
-                        setState(() {
-                          _popularRecipesFuture = _fetchPopularRecipes();
-                        });
-                      });
-                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return Center(
-                          child: Text(l10n.noPopularRecipesFound));
-                    }
-
-                    final recipes = snapshot.data!;
-                    return ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: recipes.length,
-                      itemBuilder: (context, index) {
-                        final recipe = recipes[index];
-                        return _buildRecipeCard(recipe);
-                      },
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Section: Quick Actions
-              _buildSectionTitle(l10n.quickActions.toUpperCase()),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        _showAddRecipeSheet(context);
-                      },
-                      icon: const Icon(Icons.post_add),
-                      label: Text(l10n.recipe),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.cardColor,
-                        foregroundColor: theme.textTheme.bodyLarge?.color,
-                        elevation: 1,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        _showAddShoppingListItemSheet(context);
-                      },
-                      icon: const Icon(Icons.add_shopping_cart),
-                      label: Text(l10n.item),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.cardColor,
-                        foregroundColor: theme.textTheme.bodyLarge?.color,
-                        elevation: 1,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        _showAddShoppingListSheet(context);
-                      },
-                      icon: const Icon(Icons.playlist_add),
-                      label: Text(l10n.list),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.cardColor,
-                        foregroundColor: theme.textTheme.bodyLarge?.color,
-                        elevation: 1,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+          padding: EdgeInsets.all(horizontalPadding),
+          child: isTablet
+              ? _buildTabletLayout(context, l10n, theme)
+              : _buildPhoneLayout(context, l10n, theme),
         ),
       ),
+    );
+  }
+
+  /// Phone Layout: Single column layout
+  Widget _buildPhoneLayout(BuildContext context, AppLocalizations l10n, ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildGreetingSection(context, l10n),
+        const SizedBox(height: 16),
+        _buildSearchField(context, l10n),
+        const SizedBox(height: 24),
+        _buildTodaySection(l10n),
+        const SizedBox(height: 24),
+        _buildPopularRecipesSection(l10n),
+        const SizedBox(height: 24),
+        _buildQuickActionsSection(l10n, theme),
+      ],
+    );
+  }
+
+  /// Tablet Layout: Two-column layout for better space utilization
+  Widget _buildTabletLayout(BuildContext context, AppLocalizations l10n, ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildGreetingSection(context, l10n),
+        const SizedBox(height: 16),
+        _buildSearchField(context, l10n),
+        const SizedBox(height: 24),
+        // Two-column layout: Today + Quick Actions on left, Popular Recipes on right
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Left column: Today's Meals and Quick Actions
+            Expanded(
+              flex: 1,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildTodaySection(l10n),
+                  const SizedBox(height: 24),
+                  _buildQuickActionsSection(l10n, theme),
+                ],
+              ),
+            ),
+            const SizedBox(width: 24),
+            // Right column: Popular Recipes as grid
+            Expanded(
+              flex: 1,
+              child: _buildPopularRecipesGridSection(l10n),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGreetingSection(BuildContext context, AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FutureBuilder<UserSelf>(
+          future: _userFuture,
+          builder: (context, snapshot) {
+            String name = 'there'; // Default name
+            if (snapshot.connectionState == ConnectionState.done &&
+                snapshot.hasData) {
+              name = snapshot.data!.fullName;
+            }
+            return Text(
+              _getGreeting(context, name),
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            );
+          },
+        ),
+        const SizedBox(height: 4),
+        Text(
+          l10n.whatDoYouWantToCook,
+          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSearchField(BuildContext context, AppLocalizations l10n) {
+    return TextField(
+      readOnly: true, // Prevent keyboard from appearing
+      onTap: () {
+        final screenHeight = MediaQuery.of(context).size.height;
+        final topPadding = MediaQuery.of(context).padding.top;
+        const appBarHeight = kToolbarHeight;
+
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          constraints: BoxConstraints(
+            maxHeight: screenHeight - (topPadding + appBarHeight),
+          ),
+          builder: (context) => const RecipeSearchScreen(initialQuery: ''),
+        );
+      },
+      style: const TextStyle(color: Colors.black),
+      decoration: InputDecoration(
+        hintText: l10n.recipeSearch,
+        hintStyle: TextStyle(color: const Color(0xFFE58325).withOpacity(0.6)),
+        prefixIcon: const Icon(Icons.search, color: Color(0xFFE58325)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE58325), width: 1.5),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE58325), width: 1.5),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE58325), width: 2),
+        ),
+        filled: true,
+        fillColor: const Color(0xFFE58325).withOpacity(0.08),
+        contentPadding: const EdgeInsets.symmetric(vertical: 0),
+      ),
+    );
+  }
+
+  Widget _buildTodaySection(AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle(l10n.today.toUpperCase()),
+        const SizedBox(height: 8),
+        FutureBuilder<List<MealplanEntry>>(
+          future: _todaysMealsFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return _buildErrorWidget(snapshot.error!, () {
+                setState(() {
+                  _todaysMealsFuture = _fetchTodaysMeals();
+                });
+              });
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return Center(child: Text(l10n.noMealsPlanned));
+            }
+
+            final meals = snapshot.data!;
+            return Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: List.generate(meals.length, (index) {
+                    final meal = meals[index];
+                    final entryType = toBeginningOfSentenceCase(
+                            meal.entryType.name) ??
+                        meal.entryType.name;
+                    return Column(
+                      children: [
+                        _buildMealRow(
+                          meal.recipe?.name ??
+                              meal.title ??
+                              l10n.unnamedMeal,
+                          entryType,
+                        ),
+                        if (index < meals.length - 1)
+                          const Divider(height: 24),
+                      ],
+                    );
+                  }),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPopularRecipesSection(AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle(l10n.popularRecipes.toUpperCase()),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 150,
+          child: FutureBuilder<List<Recipe>>(
+            future: _popularRecipesFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return _buildErrorWidget(snapshot.error!, () {
+                  setState(() {
+                    _popularRecipesFuture = _fetchPopularRecipes();
+                  });
+                });
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return Center(child: Text(l10n.noPopularRecipesFound));
+              }
+
+              final recipes = snapshot.data!;
+              return ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: recipes.length,
+                itemBuilder: (context, index) {
+                  final recipe = recipes[index];
+                  return _buildRecipeCard(recipe);
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Tablet: Popular Recipes as Grid instead of horizontal list
+  Widget _buildPopularRecipesGridSection(AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle(l10n.popularRecipes.toUpperCase()),
+        const SizedBox(height: 8),
+        FutureBuilder<List<Recipe>>(
+          future: _popularRecipesFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return _buildErrorWidget(snapshot.error!, () {
+                setState(() {
+                  _popularRecipesFuture = _fetchPopularRecipes();
+                });
+              });
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return Center(child: Text(l10n.noPopularRecipesFound));
+            }
+
+            final recipes = snapshot.data!;
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.85,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: recipes.length,
+              itemBuilder: (context, index) {
+                final recipe = recipes[index];
+                return _buildRecipeGridCard(recipe);
+              },
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickActionsSection(AppLocalizations l10n, ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle(l10n.quickActions.toUpperCase()),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  _showAddRecipeSheet(context);
+                },
+                icon: const Icon(Icons.post_add),
+                label: Text(l10n.recipe),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.cardColor,
+                  foregroundColor: theme.textTheme.bodyLarge?.color,
+                  elevation: 1,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  _showAddShoppingListItemSheet(context);
+                },
+                icon: const Icon(Icons.add_shopping_cart),
+                label: Text(l10n.item),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.cardColor,
+                  foregroundColor: theme.textTheme.bodyLarge?.color,
+                  elevation: 1,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  _showAddShoppingListSheet(context);
+                },
+                icon: const Icon(Icons.playlist_add),
+                label: Text(l10n.list),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.cardColor,
+                  foregroundColor: theme.textTheme.bodyLarge?.color,
+                  elevation: 1,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -600,6 +722,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
               style: const TextStyle(fontWeight: FontWeight.bold),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Tablet: Grid-style recipe card
+  Widget _buildRecipeGridCard(Recipe recipe) {
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          useSafeArea: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => RecipeDetailScreen(recipeSlug: recipe.slug),
+        );
+      },
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 2,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: RecipeImage(
+                recipeId: recipe.id,
+                imageHint: recipe.image,
+                size: RecipeImageSize.min,
+                fit: BoxFit.cover,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Text(
+                recipe.name,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),

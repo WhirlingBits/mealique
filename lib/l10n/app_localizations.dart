@@ -2011,6 +2011,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Automatically sync your data when you have an internet connection.'**
   String get backgroundSyncDescription;
+
+  /// No description provided for @selectList.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a list'**
+  String get selectList;
 }
 
 class _AppLocalizationsDelegate

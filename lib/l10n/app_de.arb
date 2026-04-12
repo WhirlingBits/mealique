@@ -419,5 +419,6 @@
     "mealReminderBody": "Schau in deinen Essensplan, um zu sehen, was auf dem Menü steht.",
     "mealReminderInfo": "Erinnerungen benachrichtigen dich täglich zu den eingestellten Zeiten. Plane deine Mahlzeiten im Voraus.",
     "backgroundSyncEnabled": "Hintergrundsynchronisierung aktiviert",
-    "backgroundSyncDescription": "Synchronisiere deine Daten automatisch, wenn du eine Internetverbindung hast."
+    "backgroundSyncDescription": "Synchronisiere deine Daten automatisch, wenn du eine Internetverbindung hast.",
+    "selectList": "Wähle eine Liste aus"
 }

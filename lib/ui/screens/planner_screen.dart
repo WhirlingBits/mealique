@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 import 'package:calendar_date_picker2/calendar_date_picker2.dart';
+import 'package:mealique/core/utils/responsive_utils.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
 import '../widgets/planner_actions_menu.dart';
 import '../../data/sync/mealplan_repository.dart';
@@ -402,6 +403,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     const accentColor = Color(0xFFE58325);
+    final isTablet = ResponsiveUtils.isLargeTablet(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -431,128 +433,11 @@ class _PlannerScreenState extends State<PlannerScreen> {
               });
             });
           }
-          final f = DateFormat.MMMd(l10n.localeName);
-          final headerTitle = '${f.format(_dateRange.start)} - ${f.format(_dateRange.end)} ';
 
-          return Column(
-            children: [
-              InkWell(
-                onTap: _showDateRangePicker,
-                child: Container(
-                  width: double.infinity,
-                  color: accentColor.withOpacity(0.1),
-                  padding: const EdgeInsets.symmetric(vertical: 12.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(headerTitle, style: const TextStyle(fontWeight: FontWeight.bold, color: accentColor)),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.arrow_drop_down, color: accentColor),
-                    ],
-                  ),
-                ),
-              ),
-              HorizontalDatePicker(
-                dateRange: _dateRange,
-                selectedDate: _selectedDay,
-                onDateChanged: _onDateChanged,
-                selectedColor: accentColor,
-                locale: l10n.localeName,
-                mealsByDay: _mealsByDay,
-              ),
-              _buildEntryTypeFilters(),
-              const Divider(height: 1),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      child: Text(
-                        DateFormat.yMMMEd(l10n.localeName).format(_selectedDay),
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    Expanded(
-                      child: ValueListenableBuilder<List<MealplanEntry>>(
-                        valueListenable: _selectedMeals,
-                        builder: (context, meals, _) {
-                          final filteredMeals = _selectedEntryType == null
-                              ? meals
-                              : meals.where((m) => m.entryType == _selectedEntryType).toList();
-
-                          if (filteredMeals.isEmpty) {
-                            return Center(
-                              child: Text(
-                                l10n.noMealsPlanned,
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-                              ),
-                            );
-                          }
-                          return SlidableAutoCloseBehavior(
-                            child: ListView.builder(
-                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                              itemCount: filteredMeals.length,
-                              itemBuilder: (context, index) {
-                                final meal = filteredMeals[index];
-                                return Slidable(
-                                  key: ObjectKey(meal.id),
-                                  startActionPane: ActionPane(
-                                    motion: const ScrollMotion(),
-                                    children: [
-                                      SlidableAction(
-                                        onPressed: (context) => _showEditMealDialog(meal),
-                                        backgroundColor: accentColor,
-                                        foregroundColor: Colors.white,
-                                        icon: Icons.edit,
-                                        label: l10n.edit,
-                                      ),
-                                      SlidableAction(
-                                        onPressed: (context) => _deleteMeal(meal),
-                                        backgroundColor: Colors.redAccent,
-                                        foregroundColor: Colors.white,
-                                        icon: Icons.delete,
-                                        label: l10n.delete,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Card(
-                                    margin: const EdgeInsets.only(bottom: 12),
-                                    child: ListTile(
-                                      title: Text(meal.recipe?.name ?? meal.title ?? l10n.untitledMeal),
-                                      leading: Text(
-                                          toBeginningOfSentenceCase(meal.entryType.name) ?? '',
-                                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                                      trailing: meal.recipeId != null
-                                          ? const Icon(Icons.chevron_right, color: Colors.grey)
-                                          : null,
-                                      onTap: meal.recipeId != null && meal.recipe?.slug != null
-                                          ? () {
-                                              showModalBottomSheet(
-                                                context: context,
-                                                isScrollControlled: true,
-                                                useSafeArea: true,
-                                                backgroundColor: Colors.transparent,
-                                                builder: (context) => RecipeDetailScreen(
-                                                  recipeSlug: meal.recipe!.slug,
-                                                ),
-                                              );
-                                            }
-                                          : null,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
+          if (isTablet) {
+            return _buildTabletLayout(context, l10n, accentColor);
+          }
+          return _buildPhoneLayout(context, l10n, accentColor);
         },
       ),
       floatingActionButton: FloatingActionButton(
@@ -563,6 +448,288 @@ class _PlannerScreenState extends State<PlannerScreen> {
         shape: const CircleBorder(),
         child: const Icon(Icons.add),
       ),
+    );
+  }
+
+  /// Phone Layout: Vertical calendar and meal list
+  Widget _buildPhoneLayout(BuildContext context, AppLocalizations l10n, Color accentColor) {
+    final f = DateFormat.MMMd(l10n.localeName);
+    final headerTitle = '${f.format(_dateRange.start)} - ${f.format(_dateRange.end)} ';
+
+    return Column(
+      children: [
+        _buildDateRangeHeader(headerTitle, accentColor),
+        HorizontalDatePicker(
+          dateRange: _dateRange,
+          selectedDate: _selectedDay,
+          onDateChanged: _onDateChanged,
+          selectedColor: accentColor,
+          locale: l10n.localeName,
+          mealsByDay: _mealsByDay,
+        ),
+        _buildEntryTypeFilters(),
+        const Divider(height: 1),
+        Expanded(child: _buildMealsList(context, l10n, accentColor)),
+      ],
+    );
+  }
+
+  /// Tablet Layout: Side-by-side calendar and meal list
+  Widget _buildTabletLayout(BuildContext context, AppLocalizations l10n, Color accentColor) {
+    final f = DateFormat.MMMd(l10n.localeName);
+    final headerTitle = '${f.format(_dateRange.start)} - ${f.format(_dateRange.end)} ';
+    final horizontalPadding = ResponsiveUtils.getHorizontalPadding(context);
+
+    return Row(
+      children: [
+        // Left: Calendar Section
+        SizedBox(
+          width: 320,
+          child: Column(
+            children: [
+              _buildDateRangeHeader(headerTitle, accentColor),
+              // Vertical calendar for tablet
+              Expanded(
+                child: _buildVerticalDateList(context, l10n, accentColor),
+              ),
+            ],
+          ),
+        ),
+        const VerticalDivider(width: 1),
+        // Right: Meals List
+        Expanded(
+          child: Column(
+            children: [
+              _buildEntryTypeFilters(),
+              const Divider(height: 1),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding - 16),
+                  child: _buildMealsList(context, l10n, accentColor),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDateRangeHeader(String headerTitle, Color accentColor) {
+    return InkWell(
+      onTap: _showDateRangePicker,
+      child: Container(
+        width: double.infinity,
+        color: accentColor.withOpacity(0.1),
+        padding: const EdgeInsets.symmetric(vertical: 12.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(headerTitle, style: TextStyle(fontWeight: FontWeight.bold, color: accentColor)),
+            const SizedBox(width: 4),
+            Icon(Icons.arrow_drop_down, color: accentColor),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Vertical date list for tablet layout
+  Widget _buildVerticalDateList(BuildContext context, AppLocalizations l10n, Color accentColor) {
+    final days = <DateTime>[];
+    var current = _dateRange.start;
+    while (!current.isAfter(_dateRange.end)) {
+      days.add(current);
+      current = current.add(const Duration(days: 1));
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: days.length,
+      itemBuilder: (context, index) {
+        final day = days[index];
+        final isSelected = isSameDay(day, _selectedDay);
+        final mealsForDay = _getMealsForDay(day);
+        final hasMeals = mealsForDay.isNotEmpty;
+
+        return InkWell(
+          onTap: () => _onDateChanged(day),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isSelected ? accentColor.withOpacity(0.15) : null,
+              border: Border(
+                left: BorderSide(
+                  color: isSelected ? accentColor : Colors.transparent,
+                  width: 4,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 45,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        DateFormat.E(l10n.localeName).format(day),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isSelected ? accentColor : Colors.grey,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                      Text(
+                        day.day.toString(),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: isSelected ? accentColor : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (hasMeals)
+                        ...mealsForDay.take(3).map((meal) => Padding(
+                              padding: const EdgeInsets.only(bottom: 2),
+                              child: Text(
+                                meal.recipe?.name ?? meal.title ?? l10n.untitledMeal,
+                                style: const TextStyle(fontSize: 13),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ))
+                      else
+                        Text(
+                          l10n.noMealsPlanned,
+                          style: TextStyle(fontSize: 13, color: Colors.grey[500], fontStyle: FontStyle.italic),
+                        ),
+                      if (mealsForDay.length > 3)
+                        Text(
+                          '+${mealsForDay.length - 3} more',
+                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                        ),
+                    ],
+                  ),
+                ),
+                if (hasMeals)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: accentColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${mealsForDay.length}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: accentColor,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMealsList(BuildContext context, AppLocalizations l10n, Color accentColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Text(
+            DateFormat.yMMMEd(l10n.localeName).format(_selectedDay),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+        ),
+        Expanded(
+          child: ValueListenableBuilder<List<MealplanEntry>>(
+            valueListenable: _selectedMeals,
+            builder: (context, meals, _) {
+              final filteredMeals = _selectedEntryType == null
+                  ? meals
+                  : meals.where((m) => m.entryType == _selectedEntryType).toList();
+
+              if (filteredMeals.isEmpty) {
+                return Center(
+                  child: Text(
+                    l10n.noMealsPlanned,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                  ),
+                );
+              }
+              return SlidableAutoCloseBehavior(
+                child: ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  itemCount: filteredMeals.length,
+                  itemBuilder: (context, index) {
+                    final meal = filteredMeals[index];
+                    return Slidable(
+                      key: ObjectKey(meal.id),
+                      startActionPane: ActionPane(
+                        motion: const ScrollMotion(),
+                        children: [
+                          SlidableAction(
+                            onPressed: (context) => _showEditMealDialog(meal),
+                            backgroundColor: accentColor,
+                            foregroundColor: Colors.white,
+                            icon: Icons.edit,
+                            label: l10n.edit,
+                          ),
+                          SlidableAction(
+                            onPressed: (context) => _deleteMeal(meal),
+                            backgroundColor: Colors.redAccent,
+                            foregroundColor: Colors.white,
+                            icon: Icons.delete,
+                            label: l10n.delete,
+                          ),
+                        ],
+                      ),
+                      child: Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: ListTile(
+                          title: Text(meal.recipe?.name ?? meal.title ?? l10n.untitledMeal),
+                          leading: Text(
+                              toBeginningOfSentenceCase(meal.entryType.name) ?? '',
+                              style: const TextStyle(fontWeight: FontWeight.bold)),
+                          trailing: meal.recipeId != null
+                              ? const Icon(Icons.chevron_right, color: Colors.grey)
+                              : null,
+                          onTap: meal.recipeId != null && meal.recipe?.slug != null
+                              ? () {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    useSafeArea: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (context) => RecipeDetailScreen(
+                                      recipeSlug: meal.recipe!.slug,
+                                    ),
+                                  );
+                                }
+                              : null,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
