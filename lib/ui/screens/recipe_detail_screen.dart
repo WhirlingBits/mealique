@@ -820,6 +820,41 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         ),
                       ],
 
+                      // Categories, Tags, Tools Section
+                      if (recipe.recipeCategory.isNotEmpty || recipe.tags.isNotEmpty || recipe.tools.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            // Categories
+                            ...recipe.recipeCategory.map((category) => Chip(
+                              avatar: const Icon(Icons.category_outlined, size: 16),
+                              label: Text(category, style: const TextStyle(fontSize: 12)),
+                              backgroundColor: _accentColor.withAlpha(30),
+                              side: BorderSide(color: _accentColor.withAlpha(80)),
+                              visualDensity: VisualDensity.compact,
+                            )),
+                            // Tags
+                            ...recipe.tags.map((tag) => Chip(
+                              avatar: const Icon(Icons.label_outline, size: 16),
+                              label: Text(tag, style: const TextStyle(fontSize: 12)),
+                              backgroundColor: Colors.blue.withAlpha(30),
+                              side: BorderSide(color: Colors.blue.withAlpha(80)),
+                              visualDensity: VisualDensity.compact,
+                            )),
+                            // Tools
+                            ...recipe.tools.map((tool) => Chip(
+                              avatar: const Icon(Icons.handyman_outlined, size: 16),
+                              label: Text(tool, style: const TextStyle(fontSize: 12)),
+                              backgroundColor: Colors.green.withAlpha(30),
+                              side: BorderSide(color: Colors.green.withAlpha(80)),
+                              visualDensity: VisualDensity.compact,
+                            )),
+                          ],
+                        ),
+                      ],
+
                       const Divider(height: 32),
 
                       // Cooking Info Row
