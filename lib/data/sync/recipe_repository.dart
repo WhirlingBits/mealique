@@ -219,7 +219,226 @@ class RecipeRepository {
     if (token == AppConstants.demoToken) {
       return;
     }
-    return _api.deleteFood(foodId);
+    await _api.deleteFood(foodId);
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // CATEGORIES
+  // ───────────────────────────────────────────────────────────────────────────
+
+  /// Fetches all recipe categories from the API.
+  Future<List<RecipeCategory>> getCategories() async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      return _getDemoCategories();
+    }
+    return _api.getCategories();
+  }
+
+  /// Creates a new recipe category.
+  Future<RecipeCategory> createCategory(String name) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      return RecipeCategory(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: name,
+        slug: _generateSlug(name),
+      );
+    }
+    return _api.createCategoryByName(name);
+  }
+
+  /// Gets an existing category by name or creates a new one.
+  Future<RecipeCategory> getOrCreateCategory(String name) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      return RecipeCategory(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: name,
+        slug: _generateSlug(name),
+      );
+    }
+
+    // First, try to find existing category
+    final categories = await _api.getCategories();
+    final normalizedName = name.toLowerCase().trim();
+    final existing = categories.cast<RecipeCategory?>().firstWhere(
+      (c) => c!.name.toLowerCase().trim() == normalizedName,
+      orElse: () => null,
+    );
+    
+    if (existing != null) {
+      debugPrint('getOrCreateCategory: Found existing category "${existing.name}"');
+      return existing;
+    }
+
+    // Create new category
+    return _api.createCategoryByName(name);
+  }
+
+  /// Deletes a recipe category by ID.
+  Future<void> deleteCategory(String categoryId) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      return;
+    }
+    await _api.deleteCategory(categoryId);
+  }
+
+  List<RecipeCategory> _getDemoCategories() {
+    return [
+      RecipeCategory(id: '1', name: 'Hauptgericht', slug: 'hauptgericht'),
+      RecipeCategory(id: '2', name: 'Vorspeise', slug: 'vorspeise'),
+      RecipeCategory(id: '3', name: 'Nachspeise', slug: 'nachspeise'),
+      RecipeCategory(id: '4', name: 'Frühstück', slug: 'fruehstueck'),
+      RecipeCategory(id: '5', name: 'Snack', slug: 'snack'),
+    ];
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // TAGS
+  // ───────────────────────────────────────────────────────────────────────────
+
+  /// Fetches all recipe tags from the API.
+  Future<List<RecipeTag>> getTags() async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      return _getDemoTags();
+    }
+    return _api.getTags();
+  }
+
+  /// Creates a new recipe tag.
+  Future<RecipeTag> createTag(String name) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      return RecipeTag(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: name,
+        slug: _generateSlug(name),
+      );
+    }
+    return _api.createTagByName(name);
+  }
+
+  /// Gets an existing tag by name or creates a new one.
+  Future<RecipeTag> getOrCreateTag(String name) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      return RecipeTag(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: name,
+        slug: _generateSlug(name),
+      );
+    }
+
+    // First, try to find existing tag
+    final tags = await _api.getTags();
+    final normalizedName = name.toLowerCase().trim();
+    final existing = tags.cast<RecipeTag?>().firstWhere(
+      (t) => t!.name.toLowerCase().trim() == normalizedName,
+      orElse: () => null,
+    );
+
+    if (existing != null) {
+      debugPrint('getOrCreateTag: Found existing tag "${existing.name}"');
+      return existing;
+    }
+
+    // Create new tag
+    return _api.createTagByName(name);
+  }
+
+  /// Deletes a recipe tag by ID.
+  Future<void> deleteTag(String tagId) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      return;
+    }
+    await _api.deleteTag(tagId);
+  }
+
+  List<RecipeTag> _getDemoTags() {
+    return [
+      RecipeTag(id: '1', name: 'Vegetarisch', slug: 'vegetarisch'),
+      RecipeTag(id: '2', name: 'Vegan', slug: 'vegan'),
+      RecipeTag(id: '3', name: 'Schnell', slug: 'schnell'),
+      RecipeTag(id: '4', name: 'Gesund', slug: 'gesund'),
+      RecipeTag(id: '5', name: 'Comfort Food', slug: 'comfort-food'),
+    ];
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // TOOLS
+  // ───────────────────────────────────────────────────────────────────────────
+
+  /// Fetches all recipe tools from the API.
+  Future<List<RecipeTool>> getTools() async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      return _getDemoTools();
+    }
+    return _api.getTools();
+  }
+
+  /// Creates a new recipe tool.
+  Future<RecipeTool> createTool(String name) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      return RecipeTool(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: name,
+        slug: _generateSlug(name),
+      );
+    }
+    return _api.createToolByName(name);
+  }
+
+  /// Gets an existing tool by name or creates a new one.
+  Future<RecipeTool> getOrCreateTool(String name) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      return RecipeTool(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: name,
+        slug: _generateSlug(name),
+      );
+    }
+
+    // First, try to find existing tool
+    final tools = await _api.getTools();
+    final normalizedName = name.toLowerCase().trim();
+    final existing = tools.cast<RecipeTool?>().firstWhere(
+      (t) => t!.name.toLowerCase().trim() == normalizedName,
+      orElse: () => null,
+    );
+
+    if (existing != null) {
+      debugPrint('getOrCreateTool: Found existing tool "${existing.name}"');
+      return existing;
+    }
+
+    // Create new tool
+    return _api.createToolByName(name);
+  }
+
+  /// Deletes a recipe tool by ID.
+  Future<void> deleteTool(String toolId) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      return;
+    }
+    await _api.deleteTool(toolId);
+  }
+
+  List<RecipeTool> _getDemoTools() {
+    return [
+      RecipeTool(id: '1', name: 'Mixer', slug: 'mixer'),
+      RecipeTool(id: '2', name: 'Backofen', slug: 'backofen'),
+      RecipeTool(id: '3', name: 'Pfanne', slug: 'pfanne'),
+      RecipeTool(id: '4', name: 'Topf', slug: 'topf'),
+      RecipeTool(id: '5', name: 'Schneebesen', slug: 'schneebesen'),
+    ];
   }
 
   Future<void> deleteRecipe(String slug) async {
@@ -308,19 +527,40 @@ class RecipeRepository {
     // Categories
     final categories = recipeData['recipeCategory'] as List? ?? [];
     if (categories.isNotEmpty) {
-      fullRecipe['recipeCategory'] = categories.map((c) => {'name': c}).toList();
+      fullRecipe['recipeCategory'] = categories.map((c) {
+        // If c is already a Map (from toJson()), use it directly
+        if (c is Map<String, dynamic>) {
+          return c;
+        }
+        final name = c.toString();
+        return {'name': name, 'slug': _generateSlug(name)};
+      }).toList();
     }
 
     // Tags
     final tags = recipeData['tags'] as List? ?? [];
     if (tags.isNotEmpty) {
-      fullRecipe['tags'] = tags.map((t) => {'name': t}).toList();
+      fullRecipe['tags'] = tags.map((t) {
+        // If t is already a Map (from toJson()), use it directly
+        if (t is Map<String, dynamic>) {
+          return t;
+        }
+        final name = t.toString();
+        return {'name': name, 'slug': _generateSlug(name)};
+      }).toList();
     }
 
     // Tools
     final tools = recipeData['tools'] as List? ?? [];
     if (tools.isNotEmpty) {
-      fullRecipe['tools'] = tools.map((t) => {'name': t}).toList();
+      fullRecipe['tools'] = tools.map((t) {
+        // If t is already a Map (from toJson()), use it directly
+        if (t is Map<String, dynamic>) {
+          return t;
+        }
+        final name = t.toString();
+        return {'name': name, 'slug': _generateSlug(name)};
+      }).toList();
     }
 
     // Notes
@@ -359,7 +599,8 @@ class RecipeRepository {
   }
 
 
-  /// Updates an existing recipe: GET raw → merge form data → PUT back.
+  /// Updates an existing recipe using PUT (full replacement).
+  /// First fetches the current recipe, merges the changes, then sends the full object.
   Future<Recipe> updateExistingRecipe(String slug, Map<String, dynamic> recipeData) async {
     final token = await _tokenStorage.getToken();
     if (token == AppConstants.demoToken) {
@@ -374,99 +615,212 @@ class RecipeRepository {
       );
     }
 
-    // GET the full recipe object so we have all server fields
-    final fullRecipe = await _api.getRecipeRaw(slug);
+    // First, GET the current recipe to get all existing fields
+    debugPrint('PUT update recipe $slug - fetching current data');
+    final currentRecipe = await _api.getRecipeRaw(slug);
 
-    // Merge form data
-    if (recipeData['name'] != null) fullRecipe['name'] = recipeData['name'];
-    if (recipeData['description'] != null) {
-      fullRecipe['description'] = recipeData['description'];
-    }
-    if (recipeData.containsKey('rating')) {
-      final rv = recipeData['rating'];
-      final ratingValue = rv is int ? rv : int.tryParse(rv.toString()) ?? 0;
-      fullRecipe['rating'] = ratingValue;
-      debugPrint('Setting rating to: $ratingValue (original: $rv)');
+    // Start with the original data from the server
+    final putData = Map<String, dynamic>.from(currentRecipe);
+
+    // Keep the original slug - this is required for PUT to update existing recipe
+    // If we remove it, the API thinks we're creating a new recipe with the same name
+    putData['slug'] = slug;
+
+    // Update name
+    if (recipeData['name'] != null && recipeData['name'].toString().isNotEmpty) {
+      putData['name'] = recipeData['name'];
     }
 
+    // Update description
+    if (recipeData.containsKey('description')) {
+      putData['description'] = recipeData['description'] ?? '';
+    }
+
+    // Update servings
     final servings = recipeData['servings']?.toString() ?? '';
-    final recipeYield = recipeData['recipeYield']?.toString() ?? '';
     if (servings.isNotEmpty) {
       final servingsInt = int.tryParse(servings) ?? 0;
-      fullRecipe['recipeServings'] = servingsInt;
-      if (recipeYield.isEmpty) {
-        fullRecipe['recipeYield'] = servings;
+      if (servingsInt > 0) {
+        putData['recipeServings'] = servingsInt;
       }
     }
+
+    // Update recipe yield
+    final recipeYield = recipeData['recipeYield']?.toString() ?? '';
     if (recipeYield.isNotEmpty) {
-      fullRecipe['recipeYield'] = recipeYield;
+      putData['recipeYield'] = recipeYield;
     }
 
-    if (recipeData['totalTime'] != null) fullRecipe['totalTime'] = recipeData['totalTime'];
-    if (recipeData['prepTime'] != null) fullRecipe['prepTime'] = recipeData['prepTime'];
-    if (recipeData['cookTime'] != null) fullRecipe['performTime'] = recipeData['cookTime'];
+    // Update time fields
+    if (recipeData.containsKey('totalTime')) {
+      putData['totalTime'] = recipeData['totalTime'] ?? '';
+    }
+    if (recipeData.containsKey('prepTime')) {
+      putData['prepTime'] = recipeData['prepTime'] ?? '';
+    }
+    if (recipeData.containsKey('cookTime')) {
+      putData['performTime'] = recipeData['cookTime'] ?? '';
+    }
 
-    // Ingredients – only overwrite if provided
+    // Update ingredients
     if (recipeData.containsKey('recipeIngredient')) {
       final formIngredients = recipeData['recipeIngredient'] as List? ?? [];
-      fullRecipe['recipeIngredient'] = formIngredients.map((ing) {
+      putData['recipeIngredient'] = formIngredients.map((ing) {
+        final rawQuantity = (ing['quantity'] as num?)?.toDouble() ?? 0.0;
+        final quantity = rawQuantity > 0 ? rawQuantity : 1.0;
+        final foodId = ing['foodId']?.toString();
+        final foodName = ing['foodName']?.toString() ?? '';
+        final unitId = ing['unitId']?.toString();
+        final unitName = ing['unitName']?.toString() ?? '';
+        final noteText = ing['note']?.toString() ?? '';
+
         final entry = <String, dynamic>{
-          'quantity': ing['quantity'] ?? 1,
-          'note': ing['note'] ?? '',
+          'quantity': quantity,
         };
-        if (ing['foodId'] != null) {
-          entry['food'] = {'id': ing['foodId'], 'name': ing['foodName'] ?? ''};
+
+        if (foodId != null && foodId.isNotEmpty) {
+          entry['food'] = {'id': foodId};
+          if (noteText.isNotEmpty) {
+            entry['note'] = noteText;
+          }
+        } else if (foodName.isNotEmpty) {
+          final parts = <String>[];
+          if (quantity > 0 && quantity != 1.0) {
+            parts.add(quantity == quantity.roundToDouble()
+                ? quantity.round().toString()
+                : quantity.toString());
+          }
+          if (unitName.isNotEmpty) {
+            parts.add(unitName);
+          }
+          parts.add(foodName);
+          if (noteText.isNotEmpty) {
+            parts.add('($noteText)');
+          }
+          entry['note'] = parts.join(' ');
+        } else if (noteText.isNotEmpty) {
+          entry['note'] = noteText;
         }
-        if (ing['unitId'] != null) {
-          entry['unit'] = {'id': ing['unitId'], 'name': ing['unitName'] ?? ''};
+
+        if (unitId != null && unitId.isNotEmpty && foodId != null && foodId.isNotEmpty) {
+          entry['unit'] = {'id': unitId};
         }
+
         return entry;
       }).toList();
     }
 
-    // Instructions – only overwrite if provided
+    // Update instructions
     if (recipeData.containsKey('recipeInstructions')) {
       final instructionSteps = recipeData['recipeInstructions'] as List? ?? [];
-      fullRecipe['recipeInstructions'] = instructionSteps
+      putData['recipeInstructions'] = instructionSteps
           .where((s) => s.toString().trim().isNotEmpty)
           .map((s) => {'text': s.toString().trim()})
           .toList();
     }
 
-    // Categories – only overwrite if provided
+    // Update categories - use existing category data from server if available
     if (recipeData.containsKey('recipeCategory')) {
       final categories = recipeData['recipeCategory'] as List? ?? [];
-      fullRecipe['recipeCategory'] = categories.map((c) => {'name': c}).toList();
+      final existingCategories = (currentRecipe['recipeCategory'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+
+      // Also fetch all available categories to get full objects for new ones
+      List<RecipeCategory>? allCategories;
+      try {
+        allCategories = await _api.getCategories();
+      } catch (_) {
+        allCategories = null;
+      }
+
+      putData['recipeCategory'] = categories.map((c) {
+        // If c is already a Map (from toJson()), use it directly
+        if (c is Map<String, dynamic>) {
+          return c;
+        }
+        final name = c.toString();
+        // Try to find the existing category in the recipe first
+        final existing = existingCategories.cast<Map<String, dynamic>?>().firstWhere(
+          (cat) => cat != null && cat['name']?.toString().toLowerCase() == name.toLowerCase(),
+          orElse: () => null,
+        );
+        if (existing != null) {
+          // Use the existing category object (has id, groupId, name, slug)
+          return existing;
+        }
+        // Try to find in all available categories
+        if (allCategories != null) {
+          final found = allCategories.cast<RecipeCategory?>().firstWhere(
+            (cat) => cat != null && cat.name.toLowerCase() == name.toLowerCase(),
+            orElse: () => null,
+          );
+          if (found != null) {
+            return {'id': found.id, 'name': found.name, 'slug': found.slug};
+          }
+        }
+        // Fallback for new categories - server will resolve these
+        return {'name': name, 'slug': _generateSlug(name)};
+      }).toList();
     }
 
-    // Tags – only overwrite if provided
+    // Update tags - use existing tag data from server if available
     if (recipeData.containsKey('tags')) {
       final tags = recipeData['tags'] as List? ?? [];
-      fullRecipe['tags'] = tags.map((t) => {'name': t}).toList();
+      final existingTags = (currentRecipe['tags'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+
+      putData['tags'] = tags.map((t) {
+        // If t is already a Map (from toJson()), use it directly
+        if (t is Map<String, dynamic>) {
+          return t;
+        }
+        final name = t.toString();
+        // Try to find the existing tag with all its fields
+        final existing = existingTags.cast<Map<String, dynamic>?>().firstWhere(
+          (tag) => tag != null && tag['name']?.toString().toLowerCase() == name.toLowerCase(),
+          orElse: () => null,
+        );
+        if (existing != null) {
+          return existing;
+        }
+        return {'name': name, 'slug': _generateSlug(name)};
+      }).toList();
     }
 
-    // Tools – only overwrite if provided
+    // Update tools - use existing tool data from server if available
     if (recipeData.containsKey('tools')) {
       final tools = recipeData['tools'] as List? ?? [];
-      fullRecipe['tools'] = tools.map((t) => {'name': t}).toList();
+      final existingTools = (currentRecipe['tools'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+
+      putData['tools'] = tools.map((t) {
+        // If t is already a Map (from toJson()), use it directly
+        if (t is Map<String, dynamic>) {
+          return t;
+        }
+        final name = t.toString();
+        // Try to find the existing tool with all its fields
+        final existing = existingTools.cast<Map<String, dynamic>?>().firstWhere(
+          (tool) => tool != null && tool['name']?.toString().toLowerCase() == name.toLowerCase(),
+          orElse: () => null,
+        );
+        if (existing != null) {
+          return existing;
+        }
+        return {'name': name, 'slug': _generateSlug(name)};
+      }).toList();
     }
 
-    // Notes – only overwrite if provided
+    // Update notes
     if (recipeData.containsKey('notes')) {
-      final notes = recipeData['notes']?.toString() ?? '';
-      if (notes.isNotEmpty) {
-        fullRecipe['notes'] = [{'title': '', 'text': notes}];
+      final notesText = recipeData['notes']?.toString() ?? '';
+      if (notesText.isNotEmpty) {
+        putData['notes'] = [{'title': '', 'text': notesText}];
       } else {
-        fullRecipe['notes'] = [];
+        putData['notes'] = [];
       }
     }
 
-    // Remove rating from PUT body – Mealie ignores it on recipe PUT;
-    // ratings are stored per-user via a separate endpoint.
-    fullRecipe.remove('rating');
-
-    debugPrint('PUT update recipe $slug');
-    final recipe = await _api.updateRecipe(slug, fullRecipe);
+    debugPrint('PUT /api/recipes/$slug');
+    debugPrint('PUT recipeCategory: ${putData['recipeCategory']}');
+    final recipe = await _api.updateRecipe(slug, putData);
 
     // Mealie stores ratings per-user via a separate endpoint
     if (recipeData.containsKey('rating')) {
@@ -601,5 +955,19 @@ class RecipeRepository {
       Food(id: 'food-2', name: 'Milk', pluralName: 'Milk', createdAt: '', updatedAt: '', aliases: [], extras: {}, householdsWithIngredientFood: []),
       Food(id: 'food-3', name: 'Bread', pluralName: 'Bread', createdAt: '', updatedAt: '', aliases: [], extras: {}, householdsWithIngredientFood: []),
     ];
+  }
+
+  /// Generates a URL-friendly slug from a name.
+  /// Converts to lowercase, replaces spaces and special characters with hyphens.
+  String _generateSlug(String name) {
+    return name
+        .toLowerCase()
+        .replaceAll(RegExp(r'[äÄ]'), 'ae')
+        .replaceAll(RegExp(r'[öÖ]'), 'oe')
+        .replaceAll(RegExp(r'[üÜ]'), 'ue')
+        .replaceAll(RegExp(r'ß'), 'ss')
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'-+'), '-')
+        .replaceAll(RegExp(r'^-|-$'), '');
   }
 }

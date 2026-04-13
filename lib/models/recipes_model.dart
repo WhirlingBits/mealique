@@ -1,3 +1,115 @@
+/// Represents a recipe category from the Mealie API.
+class RecipeCategory {
+  final String? id;
+  final String? groupId;
+  final String name;
+  final String slug;
+
+  RecipeCategory({
+    this.id,
+    this.groupId,
+    required this.name,
+    required this.slug,
+  });
+
+  factory RecipeCategory.fromJson(Map<String, dynamic> json) {
+    return RecipeCategory(
+      id: json['id']?.toString(),
+      groupId: json['groupId']?.toString(),
+      name: json['name']?.toString() ?? '',
+      slug: json['slug']?.toString() ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      if (id != null) 'id': id,
+      if (groupId != null) 'groupId': groupId,
+      'name': name,
+      'slug': slug,
+    };
+  }
+
+  @override
+  String toString() => 'RecipeCategory(name: $name, slug: $slug)';
+}
+
+/// Represents a recipe tag from the Mealie API.
+class RecipeTag {
+  final String? id;
+  final String? groupId;
+  final String name;
+  final String slug;
+
+  RecipeTag({
+    this.id,
+    this.groupId,
+    required this.name,
+    required this.slug,
+  });
+
+  factory RecipeTag.fromJson(Map<String, dynamic> json) {
+    return RecipeTag(
+      id: json['id']?.toString(),
+      groupId: json['groupId']?.toString(),
+      name: json['name']?.toString() ?? '',
+      slug: json['slug']?.toString() ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      if (id != null) 'id': id,
+      if (groupId != null) 'groupId': groupId,
+      'name': name,
+      'slug': slug,
+    };
+  }
+
+  @override
+  String toString() => 'RecipeTag(name: $name, slug: $slug)';
+}
+
+/// Represents a recipe tool from the Mealie API.
+class RecipeTool {
+  final String? id;
+  final String? groupId;
+  final String name;
+  final String slug;
+  final bool? onHand;
+
+  RecipeTool({
+    this.id,
+    this.groupId,
+    required this.name,
+    required this.slug,
+    this.onHand,
+  });
+
+  factory RecipeTool.fromJson(Map<String, dynamic> json) {
+    return RecipeTool(
+      id: json['id']?.toString(),
+      groupId: json['groupId']?.toString(),
+      name: json['name']?.toString() ?? '',
+      slug: json['slug']?.toString() ?? '',
+      onHand: json['onHand'] as bool?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      if (id != null) 'id': id,
+      if (groupId != null) 'groupId': groupId,
+      'name': name,
+      'slug': slug,
+      if (onHand != null) 'onHand': onHand,
+    };
+  }
+
+  @override
+  String toString() => 'RecipeTool(name: $name, slug: $slug)';
+}
+
 class RecipeIngredient {
   final String? referenceId;
   final String note;

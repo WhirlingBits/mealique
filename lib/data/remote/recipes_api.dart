@@ -32,6 +32,161 @@ class RecipesApi {
     ));
   }
 
+  /// GET /api/organizers/categories – fetches all recipe categories.
+  Future<List<RecipeCategory>> getCategories() async {
+    try {
+      final response = await _dio.get('api/organizers/categories');
+      // Response can be a list directly or have an 'items' key
+      if (response.data is List) {
+        return (response.data as List)
+            .map((e) => RecipeCategory.fromJson(e as Map<String, dynamic>))
+            .toList();
+      } else if (response.data['items'] is List) {
+        return (response.data['items'] as List)
+            .map((e) => RecipeCategory.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('getCategories error: $e');
+      return [];
+    }
+  }
+
+  /// POST /api/organizers/categories – creates a new recipe category.
+  /// Returns the created category on success.
+  Future<RecipeCategory> createCategory(RecipeCategory category) async {
+    debugPrint('POST /api/organizers/categories: ${category.name}');
+    final response = await _dio.post(
+      'api/organizers/categories',
+      data: category.toJson(),
+    );
+    debugPrint('createCategory response: ${response.statusCode}');
+    return RecipeCategory.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// Creates a category by name – generates slug automatically.
+  Future<RecipeCategory> createCategoryByName(String name) async {
+    final slug = _generateSlug(name);
+    return createCategory(RecipeCategory(name: name, slug: slug));
+  }
+
+  /// DELETE /api/organizers/categories/{item_id} – deletes a recipe category.
+  Future<void> deleteCategory(String categoryId) async {
+    debugPrint('DELETE /api/organizers/categories/$categoryId');
+    await _dio.delete('api/organizers/categories/$categoryId');
+    debugPrint('deleteCategory: $categoryId deleted successfully');
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // TAGS
+  // ───────────────────────────────────────────────────────────────────────────
+
+  /// GET /api/organizers/tags – fetches all recipe tags.
+  Future<List<RecipeTag>> getTags() async {
+    try {
+      final response = await _dio.get('api/organizers/tags');
+      if (response.data is List) {
+        return (response.data as List)
+            .map((e) => RecipeTag.fromJson(e as Map<String, dynamic>))
+            .toList();
+      } else if (response.data['items'] is List) {
+        return (response.data['items'] as List)
+            .map((e) => RecipeTag.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('getTags error: $e');
+      return [];
+    }
+  }
+
+  /// POST /api/organizers/tags – creates a new recipe tag.
+  Future<RecipeTag> createTag(RecipeTag tag) async {
+    debugPrint('POST /api/organizers/tags: ${tag.name}');
+    final response = await _dio.post(
+      'api/organizers/tags',
+      data: tag.toJson(),
+    );
+    debugPrint('createTag response: ${response.statusCode}');
+    return RecipeTag.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// Creates a tag by name – generates slug automatically.
+  Future<RecipeTag> createTagByName(String name) async {
+    final slug = _generateSlug(name);
+    return createTag(RecipeTag(name: name, slug: slug));
+  }
+
+  /// DELETE /api/organizers/tags/{item_id} – deletes a recipe tag.
+  Future<void> deleteTag(String tagId) async {
+    debugPrint('DELETE /api/organizers/tags/$tagId');
+    await _dio.delete('api/organizers/tags/$tagId');
+    debugPrint('deleteTag: $tagId deleted successfully');
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // TOOLS
+  // ───────────────────────────────────────────────────────────────────────────
+
+  /// GET /api/organizers/tools – fetches all recipe tools.
+  Future<List<RecipeTool>> getTools() async {
+    try {
+      final response = await _dio.get('api/organizers/tools');
+      if (response.data is List) {
+        return (response.data as List)
+            .map((e) => RecipeTool.fromJson(e as Map<String, dynamic>))
+            .toList();
+      } else if (response.data['items'] is List) {
+        return (response.data['items'] as List)
+            .map((e) => RecipeTool.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('getTools error: $e');
+      return [];
+    }
+  }
+
+  /// POST /api/organizers/tools – creates a new recipe tool.
+  Future<RecipeTool> createTool(RecipeTool tool) async {
+    debugPrint('POST /api/organizers/tools: ${tool.name}');
+    final response = await _dio.post(
+      'api/organizers/tools',
+      data: tool.toJson(),
+    );
+    debugPrint('createTool response: ${response.statusCode}');
+    return RecipeTool.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// Creates a tool by name – generates slug automatically.
+  Future<RecipeTool> createToolByName(String name) async {
+    final slug = _generateSlug(name);
+    return createTool(RecipeTool(name: name, slug: slug));
+  }
+
+  /// DELETE /api/organizers/tools/{item_id} – deletes a recipe tool.
+  Future<void> deleteTool(String toolId) async {
+    debugPrint('DELETE /api/organizers/tools/$toolId');
+    await _dio.delete('api/organizers/tools/$toolId');
+    debugPrint('deleteTool: $toolId deleted successfully');
+  }
+
+  /// Generates a URL-friendly slug from a name.
+  String _generateSlug(String name) {
+    return name
+        .toLowerCase()
+        .replaceAll(RegExp(r'[äÄ]'), 'ae')
+        .replaceAll(RegExp(r'[öÖ]'), 'oe')
+        .replaceAll(RegExp(r'[üÜ]'), 'ue')
+        .replaceAll(RegExp(r'ß'), 'ss')
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'-+'), '-')
+        .replaceAll(RegExp(r'^-|-$'), '');
+  }
+
   Future<Response> getRecipes(
       {int page = 1,
       int perPage = 15,
@@ -178,12 +333,40 @@ class RecipesApi {
   /// PUT /api/recipes/{slug} – updates the recipe with full details.
   Future<Recipe> updateRecipe(String slug, Map<String, dynamic> data) async {
     debugPrint('PUT /api/recipes/$slug');
-    final response = await _dio.put(
-      'api/recipes/$slug',
-      data: data,
-    );
-    debugPrint('PUT /api/recipes/$slug response status: ${response.statusCode}');
-    return Recipe.fromJson(response.data);
+    debugPrint('PUT data keys: ${data.keys.toList()}');
+    debugPrint('PUT data name: ${data['name']}, slug in data: ${data['slug']}');
+    try {
+      final response = await _dio.put(
+        'api/recipes/$slug',
+        data: data,
+      );
+      debugPrint('PUT /api/recipes/$slug response status: ${response.statusCode}');
+      return Recipe.fromJson(response.data);
+    } on DioException catch (e) {
+      debugPrint('PUT /api/recipes/$slug failed: ${e.response?.statusCode}');
+      debugPrint('Error response: ${e.response?.data}');
+      rethrow;
+    }
+  }
+
+  /// PATCH /api/recipes/{slug} – partially updates the recipe.
+  /// Only sends the fields that need to be updated.
+  Future<Recipe> patchRecipe(String slug, Map<String, dynamic> data) async {
+    debugPrint('PATCH /api/recipes/$slug');
+    debugPrint('PATCH data keys: ${data.keys.toList()}');
+    debugPrint('PATCH full data: $data');
+    try {
+      final response = await _dio.patch(
+        'api/recipes/$slug',
+        data: data,
+      );
+      debugPrint('PATCH /api/recipes/$slug response status: ${response.statusCode}');
+      return Recipe.fromJson(response.data);
+    } on DioException catch (e) {
+      debugPrint('PATCH /api/recipes/$slug failed: ${e.response?.statusCode}');
+      debugPrint('Error response: ${e.response?.data}');
+      rethrow;
+    }
   }
 
   /// Fetches all user ratings/favorites at once via GET /api/users/{id}/favorites.

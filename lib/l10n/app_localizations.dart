@@ -2029,6 +2029,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not find a random recipe. Please try again.'**
   String get noRandomRecipeFound;
+
+  /// No description provided for @addNewCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Create new category'**
+  String get addNewCategory;
+
+  /// No description provided for @categoryCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Category \"{name}\" created.'**
+  String categoryCreated(String name);
+
+  /// No description provided for @deleteCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete category'**
+  String get deleteCategory;
+
+  /// No description provided for @confirmDeleteCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete the category \"{name}\"?'**
+  String confirmDeleteCategory(String name);
+
+  /// No description provided for @categoryStillInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'The category \"{name}\" is still used in recipes and cannot be deleted.'**
+  String categoryStillInUse(String name);
+
+  /// No description provided for @recipeAlreadyExists.
+  ///
+  /// In en, this message translates to:
+  /// **'A recipe with the name \"{name}\" already exists.'**
+  String recipeAlreadyExists(String name);
+
+  /// No description provided for @addNewTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Create new tag'**
+  String get addNewTag;
+
+  /// No description provided for @tagCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag \"{name}\" created.'**
+  String tagCreated(String name);
+
+  /// No description provided for @deleteTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete tag'**
+  String get deleteTag;
+
+  /// No description provided for @confirmDeleteTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete the tag \"{name}\"?'**
+  String confirmDeleteTag(String name);
+
+  /// No description provided for @tagStillInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'The tag \"{name}\" is still used in recipes and cannot be deleted.'**
+  String tagStillInUse(String name);
+
+  /// No description provided for @addNewTool.
+  ///
+  /// In en, this message translates to:
+  /// **'Create new tool'**
+  String get addNewTool;
+
+  /// No description provided for @toolCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Tool \"{name}\" created.'**
+  String toolCreated(String name);
+
+  /// No description provided for @deleteTool.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete tool'**
+  String get deleteTool;
+
+  /// No description provided for @confirmDeleteTool.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete the tool \"{name}\"?'**
+  String confirmDeleteTool(String name);
+
+  /// No description provided for @toolStillInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'The tool \"{name}\" is still used in recipes and cannot be deleted.'**
+  String toolStillInUse(String name);
 }
 
 class _AppLocalizationsDelegate

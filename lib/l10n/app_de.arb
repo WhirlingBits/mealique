@@ -422,5 +422,91 @@
     "backgroundSyncDescription": "Synchronisiere deine Daten automatisch, wenn du eine Internetverbindung hast.",
     "selectList": "Wähle eine Liste aus",
     "randomRecipe": "Zufälliges Gericht",
-    "noRandomRecipeFound": "Es konnte kein zufälliges Rezept gefunden werden. Bitte versuche es erneut."
+    "noRandomRecipeFound": "Es konnte kein zufälliges Rezept gefunden werden. Bitte versuche es erneut.",
+    "addNewCategory": "Neue Kategorie erstellen",
+    "categoryCreated": "Kategorie \"{name}\" erstellt.",
+    "@categoryCreated": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "deleteCategory": "Kategorie löschen",
+    "confirmDeleteCategory": "Bist du sicher, dass du die Kategorie \"{name}\" löschen möchtest?",
+    "@confirmDeleteCategory": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "categoryStillInUse": "Die Kategorie \"{name}\" wird noch in Rezepten verwendet und kann nicht gelöscht werden.",
+    "@categoryStillInUse": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "recipeAlreadyExists": "Ein Rezept mit dem Namen \"{name}\" existiert bereits.",
+    "@recipeAlreadyExists": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "addNewTag": "Neues Schlagwort erstellen",
+    "tagCreated": "Schlagwort \"{name}\" erstellt.",
+    "@tagCreated": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "deleteTag": "Schlagwort löschen",
+    "confirmDeleteTag": "Bist du sicher, dass du das Schlagwort \"{name}\" löschen möchtest?",
+    "@confirmDeleteTag": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "tagStillInUse": "Das Schlagwort \"{name}\" wird noch in Rezepten verwendet und kann nicht gelöscht werden.",
+    "@tagStillInUse": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "addNewTool": "Neues Utensil erstellen",
+    "toolCreated": "Utensil \"{name}\" erstellt.",
+    "@toolCreated": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "deleteTool": "Utensil löschen",
+    "confirmDeleteTool": "Bist du sicher, dass du das Utensil \"{name}\" löschen möchtest?",
+    "@confirmDeleteTool": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "toolStillInUse": "Das Utensil \"{name}\" wird noch in Rezepten verwendet und kann nicht gelöscht werden.",
+    "@toolStillInUse": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    }
 }

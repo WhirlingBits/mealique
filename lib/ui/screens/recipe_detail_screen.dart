@@ -188,11 +188,11 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     }
 
     // Einkaufslisten laden
-    List<ShoppingList>? lists;
+    List<ShoppingList> lists;
     try {
       debugPrint('DEBUG: Fetching shopping lists...');
       lists = await _householdRepository.getShoppingLists();
-      debugPrint('DEBUG: Found ${lists?.length ?? 0} lists.');
+      debugPrint('DEBUG: Found ${lists.length} lists.');
     } catch (e) {
       debugPrint('DEBUG: Error fetching shopping lists: $e');
       if (mounted) {
@@ -203,7 +203,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
     if (!mounted) return;
 
-    if (lists == null || lists.isEmpty) {
+    if (lists.isEmpty) {
       debugPrint('DEBUG: No shopping lists found on server.');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

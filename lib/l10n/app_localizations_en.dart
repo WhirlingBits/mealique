@@ -1054,4 +1054,72 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get noRandomRecipeFound =>
       'Could not find a random recipe. Please try again.';
+
+  @override
+  String get addNewCategory => 'Create new category';
+
+  @override
+  String categoryCreated(String name) {
+    return 'Category \"$name\" created.';
+  }
+
+  @override
+  String get deleteCategory => 'Delete category';
+
+  @override
+  String confirmDeleteCategory(String name) {
+    return 'Are you sure you want to delete the category \"$name\"?';
+  }
+
+  @override
+  String categoryStillInUse(String name) {
+    return 'The category \"$name\" is still used in recipes and cannot be deleted.';
+  }
+
+  @override
+  String recipeAlreadyExists(String name) {
+    return 'A recipe with the name \"$name\" already exists.';
+  }
+
+  @override
+  String get addNewTag => 'Create new tag';
+
+  @override
+  String tagCreated(String name) {
+    return 'Tag \"$name\" created.';
+  }
+
+  @override
+  String get deleteTag => 'Delete tag';
+
+  @override
+  String confirmDeleteTag(String name) {
+    return 'Are you sure you want to delete the tag \"$name\"?';
+  }
+
+  @override
+  String tagStillInUse(String name) {
+    return 'The tag \"$name\" is still used in recipes and cannot be deleted.';
+  }
+
+  @override
+  String get addNewTool => 'Create new tool';
+
+  @override
+  String toolCreated(String name) {
+    return 'Tool \"$name\" created.';
+  }
+
+  @override
+  String get deleteTool => 'Delete tool';
+
+  @override
+  String confirmDeleteTool(String name) {
+    return 'Are you sure you want to delete the tool \"$name\"?';
+  }
+
+  @override
+  String toolStillInUse(String name) {
+    return 'The tool \"$name\" is still used in recipes and cannot be deleted.';
+  }
 }

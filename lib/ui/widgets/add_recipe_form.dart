@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../data/sync/recipe_repository.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/food_model.dart';
+import '../../models/recipes_model.dart';
 import '../../models/shopping_item_model.dart';
 
 /// A single ingredient entry added by the user.
@@ -70,20 +71,29 @@ class _AddRecipeFormState extends State<AddRecipeForm> {
 
   // -- Step 4 (categories, tags, tools, instructions, notes) --
   final _categoryInputController = TextEditingController();
+  final _categoryFocusNode = FocusNode();
   final _tagInputController = TextEditingController();
+  final _tagFocusNode = FocusNode();
   final _toolInputController = TextEditingController();
+  final _toolFocusNode = FocusNode();
   final _instructionInputController = TextEditingController();
   final _recipeNoteController = TextEditingController();
-  final List<String> _categories = [];
-  final List<String> _tags = [];
-  final List<String> _tools = [];
+  final List<RecipeCategory> _categories = [];
+  final List<RecipeTag> _tags = [];
+  final List<RecipeTool> _tools = [];
   final List<String> _instructionSteps = [];
 
   // -- Data loaded from API --
   final _recipeRepo = RecipeRepository();
   List<Food>? _foods;
   List<ShoppingItemUnit>? _units;
+  List<RecipeCategory>? _availableCategories;
+  List<RecipeTag>? _availableTags;
+  List<RecipeTool>? _availableTools;
   bool _dataLoading = false;
+  bool _showAddCategoryButton = false;
+  bool _showAddTagButton = false;
+  bool _showAddToolButton = false;
 
   // -- Current step: 0 = name, 1 = details, 2 = ingredients, 3 = extras --
   int _currentStep = 0;
@@ -93,6 +103,54 @@ class _AddRecipeFormState extends State<AddRecipeForm> {
   void initState() {
     super.initState();
     _loadData();
+    _categoryInputController.addListener(_onCategoryInputChanged);
+    _tagInputController.addListener(_onTagInputChanged);
+    _toolInputController.addListener(_onToolInputChanged);
+  }
+
+  void _onCategoryInputChanged() {
+    final text = _categoryInputController.text.trim();
+    final hasText = text.isNotEmpty;
+    final existsInAvailable = _availableCategories?.any(
+      (c) => c.name.toLowerCase() == text.toLowerCase()
+    ) ?? false;
+    final existsInSelected = _categories.any(
+      (c) => c.name.toLowerCase() == text.toLowerCase()
+    );
+    final shouldShow = hasText && !existsInAvailable && !existsInSelected;
+    if (_showAddCategoryButton != shouldShow) {
+      setState(() => _showAddCategoryButton = shouldShow);
+    }
+  }
+
+  void _onTagInputChanged() {
+    final text = _tagInputController.text.trim();
+    final hasText = text.isNotEmpty;
+    final existsInAvailable = _availableTags?.any(
+      (t) => t.name.toLowerCase() == text.toLowerCase()
+    ) ?? false;
+    final existsInSelected = _tags.any(
+      (t) => t.name.toLowerCase() == text.toLowerCase()
+    );
+    final shouldShow = hasText && !existsInAvailable && !existsInSelected;
+    if (_showAddTagButton != shouldShow) {
+      setState(() => _showAddTagButton = shouldShow);
+    }
+  }
+
+  void _onToolInputChanged() {
+    final text = _toolInputController.text.trim();
+    final hasText = text.isNotEmpty;
+    final existsInAvailable = _availableTools?.any(
+      (t) => t.name.toLowerCase() == text.toLowerCase()
+    ) ?? false;
+    final existsInSelected = _tools.any(
+      (t) => t.name.toLowerCase() == text.toLowerCase()
+    );
+    final shouldShow = hasText && !existsInAvailable && !existsInSelected;
+    if (_showAddToolButton != shouldShow) {
+      setState(() => _showAddToolButton = shouldShow);
+    }
   }
 
   Future<void> _loadData() async {
@@ -101,11 +159,17 @@ class _AddRecipeFormState extends State<AddRecipeForm> {
       final results = await Future.wait([
         _recipeRepo.getFoods(),
         _recipeRepo.getUnits(),
+        _recipeRepo.getCategories(),
+        _recipeRepo.getTags(),
+        _recipeRepo.getTools(),
       ]);
       if (mounted) {
         setState(() {
           _foods = results[0] as List<Food>;
           _units = results[1] as List<ShoppingItemUnit>;
+          _availableCategories = results[2] as List<RecipeCategory>;
+          _availableTags = results[3] as List<RecipeTag>;
+          _availableTools = results[4] as List<RecipeTool>;
           _dataLoading = false;
         });
       }
@@ -137,9 +201,9 @@ class _AddRecipeFormState extends State<AddRecipeForm> {
       'prepTime': _prepTimeController.text.trim(),
       'cookTime': _cookTimeController.text.trim(),
       'recipeIngredient': _ingredients.map((e) => e.toJson()).toList(),
-      'recipeCategory': _categories,
-      'tags': _tags,
-      'tools': _tools,
+      'recipeCategory': _categories.map((c) => c.toJson()).toList(),
+      'tags': _tags.map((t) => t.toJson()).toList(),
+      'tools': _tools.map((t) => t.toJson()).toList(),
       'recipeInstructions': _instructionSteps,
       'notes': _recipeNoteController.text.trim(),
     };
@@ -663,33 +727,21 @@ class _AddRecipeFormState extends State<AddRecipeForm> {
           _buildStepIndicator(3),
 
           // -- Categories --
-          _buildChipSection(
-            label: l10n.recipeCategories,
-            hint: l10n.categoriesHint,
-            controller: _categoryInputController,
-            items: _categories,
-            icon: Icons.category_outlined,
-          ),
+          Text(l10n.recipeCategories, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          const SizedBox(height: 8),
+          _buildCategoryInput(l10n),
           const SizedBox(height: 16),
 
           // -- Tags --
-          _buildChipSection(
-            label: l10n.tags,
-            hint: l10n.tagsHint,
-            controller: _tagInputController,
-            items: _tags,
-            icon: Icons.label_outline,
-          ),
+          Text(l10n.tags, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          const SizedBox(height: 8),
+          _buildTagInput(l10n),
           const SizedBox(height: 16),
 
           // -- Tools --
-          _buildChipSection(
-            label: l10n.tools,
-            hint: l10n.toolsHint,
-            controller: _toolInputController,
-            items: _tools,
-            icon: Icons.handyman_outlined,
-          ),
+          Text(l10n.tools, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          const SizedBox(height: 8),
+          _buildToolInput(l10n),
           const SizedBox(height: 16),
 
           // -- Instructions (step-by-step like ingredients) --
@@ -802,70 +854,435 @@ class _AddRecipeFormState extends State<AddRecipeForm> {
     );
   }
 
+
   // ===================================================================
-  // CHIP SECTION BUILDER (for categories, tags, tools)
+  // CATEGORY, TAG, TOOL INPUT WIDGETS
   // ===================================================================
 
-  Widget _buildChipSection({
-    required String label,
-    required String hint,
-    required TextEditingController controller,
-    required List<String> items,
-    required IconData icon,
-  }) {
+  Widget _buildCategoryInput(AppLocalizations l10n) {
+    final categoryOptions = _availableCategories ?? <RecipeCategory>[];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-        const SizedBox(height: 8),
-        if (items.isNotEmpty)
+        if (_categories.isNotEmpty) ...[
           Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            children: items.asMap().entries.map((entry) {
+            spacing: 6, runSpacing: 4,
+            children: _categories.asMap().entries.map((entry) {
               return Chip(
-                label: Text(entry.value, style: const TextStyle(fontSize: 13)),
+                label: Text(entry.value.name, style: const TextStyle(fontSize: 13)),
                 deleteIcon: const Icon(Icons.close, size: 16),
-                onDeleted: () => setState(() => items.removeAt(entry.key)),
+                onDeleted: () => setState(() => _categories.removeAt(entry.key)),
                 backgroundColor: _accent.withAlpha(30),
                 side: BorderSide(color: _accent.withAlpha(80)),
               );
             }).toList(),
           ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: controller,
-                decoration: InputDecoration(
-                  hintText: hint,
-                  prefixIcon: Icon(icon, size: 20),
-                  border: const OutlineInputBorder(),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                ),
-                onSubmitted: (_) => _addChipItem(controller, items),
+          const SizedBox(height: 8),
+        ],
+        RawAutocomplete<RecipeCategory>(
+          textEditingController: _categoryInputController,
+          focusNode: _categoryFocusNode,
+          displayStringForOption: (cat) => cat.name,
+          optionsBuilder: (textEditingValue) {
+            final query = textEditingValue.text.toLowerCase();
+            if (query.isEmpty) return const Iterable.empty();
+            return categoryOptions.where((cat) =>
+              cat.name.toLowerCase().contains(query) &&
+              !_categories.any((c) => c.id == cat.id)
+            );
+          },
+          onSelected: (category) {
+            if (!_categories.any((c) => c.id == category.id)) {
+              setState(() => _categories.add(category));
+            }
+            _categoryInputController.clear();
+          },
+          fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+            return TextField(
+              controller: controller,
+              focusNode: focusNode,
+              decoration: InputDecoration(
+                hintText: l10n.categoriesHint,
+                prefixIcon: const Icon(Icons.category_outlined, size: 20),
+                border: const OutlineInputBorder(),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                suffixIcon: _showAddCategoryButton
+                    ? IconButton(
+                        icon: const Icon(Icons.add_circle_outline),
+                        onPressed: () => _handleCreateAndSelectCategory(controller.text.trim()),
+                        tooltip: l10n.addNewCategory,
+                      )
+                    : null,
               ),
-            ),
-            const SizedBox(width: 8),
-            IconButton(
-              onPressed: () => _addChipItem(controller, items),
-              icon: Icon(Icons.add_circle, color: _accent),
-              tooltip: AppLocalizations.of(context)!.addTag,
-            ),
-          ],
+              onSubmitted: (_) {
+                final text = controller.text.trim();
+                if (text.isEmpty) return;
+                final match = categoryOptions.cast<RecipeCategory?>().firstWhere(
+                  (c) => c!.name.toLowerCase() == text.toLowerCase(),
+                  orElse: () => null,
+                );
+                if (match != null && !_categories.any((c) => c.id == match.id)) {
+                  setState(() => _categories.add(match));
+                  controller.clear();
+                } else if (_showAddCategoryButton) {
+                  _handleCreateAndSelectCategory(text);
+                }
+              },
+            );
+          },
+          optionsViewBuilder: (context, onSelected, options) {
+            return Align(
+              alignment: Alignment.topLeft,
+              child: Material(
+                elevation: 4,
+                borderRadius: BorderRadius.circular(8),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 250),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    itemCount: options.length,
+                    itemBuilder: (context, index) {
+                      final category = options.elementAt(index);
+                      return ListTile(
+                        dense: true,
+                        title: Text(category.name),
+                        onTap: () => onSelected(category),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ],
     );
   }
 
-  void _addChipItem(TextEditingController controller, List<String> items) {
-    final text = controller.text.trim();
-    if (text.isEmpty) return;
-    if (!items.contains(text)) {
-      setState(() => items.add(text));
+  Widget _buildTagInput(AppLocalizations l10n) {
+    final tagOptions = _availableTags ?? <RecipeTag>[];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_tags.isNotEmpty) ...[
+          Wrap(
+            spacing: 6, runSpacing: 4,
+            children: _tags.asMap().entries.map((entry) {
+              return Chip(
+                label: Text(entry.value.name, style: const TextStyle(fontSize: 13)),
+                deleteIcon: const Icon(Icons.close, size: 16),
+                onDeleted: () => setState(() => _tags.removeAt(entry.key)),
+                backgroundColor: _accent.withAlpha(30),
+                side: BorderSide(color: _accent.withAlpha(80)),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 8),
+        ],
+        RawAutocomplete<RecipeTag>(
+          textEditingController: _tagInputController,
+          focusNode: _tagFocusNode,
+          displayStringForOption: (tag) => tag.name,
+          optionsBuilder: (textEditingValue) {
+            final query = textEditingValue.text.toLowerCase();
+            if (query.isEmpty) return const Iterable.empty();
+            return tagOptions.where((tag) =>
+              tag.name.toLowerCase().contains(query) &&
+              !_tags.any((t) => t.id == tag.id)
+            );
+          },
+          onSelected: (tag) {
+            if (!_tags.any((t) => t.id == tag.id)) {
+              setState(() => _tags.add(tag));
+            }
+            _tagInputController.clear();
+          },
+          fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+            return TextField(
+              controller: controller,
+              focusNode: focusNode,
+              decoration: InputDecoration(
+                hintText: l10n.tagsHint,
+                prefixIcon: const Icon(Icons.label_outline, size: 20),
+                border: const OutlineInputBorder(),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                suffixIcon: _showAddTagButton
+                    ? IconButton(
+                        icon: const Icon(Icons.add_circle_outline),
+                        onPressed: () => _handleCreateAndSelectTag(controller.text.trim()),
+                        tooltip: l10n.addNewTag,
+                      )
+                    : null,
+              ),
+              onSubmitted: (_) {
+                final text = controller.text.trim();
+                if (text.isEmpty) return;
+                final match = tagOptions.cast<RecipeTag?>().firstWhere(
+                  (t) => t!.name.toLowerCase() == text.toLowerCase(),
+                  orElse: () => null,
+                );
+                if (match != null && !_tags.any((t) => t.id == match.id)) {
+                  setState(() => _tags.add(match));
+                  controller.clear();
+                } else if (_showAddTagButton) {
+                  _handleCreateAndSelectTag(text);
+                }
+              },
+            );
+          },
+          optionsViewBuilder: (context, onSelected, options) {
+            return Align(
+              alignment: Alignment.topLeft,
+              child: Material(
+                elevation: 4,
+                borderRadius: BorderRadius.circular(8),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 250),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    itemCount: options.length,
+                    itemBuilder: (context, index) {
+                      final tag = options.elementAt(index);
+                      return ListTile(
+                        dense: true,
+                        title: Text(tag.name),
+                        onTap: () => onSelected(tag),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildToolInput(AppLocalizations l10n) {
+    final toolOptions = _availableTools ?? <RecipeTool>[];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_tools.isNotEmpty) ...[
+          Wrap(
+            spacing: 6, runSpacing: 4,
+            children: _tools.asMap().entries.map((entry) {
+              return Chip(
+                label: Text(entry.value.name, style: const TextStyle(fontSize: 13)),
+                deleteIcon: const Icon(Icons.close, size: 16),
+                onDeleted: () => setState(() => _tools.removeAt(entry.key)),
+                backgroundColor: _accent.withAlpha(30),
+                side: BorderSide(color: _accent.withAlpha(80)),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 8),
+        ],
+        RawAutocomplete<RecipeTool>(
+          textEditingController: _toolInputController,
+          focusNode: _toolFocusNode,
+          displayStringForOption: (tool) => tool.name,
+          optionsBuilder: (textEditingValue) {
+            final query = textEditingValue.text.toLowerCase();
+            if (query.isEmpty) return const Iterable.empty();
+            return toolOptions.where((tool) =>
+              tool.name.toLowerCase().contains(query) &&
+              !_tools.any((t) => t.id == tool.id)
+            );
+          },
+          onSelected: (tool) {
+            if (!_tools.any((t) => t.id == tool.id)) {
+              setState(() => _tools.add(tool));
+            }
+            _toolInputController.clear();
+          },
+          fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+            return TextField(
+              controller: controller,
+              focusNode: focusNode,
+              decoration: InputDecoration(
+                hintText: l10n.toolsHint,
+                prefixIcon: const Icon(Icons.handyman_outlined, size: 20),
+                border: const OutlineInputBorder(),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                suffixIcon: _showAddToolButton
+                    ? IconButton(
+                        icon: const Icon(Icons.add_circle_outline),
+                        onPressed: () => _handleCreateAndSelectTool(controller.text.trim()),
+                        tooltip: l10n.addNewTool,
+                      )
+                    : null,
+              ),
+              onSubmitted: (_) {
+                final text = controller.text.trim();
+                if (text.isEmpty) return;
+                final match = toolOptions.cast<RecipeTool?>().firstWhere(
+                  (t) => t!.name.toLowerCase() == text.toLowerCase(),
+                  orElse: () => null,
+                );
+                if (match != null && !_tools.any((t) => t.id == match.id)) {
+                  setState(() => _tools.add(match));
+                  controller.clear();
+                } else if (_showAddToolButton) {
+                  _handleCreateAndSelectTool(text);
+                }
+              },
+            );
+          },
+          optionsViewBuilder: (context, onSelected, options) {
+            return Align(
+              alignment: Alignment.topLeft,
+              child: Material(
+                elevation: 4,
+                borderRadius: BorderRadius.circular(8),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 250),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    itemCount: options.length,
+                    itemBuilder: (context, index) {
+                      final tool = options.elementAt(index);
+                      return ListTile(
+                        dense: true,
+                        title: Text(tool.name),
+                        onTap: () => onSelected(tool),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Future<void> _handleCreateAndSelectCategory(String categoryName) async {
+    if (categoryName.isEmpty) return;
+    final l10n = AppLocalizations.of(context)!;
+
+    try {
+      final category = await _recipeRepo.getOrCreateCategory(categoryName);
+
+      List<RecipeCategory> newList;
+      if (_availableCategories != null) {
+        final exists = _availableCategories!.any((c) => c.id == category.id);
+        newList = exists ? _availableCategories! : [..._availableCategories!, category];
+      } else {
+        newList = [category];
+      }
+
+      setState(() {
+        _availableCategories = newList;
+        if (!_categories.any((c) => c.id == category.id)) {
+          _categories.add(category);
+        }
+        _categoryInputController.clear();
+        _showAddCategoryButton = false;
+      });
+
+      _categoryFocusNode.unfocus();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.categoryCreated(categoryName)), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.errorCreating(e.toString())), backgroundColor: Colors.red),
+        );
+      }
     }
-    controller.clear();
+  }
+
+  Future<void> _handleCreateAndSelectTag(String tagName) async {
+    if (tagName.isEmpty) return;
+    final l10n = AppLocalizations.of(context)!;
+
+    try {
+      final tag = await _recipeRepo.getOrCreateTag(tagName);
+
+      List<RecipeTag> newList;
+      if (_availableTags != null) {
+        final exists = _availableTags!.any((t) => t.id == tag.id);
+        newList = exists ? _availableTags! : [..._availableTags!, tag];
+      } else {
+        newList = [tag];
+      }
+
+      setState(() {
+        _availableTags = newList;
+        if (!_tags.any((t) => t.id == tag.id)) {
+          _tags.add(tag);
+        }
+        _tagInputController.clear();
+        _showAddTagButton = false;
+      });
+
+      _tagFocusNode.unfocus();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.tagCreated(tagName)), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.errorCreating(e.toString())), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleCreateAndSelectTool(String toolName) async {
+    if (toolName.isEmpty) return;
+    final l10n = AppLocalizations.of(context)!;
+
+    try {
+      final tool = await _recipeRepo.getOrCreateTool(toolName);
+
+      List<RecipeTool> newList;
+      if (_availableTools != null) {
+        final exists = _availableTools!.any((t) => t.id == tool.id);
+        newList = exists ? _availableTools! : [..._availableTools!, tool];
+      } else {
+        newList = [tool];
+      }
+
+      setState(() {
+        _availableTools = newList;
+        if (!_tools.any((t) => t.id == tool.id)) {
+          _tools.add(tool);
+        }
+        _toolInputController.clear();
+        _showAddToolButton = false;
+      });
+
+      _toolFocusNode.unfocus();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.toolCreated(toolName)), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.errorCreating(e.toString())), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   // ===================================================================
@@ -991,9 +1408,15 @@ class _AddRecipeFormState extends State<AddRecipeForm> {
     _ingredientNoteController.dispose();
     _ingredientFoodController.dispose();
     _ingredientFoodFocusNode.dispose();
+    _categoryInputController.removeListener(_onCategoryInputChanged);
     _categoryInputController.dispose();
+    _categoryFocusNode.dispose();
+    _tagInputController.removeListener(_onTagInputChanged);
     _tagInputController.dispose();
+    _tagFocusNode.dispose();
+    _toolInputController.removeListener(_onToolInputChanged);
     _toolInputController.dispose();
+    _toolFocusNode.dispose();
     _instructionInputController.dispose();
     _recipeNoteController.dispose();
     super.dispose();

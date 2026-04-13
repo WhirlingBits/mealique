@@ -341,21 +341,14 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
     }
   }
 
-  Future<void> _editItem(ShoppingItem item, String newName) async {
-    final l10n = AppLocalizations.of(context)!;
-    try {
-      final newItem = item.copyWith(display: newName);
-      await _repository.updateItem(newItem);
-      _loadItems();
-    } catch (e) {
-      _showError(l10n.errorEditing(e.toString()));
-    }
-  }
 
   void _showError(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }

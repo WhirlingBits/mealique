@@ -205,9 +205,9 @@ class RecipeStorage {
       'recipeInstructions': recipe.instructions.map((i) => {
         'text': i.text,
       }).toList(),
-      'recipeCategory': recipe.recipeCategory.map((c) => {'name': c}).toList(),
-      'tags': recipe.tags.map((t) => {'name': t}).toList(),
-      'tools': recipe.tools.map((t) => {'name': t}).toList(),
+      'recipeCategory': recipe.recipeCategory.map((c) => {'name': c, 'slug': _generateSlug(c)}).toList(),
+      'tags': recipe.tags.map((t) => {'name': t, 'slug': _generateSlug(t)}).toList(),
+      'tools': recipe.tools.map((t) => {'name': t, 'slug': _generateSlug(t)}).toList(),
       'notes': recipe.notes.map((n) => {'title': n.title, 'text': n.text}).toList(),
     };
   }
@@ -233,6 +233,19 @@ class RecipeStorage {
       'createdAt': food.createdAt,
       'updatedAt': food.updatedAt,
     };
+  }
+
+  /// Generates a URL-friendly slug from a name.
+  String _generateSlug(String name) {
+    return name
+        .toLowerCase()
+        .replaceAll(RegExp(r'[äÄ]'), 'ae')
+        .replaceAll(RegExp(r'[öÖ]'), 'oe')
+        .replaceAll(RegExp(r'[üÜ]'), 'ue')
+        .replaceAll(RegExp(r'ß'), 'ss')
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'-+'), '-')
+        .replaceAll(RegExp(r'^-|-$'), '');
   }
 }
 

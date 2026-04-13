@@ -482,8 +482,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: List.generate(meals.length, (index) {
                     final meal = meals[index];
                     final entryType = toBeginningOfSentenceCase(
-                            meal.entryType.name) ??
-                        meal.entryType.name;
+                            meal.entryType.name);
                     return Column(
                       children: [
                         _buildMealRow(

@@ -422,5 +422,91 @@
     "backgroundSyncDescription": "Automatically sync your data when you have an internet connection.",
     "selectList": "Select a list",
     "randomRecipe": "Random recipe",
-    "noRandomRecipeFound": "Could not find a random recipe. Please try again."
+    "noRandomRecipeFound": "Could not find a random recipe. Please try again.",
+    "addNewCategory": "Create new category",
+    "categoryCreated": "Category \"{name}\" created.",
+    "@categoryCreated": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "deleteCategory": "Delete category",
+    "confirmDeleteCategory": "Are you sure you want to delete the category \"{name}\"?",
+    "@confirmDeleteCategory": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "categoryStillInUse": "The category \"{name}\" is still used in recipes and cannot be deleted.",
+    "@categoryStillInUse": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "recipeAlreadyExists": "A recipe with the name \"{name}\" already exists.",
+    "@recipeAlreadyExists": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "addNewTag": "Create new tag",
+    "tagCreated": "Tag \"{name}\" created.",
+    "@tagCreated": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "deleteTag": "Delete tag",
+    "confirmDeleteTag": "Are you sure you want to delete the tag \"{name}\"?",
+    "@confirmDeleteTag": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "tagStillInUse": "The tag \"{name}\" is still used in recipes and cannot be deleted.",
+    "@tagStillInUse": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "addNewTool": "Create new tool",
+    "toolCreated": "Tool \"{name}\" created.",
+    "@toolCreated": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "deleteTool": "Delete tool",
+    "confirmDeleteTool": "Are you sure you want to delete the tool \"{name}\"?",
+    "@confirmDeleteTool": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "toolStillInUse": "The tool \"{name}\" is still used in recipes and cannot be deleted.",
+    "@toolStillInUse": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    }
 }

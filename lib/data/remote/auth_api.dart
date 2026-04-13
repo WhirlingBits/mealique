@@ -46,7 +46,7 @@ class AuthApi {
     final currentToken = await storage.getToken();
     final serverUrl = await storage.getServerUrl();
 
-    debugPrint('AuthApi.refreshToken: currentToken=${currentToken?.substring(0, (currentToken?.length ?? 0).clamp(0, 20))}..., serverUrl=$serverUrl');
+    debugPrint('AuthApi.refreshToken: currentToken=${currentToken?.substring(0, (currentToken.length).clamp(0, 20))}..., serverUrl=$serverUrl');
 
     // Demo mode check - if token is demo token OR server is demo server, stay in demo mode
     if (currentToken == AppConstants.demoToken || serverUrl == AppConstants.demoServerUrl) {

@@ -1065,4 +1065,72 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get noRandomRecipeFound =>
       'Es konnte kein zufälliges Rezept gefunden werden. Bitte versuche es erneut.';
+
+  @override
+  String get addNewCategory => 'Neue Kategorie erstellen';
+
+  @override
+  String categoryCreated(String name) {
+    return 'Kategorie \"$name\" erstellt.';
+  }
+
+  @override
+  String get deleteCategory => 'Kategorie löschen';
+
+  @override
+  String confirmDeleteCategory(String name) {
+    return 'Bist du sicher, dass du die Kategorie \"$name\" löschen möchtest?';
+  }
+
+  @override
+  String categoryStillInUse(String name) {
+    return 'Die Kategorie \"$name\" wird noch in Rezepten verwendet und kann nicht gelöscht werden.';
+  }
+
+  @override
+  String recipeAlreadyExists(String name) {
+    return 'Ein Rezept mit dem Namen \"$name\" existiert bereits.';
+  }
+
+  @override
+  String get addNewTag => 'Neues Schlagwort erstellen';
+
+  @override
+  String tagCreated(String name) {
+    return 'Schlagwort \"$name\" erstellt.';
+  }
+
+  @override
+  String get deleteTag => 'Schlagwort löschen';
+
+  @override
+  String confirmDeleteTag(String name) {
+    return 'Bist du sicher, dass du das Schlagwort \"$name\" löschen möchtest?';
+  }
+
+  @override
+  String tagStillInUse(String name) {
+    return 'Das Schlagwort \"$name\" wird noch in Rezepten verwendet und kann nicht gelöscht werden.';
+  }
+
+  @override
+  String get addNewTool => 'Neues Utensil erstellen';
+
+  @override
+  String toolCreated(String name) {
+    return 'Utensil \"$name\" erstellt.';
+  }
+
+  @override
+  String get deleteTool => 'Utensil löschen';
+
+  @override
+  String confirmDeleteTool(String name) {
+    return 'Bist du sicher, dass du das Utensil \"$name\" löschen möchtest?';
+  }
+
+  @override
+  String toolStillInUse(String name) {
+    return 'Das Utensil \"$name\" wird noch in Rezepten verwendet und kann nicht gelöscht werden.';
+  }
 }
