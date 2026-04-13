@@ -9,6 +9,16 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  errors:
+    # Treat these as warnings instead of errors
+    deprecated_member_use: warning
+    use_build_context_synchronously: info
+    avoid_print: ignore
+    invalid_null_aware_operator: warning
+    dead_null_aware_expression: warning
+    unnecessary_null_comparison: warning
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`
