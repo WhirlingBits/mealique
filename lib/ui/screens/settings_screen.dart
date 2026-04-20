@@ -5,6 +5,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:mealique/ui/screens/appearance_settings_screen.dart';
 import 'package:mealique/ui/screens/notification_settings_screen.dart';
 import 'package:mealique/ui/screens/server_api_settings_screen.dart';
+import 'package:mealique/ui/screens/shopping_labels_screen.dart';
+import 'package:mealique/ui/screens/food_labels_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../data/sync/user_repository.dart';
 import '../../models/user_self_model.dart';
@@ -162,6 +164,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const NotificationSettingsScreen(),
+                  ),
+                );
+              },
+            ),
+
+            // Menüpunkt: Einkaufs-Kategorien
+            ListTile(
+              leading: const Icon(Icons.category),
+              title: Text(l10n.shoppingLabels),
+              subtitle: Text(l10n.shoppingLabelsDescription),
+              trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ShoppingLabelsScreen(),
+                  ),
+                );
+              },
+            ),
+
+            // Menüpunkt: Lebensmittel-Kategorien
+            ListTile(
+              leading: const Icon(Icons.restaurant),
+              title: Text(l10n.foodLabels),
+              subtitle: Text(l10n.foodLabelsDescription),
+              trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const FoodLabelsScreen(),
                   ),
                 );
               },

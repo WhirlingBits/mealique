@@ -265,8 +265,8 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
           result = a.position.compareTo(b.position);
           break;
         case 'category':
-          final catA = a.food?.label?.name ?? '';
-          final catB = b.food?.label?.name ?? '';
+          final catA = a.label?.name ?? a.food?.label?.name ?? '';
+          final catB = b.label?.name ?? b.food?.label?.name ?? '';
           result = catA.toLowerCase().compareTo(catB.toLowerCase());
           break;
         case 'position':
@@ -384,15 +384,35 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
   Map<String, List<ShoppingItem>> _groupItemsByCategory(
       List<ShoppingItem> items) {
     final l10n = AppLocalizations.of(context)!;
+    final generalCategory = l10n.general;
     final Map<String, List<ShoppingItem>> grouped = {};
+    
     for (var item in items) {
-      final category = item.food?.label?.name ?? l10n.general;
+      // Check item.label first (direct label on item), then food.label as fallback
+      final category = item.label?.name ?? item.food?.label?.name ?? generalCategory;
       if (!grouped.containsKey(category)) {
         grouped[category] = [];
       }
       grouped[category]!.add(item);
     }
-    return grouped;
+    
+    // Sort categories alphabetically, but keep "Allgemein" at the end
+    final sortedKeys = grouped.keys.toList()
+      ..sort((a, b) {
+        if (a == generalCategory) return 1;
+        if (b == generalCategory) return -1;
+        return a.toLowerCase().compareTo(b.toLowerCase());
+      });
+    
+    final sortedGrouped = <String, List<ShoppingItem>>{};
+    for (var key in sortedKeys) {
+      // Sort items within each category by name
+      final categoryItems = grouped[key]!;
+      categoryItems.sort((a, b) => a.display.toLowerCase().compareTo(b.display.toLowerCase()));
+      sortedGrouped[key] = categoryItems;
+    }
+    
+    return sortedGrouped;
   }
 
   Widget _buildSectionTitle(String title) {

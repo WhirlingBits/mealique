@@ -1,22 +1,18 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:mealique/data/remote/labels_api.dart';
 import 'package:mealique/data/sync/household_repository.dart';
 import 'package:mealique/data/sync/recipe_repository.dart';
 import 'package:mealique/l10n/app_localizations.dart';
 import 'package:mealique/models/food_model.dart';
+import 'package:mealique/models/shopping_item_model.dart';
 import 'package:mealique/models/shopping_list_model.dart';
 
 class Unit {
   final String id;
   final String name;
   Unit({required this.id, required this.name});
-}
-
-class Category {
-  final String id;
-  final String name;
-  Category({required this.id, required this.name});
 }
 
 class NewShoppingItem {
@@ -43,26 +39,26 @@ class _FormData {
   final List<ShoppingList> lists;
   final List<Food> foods;
   final List<Unit> units;
-  final List<Category> categories;
+  final List<ShoppingItemLabel> labels;
 
   _FormData({
     required this.lists,
     required this.foods,
     required this.units,
-    required this.categories,
+    required this.labels,
   });
 
   _FormData copyWith({
     List<ShoppingList>? lists,
     List<Food>? foods,
     List<Unit>? units,
-    List<Category>? categories,
+    List<ShoppingItemLabel>? labels,
   }) {
     return _FormData(
       lists: lists ?? this.lists,
       foods: foods ?? this.foods,
       units: units ?? this.units,
-      categories: categories ?? this.categories,
+      labels: labels ?? this.labels,
     );
   }
 }
@@ -84,13 +80,16 @@ class AddShoppingListItemForm extends StatefulWidget {
 class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
   final _householdRepo = HouseholdRepository();
   final _recipeRepo = RecipeRepository();
+  final _labelsApi = LabelsApi();
   late Future<void> _loadFuture;
   _FormData? _formData;
 
   final _quantityController = TextEditingController(text: '1');
   final _notesController = TextEditingController();
   final _foodController = TextEditingController();
+  final _categoryController = TextEditingController();
   final _foodFocusNode = FocusNode();
+  final _categoryFocusNode = FocusNode();
 
   String? _selectedListId;
   String? _selectedFoodId;
@@ -98,6 +97,7 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
   String? _selectedCategoryId;
 
   bool _showAddFoodButton = false;
+  bool _showAddCategoryButton = false;
   bool _showAdvanced = false;
 
   // Inline toast state
@@ -110,6 +110,7 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
     _selectedListId = widget.shoppingListId;
     _loadFuture = _loadFormData();
     _foodController.addListener(_onFoodTextChanged);
+    _categoryController.addListener(_onCategoryTextChanged);
   }
 
   @override
@@ -118,7 +119,10 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
     _notesController.dispose();
     _foodController.removeListener(_onFoodTextChanged);
     _foodController.dispose();
+    _categoryController.removeListener(_onCategoryTextChanged);
+    _categoryController.dispose();
     _foodFocusNode.dispose();
+    _categoryFocusNode.dispose();
     super.dispose();
   }
 
@@ -147,6 +151,31 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
     }
   }
 
+  void _onCategoryTextChanged() {
+    if (!mounted || _formData == null) return;
+    final text = _categoryController.text;
+    if (text.isEmpty) {
+      if (_showAddCategoryButton) setState(() => _showAddCategoryButton = false);
+      if (_selectedCategoryId != null) setState(() => _selectedCategoryId = null);
+      return;
+    }
+    final query = text.toLowerCase();
+    final hasExactMatch = _formData!.labels.any((label) => label.name.toLowerCase() == query);
+    final shouldShow = !hasExactMatch;
+
+    // Reset selected category ID if text no longer matches the previously selected category
+    if (_selectedCategoryId != null) {
+      final selectedCategory = _formData!.labels.where((l) => l.id == _selectedCategoryId);
+      if (selectedCategory.isEmpty || selectedCategory.first.name.toLowerCase() != query) {
+        setState(() => _selectedCategoryId = null);
+      }
+    }
+
+    if (_showAddCategoryButton != shouldShow) {
+      setState(() => _showAddCategoryButton = shouldShow);
+    }
+  }
+
   void _showToast(String message, {Color? backgroundColor}) {
     if (!mounted) return;
     setState(() {
@@ -167,16 +196,17 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
         _householdRepo.getShoppingLists(),
         _recipeRepo.getFoods(),
         _recipeRepo.getUnits(),
+        _labelsApi.getLabels(),
       ]);
       final lists = (results[0] as List<ShoppingList>?) ?? [];
       final foods = results[1] as List<Food>;
       final apiUnits = results[2] as List;
       final units = apiUnits.map((u) => Unit(id: u.id, name: u.name)).toList();
-      final categories = <Category>[];
+      final labels = results[3] as List<ShoppingItemLabel>;
 
       if (mounted) {
         setState(() {
-          _formData = _FormData(lists: lists, foods: foods, units: units, categories: categories);
+          _formData = _FormData(lists: lists, foods: foods, units: units, labels: labels);
         });
       }
     } catch (e) {
@@ -210,6 +240,35 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
       _showToast(l10n.foodCreatedSuccess(foodName), backgroundColor: Colors.green);
     } catch (e) {
       _showToast(l10n.errorCreatingFood(e.toString()), backgroundColor: Colors.red);
+    }
+  }
+
+  Future<void> _handleCreateAndSelectCategory(String categoryName) async {
+    if (_formData == null) return;
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      // Use getOrCreateLabel which handles duplicates gracefully
+      final label = await _labelsApi.getOrCreateLabel(categoryName);
+
+      // Check if label already exists in local list
+      final existingIndex = _formData!.labels.indexWhere((l) => l.id == label.id);
+      List<ShoppingItemLabel> newLabelList;
+      if (existingIndex == -1) {
+        newLabelList = List<ShoppingItemLabel>.from(_formData!.labels)..add(label);
+      } else {
+        newLabelList = _formData!.labels;
+      }
+
+      setState(() {
+        _formData = _formData!.copyWith(labels: newLabelList);
+        _selectedCategoryId = label.id;
+        _categoryController.text = label.name;
+        _showAddCategoryButton = false;
+      });
+
+      _showToast(l10n.categoryCreatedSuccess(categoryName), backgroundColor: Colors.green);
+    } catch (e) {
+      _showToast(l10n.errorCreatingCategory(e.toString()), backgroundColor: Colors.red);
     }
   }
 
@@ -266,6 +325,64 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
         }
       } catch (e) {
         debugPrint('Error deleting food: $e');
+        _showToast(l10n.deleteFailed(e.toString()), backgroundColor: Colors.red);
+      }
+    }
+  }
+
+  Future<void> _handleDeleteCategory(ShoppingItemLabel label) async {
+    if (_formData == null) return;
+    final l10n = AppLocalizations.of(context)!;
+    debugPrint('Delete category requested: ${label.id} - ${label.name}');
+
+    _categoryFocusNode.unfocus();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.deleteCategory),
+        content: Text(l10n.confirmDeleteCategory(label.name)),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.delete, style: const TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+
+    debugPrint('Delete confirmed: $confirmed');
+
+    if (confirmed == true) {
+      try {
+        await _labelsApi.deleteLabel(label.id);
+        debugPrint('Category deleted successfully from API: ${label.id}');
+        final newLabelList = List<ShoppingItemLabel>.from(_formData!.labels)..removeWhere((l) => l.id == label.id);
+        
+        setState(() {
+          _formData = _formData!.copyWith(labels: newLabelList);
+          if (_selectedCategoryId == label.id) {
+            _selectedCategoryId = null;
+            _categoryController.clear();
+          }
+        });
+        debugPrint('Category list updated, remaining: ${newLabelList.length}');
+        _showToast(l10n.itemDeletedSuccess(label.name), backgroundColor: Colors.green);
+      } on DioException catch (e) {
+        debugPrint('Error deleting category: $e');
+        if (mounted) {
+          String message;
+          final responseData = e.response?.data;
+          if (e.response?.statusCode == 400 &&
+              responseData is Map &&
+              responseData['exception'] != null &&
+              responseData['exception'].toString().contains('ForeignKeyViolation')) {
+            message = l10n.categoryStillInUse(label.name);
+          } else {
+            message = l10n.deleteFailed('${responseData?['message'] ?? e.message}');
+          }
+          _showToast(message, backgroundColor: Colors.red);
+        }
+      } catch (e) {
+        debugPrint('Error deleting category: $e');
         _showToast(l10n.deleteFailed(e.toString()), backgroundColor: Colors.red);
       }
     }
@@ -404,6 +521,8 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
                             Expanded(flex: 2, child: _buildQuantityField()),
                           ],
                         ),
+                        const SizedBox(height: 12),
+                        _buildCategoryAutocomplete(formData.labels),
                         const SizedBox(height: 8),
                         _buildAdvancedSectionToggle(),
                         _buildAdvancedSection(formData),
@@ -481,15 +600,162 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
             const SizedBox(height: 12),
             _buildAutocomplete<Unit>(label: l10n.unit, options: formData.units, onSelected: (unit) => setState(() => _selectedUnitId = unit.id)),
             const SizedBox(height: 12),
-            _buildAutocomplete<Category>(label: l10n.category, options: formData.categories, onSelected: (cat) => setState(() => _selectedCategoryId = cat.id)),
-            const SizedBox(height: 12),
             _buildNotesField(),
           ],
         ),
       ),
     );
   }
-  
+
+  Widget _buildCategoryAutocomplete(List<ShoppingItemLabel> labels) {
+    final l10n = AppLocalizations.of(context)!;
+    return RawAutocomplete<ShoppingItemLabel>(
+      textEditingController: _categoryController,
+      focusNode: _categoryFocusNode,
+      displayStringForOption: (label) => label.name,
+      optionsBuilder: (textEditingValue) {
+        final query = textEditingValue.text.toLowerCase();
+        if (query.isEmpty) return labels; // Zeige alle Labels wenn leer
+        return labels.where((label) => label.name.toLowerCase().contains(query));
+      },
+      onSelected: (label) => setState(() {
+        _selectedCategoryId = label.id;
+        _categoryController.text = label.name;
+        _showAddCategoryButton = false;
+      }),
+      fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+        return TextFormField(
+          controller: controller,
+          focusNode: focusNode,
+          decoration: InputDecoration(
+            labelText: l10n.category,
+            border: const OutlineInputBorder(),
+            prefixIcon: _selectedCategoryId != null
+                ? Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: _buildLabelColorDot(_getSelectedLabel()?.color),
+                  )
+                : null,
+            suffixIcon: _selectedCategoryId != null
+                ? IconButton(
+                    icon: const Icon(Icons.clear, size: 20),
+                    onPressed: () => setState(() {
+                      _selectedCategoryId = null;
+                      _categoryController.clear();
+                    }),
+                  )
+                : _showAddCategoryButton
+                    ? IconButton(
+                        icon: const Icon(Icons.add_circle_outline),
+                        onPressed: () => _handleCreateAndSelectCategory(controller.text),
+                        tooltip: l10n.addNewLabel,
+                      )
+                    : null,
+          ),
+        );
+      },
+      optionsViewBuilder: (context, onSelected, options) {
+        return Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            elevation: 4.0,
+            borderRadius: BorderRadius.circular(8),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: 250,
+                maxWidth: MediaQuery.of(context).size.width - 32,
+              ),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                itemCount: options.length,
+                itemBuilder: (context, index) {
+                  final label = options.elementAt(index);
+                  final isSelected = _selectedCategoryId == label.id;
+                  return InkWell(
+                    onTap: () => onSelected(label),
+                    child: Container(
+                      color: isSelected ? const Color(0xFFE58325).withValues(alpha: 0.1) : null,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      child: Row(
+                        children: [
+                          _buildLabelColorDot(label.color),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 6.0),
+                              child: Text(label.name),
+                            ),
+                          ),
+                          if (isSelected)
+                            const Icon(Icons.check, color: Color(0xFFE58325), size: 18),
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(20),
+                              onTap: () {
+                                // First unfocus to close the autocomplete overlay
+                                _categoryFocusNode.unfocus();
+                                // Then show delete dialog after overlay is closed
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  _handleDeleteCategory(label);
+                                });
+                              },
+                              child: const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Icon(Icons.delete_outline, size: 20, color: Colors.redAccent),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  ShoppingItemLabel? _getSelectedLabel() {
+    if (_selectedCategoryId == null || _formData == null) return null;
+    return _formData!.labels.where((l) => l.id == _selectedCategoryId).firstOrNull;
+  }
+
+  Widget _buildLabelColorDot(String? colorStr) {
+    if (colorStr == null || colorStr.isEmpty) {
+      return Container(
+        width: 16,
+        height: 16,
+        decoration: BoxDecoration(
+          color: Colors.grey[300],
+          shape: BoxShape.circle,
+        ),
+      );
+    }
+    try {
+      final hex = colorStr.replaceFirst('#', '');
+      final color = Color(int.parse('FF$hex', radix: 16));
+      return Container(
+        width: 16,
+        height: 16,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      );
+    } catch (_) {
+      return Container(
+        width: 16,
+        height: 16,
+        decoration: BoxDecoration(
+          color: Colors.grey[300],
+          shape: BoxShape.circle,
+        ),
+      );
+    }
+  }
+
   Widget _buildFoodAutocomplete(List<Food> foodOptions) {
     final l10n = AppLocalizations.of(context)!;
     return RawAutocomplete<Food>(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../data/remote/labels_api.dart';
 import '../../data/sync/household_repository.dart';
 import '../../data/sync/recipe_repository.dart';
 import '../../l10n/app_localizations.dart';
@@ -20,6 +21,7 @@ class _EditShoppingListItemScreenState
     extends State<EditShoppingListItemScreen> {
   final _repository = HouseholdRepository();
   final _recipeRepo = RecipeRepository();
+  final _labelsApi = LabelsApi();
 
   late final TextEditingController _displayController;
   late final TextEditingController _quantityController;
@@ -30,9 +32,11 @@ class _EditShoppingListItemScreenState
   late bool _checked;
   String? _selectedUnitId;
   String? _selectedFoodId;
+  String? _selectedLabelId;
 
   List<Food>? _foods;
   List<ShoppingItemUnit>? _units;
+  List<ShoppingItemLabel>? _labels;
   bool _dataLoading = false;
   bool _saving = false;
 
@@ -54,6 +58,7 @@ class _EditShoppingListItemScreenState
     _checked = item.checked;
     _selectedUnitId = item.unit?.id ?? item.unitId;
     _selectedFoodId = item.food?.id ?? item.foodId;
+    _selectedLabelId = item.label?.id ?? item.labelId ?? item.food?.label?.id;
 
     _loadData();
   }
@@ -64,11 +69,13 @@ class _EditShoppingListItemScreenState
       final results = await Future.wait([
         _recipeRepo.getFoods(),
         _recipeRepo.getUnits(),
+        _labelsApi.getLabels(),
       ]);
       if (mounted) {
         setState(() {
           _foods = results[0] as List<Food>;
           _units = results[1] as List<ShoppingItemUnit>;
+          _labels = results[2] as List<ShoppingItemLabel>;
           _dataLoading = false;
         });
       }
@@ -100,6 +107,12 @@ class _EditShoppingListItemScreenState
       updatedUnit = _units!.where((u) => u.id == _selectedUnitId).firstOrNull;
     }
 
+    // Build updated label object
+    ShoppingItemLabel? updatedLabel;
+    if (_selectedLabelId != null && _labels != null) {
+      updatedLabel = _labels!.where((l) => l.id == _selectedLabelId).firstOrNull;
+    }
+
     final updatedItem = widget.item.copyWith(
       display: _displayController.text.trim(),
       quantity: qty,
@@ -109,6 +122,8 @@ class _EditShoppingListItemScreenState
       foodId: _selectedFoodId ?? widget.item.foodId,
       unit: updatedUnit,
       unitId: _selectedUnitId,
+      label: updatedLabel,
+      labelId: _selectedLabelId,
     );
 
     try {
@@ -284,22 +299,10 @@ class _EditShoppingListItemScreenState
               const SizedBox(height: 24),
 
               // ── Category ──
-              if (widget.item.food?.label != null || widget.item.label != null) ...[
-                _buildSectionHeader(l10n.category, Icons.category_outlined),
-                const SizedBox(height: 8),
-                Card(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  child: ListTile(
-                    leading: _buildLabelColorDot(),
-                    title: Text(
-                      widget.item.food?.label?.name ??
-                          widget.item.label?.name ??
-                          l10n.noCategory,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-              ],
+              _buildSectionHeader(l10n.category, Icons.category_outlined),
+              const SizedBox(height: 8),
+              _buildLabelDropdown(l10n),
+              const SizedBox(height: 24),
 
               // ── Save Button ──
               SizedBox(
@@ -354,7 +357,7 @@ class _EditShoppingListItemScreenState
       );
     }
     return DropdownButtonFormField<String?>(
-      initialValue: _selectedUnitId,
+      value: _selectedUnitId,
       isExpanded: true,
       decoration: InputDecoration(
         labelText: l10n.unit,
@@ -370,6 +373,80 @@ class _EditShoppingListItemScreenState
       ],
       onChanged: (val) => setState(() => _selectedUnitId = val),
     );
+  }
+
+  Widget _buildLabelDropdown(AppLocalizations l10n) {
+    if (_dataLoading || _labels == null) {
+      return const SizedBox(
+        height: 56,
+        child: Center(
+          child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+        ),
+      );
+    }
+    return DropdownButtonFormField<String?>(
+      value: _selectedLabelId,
+      isExpanded: true,
+      decoration: InputDecoration(
+        labelText: l10n.category,
+        border: const OutlineInputBorder(),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      ),
+      items: [
+        DropdownMenuItem<String?>(
+          value: null,
+          child: Row(
+            children: [
+              Icon(Icons.category_outlined, color: Colors.grey[400], size: 20),
+              const SizedBox(width: 8),
+              Text('— ${l10n.noCategory}', style: TextStyle(color: Colors.grey[600])),
+            ],
+          ),
+        ),
+        ..._labels!.map((label) => DropdownMenuItem(
+              value: label.id,
+              child: Row(
+                children: [
+                  _buildColorDot(label.color),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(label.name, overflow: TextOverflow.ellipsis)),
+                ],
+              ),
+            )),
+      ],
+      onChanged: (val) => setState(() => _selectedLabelId = val),
+    );
+  }
+
+  Widget _buildColorDot(String? colorStr) {
+    if (colorStr == null || colorStr.isEmpty) {
+      return Container(
+        width: 20,
+        height: 20,
+        decoration: BoxDecoration(
+          color: Colors.grey[300],
+          shape: BoxShape.circle,
+        ),
+      );
+    }
+    try {
+      final hex = colorStr.replaceFirst('#', '');
+      final color = Color(int.parse('FF$hex', radix: 16));
+      return Container(
+        width: 20,
+        height: 20,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      );
+    } catch (_) {
+      return Container(
+        width: 20,
+        height: 20,
+        decoration: BoxDecoration(
+          color: Colors.grey[300],
+          shape: BoxShape.circle,
+        ),
+      );
+    }
   }
 
   Widget _buildFoodAutocomplete(AppLocalizations l10n) {
@@ -426,23 +503,6 @@ class _EditShoppingListItemScreenState
     );
   }
 
-  Widget _buildLabelColorDot() {
-    final colorStr = widget.item.food?.label?.color ?? widget.item.label?.color;
-    if (colorStr == null || colorStr.isEmpty) {
-      return Icon(Icons.category_outlined, color: Colors.grey[400]);
-    }
-    try {
-      final hex = colorStr.replaceFirst('#', '');
-      final color = Color(int.parse('FF$hex', radix: 16));
-      return Container(
-        width: 24,
-        height: 24,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-      );
-    } catch (_) {
-      return Icon(Icons.category_outlined, color: Colors.grey[400]);
-    }
-  }
 
   @override
   void dispose() {
