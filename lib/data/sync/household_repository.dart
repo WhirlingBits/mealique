@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:mealique/config/app_constants.dart';
 import 'package:mealique/core/utils/offline_helper.dart';
+import 'package:mealique/data/local/food_label_cache.dart';
 import 'package:mealique/data/local/household_storage.dart';
 import 'package:mealique/data/local/sync_queue_storage.dart';
 import 'package:mealique/data/local/token_storage.dart';
@@ -14,6 +15,7 @@ class HouseholdRepository {
   final HouseholdStorage _storage;
   final TokenStorage _tokenStorage;
   final SyncQueueStorage _syncQueue;
+  final FoodLabelCache _foodLabelCache;
 
   final Map<String, List<ShoppingItem>> _demoShoppingItems = {
     '1': [
@@ -37,7 +39,8 @@ class HouseholdRepository {
       : _api = HouseholdApi(),
         _storage = HouseholdStorage(),
         _tokenStorage = TokenStorage(),
-        _syncQueue = SyncQueueStorage();
+        _syncQueue = SyncQueueStorage(),
+        _foodLabelCache = FoodLabelCache();
 
   // ─── Shopping Lists ────────────────────────────────────────────────
 
@@ -255,6 +258,8 @@ class HouseholdRepository {
     return withOfflineFallbackSimple<List<ShoppingItem>>(
       apiCall: () async {
         final list = await _api.getShoppingList(listId);
+        // Cache alle Food-Label-Zuordnungen für spätere Verwendung
+        _cacheFoodLabelsFromItems(list.listItems);
         return list.listItems;
       },
       cacheWrite: (items) async {
@@ -322,6 +327,20 @@ class HouseholdRepository {
     debugPrint('DEBUG:   unitId: $unitId');
     debugPrint('DEBUG:   categoryId: $categoryId');
 
+    // Wenn kein Label angegeben, prüfe den lokalen Cache
+    String? effectiveCategoryId = categoryId;
+    if ((effectiveCategoryId == null || effectiveCategoryId.isEmpty) && foodName.isNotEmpty) {
+      effectiveCategoryId = await _foodLabelCache.getLabel(foodName);
+      if (effectiveCategoryId != null) {
+        debugPrint('DEBUG: Using cached label for "$foodName": $effectiveCategoryId');
+      }
+    }
+
+    // Wenn ein Label vorhanden ist, speichere die Zuordnung im Cache
+    if (effectiveCategoryId != null && effectiveCategoryId.isNotEmpty && foodName.isNotEmpty) {
+      await _foodLabelCache.setLabel(foodName, effectiveCategoryId);
+    }
+
     final token = await _tokenStorage.getToken();
     if (token == AppConstants.demoToken) {
       final newItem = ShoppingItem(
@@ -332,7 +351,7 @@ class HouseholdRepository {
         quantity: quantity,
         note: note ?? '',
         unitId: unitId,
-        labelId: categoryId,
+        labelId: effectiveCategoryId,
         checked: false,
         position: (_demoShoppingItems[listId]?.length ?? 0),
       );
@@ -348,7 +367,7 @@ class HouseholdRepository {
       food: ShoppingItemFood(id: foodId, name: foodName),
       unit: unitId != null && unitId.isNotEmpty ? ShoppingItemUnit(id: unitId, name: '') : null,
       unitId: unitId,
-      labelId: categoryId,
+      labelId: effectiveCategoryId,
       quantity: quantity,
       note: note ?? '',
       display: '',
@@ -362,6 +381,8 @@ class HouseholdRepository {
         debugPrint('DEBUG: Calling HouseholdApi.createShoppingItem');
         final result = await _api.createShoppingItem(item);
         debugPrint('DEBUG: Shopping item created successfully via API: ${result.id}');
+        // Cache das Label aus der API-Antwort (falls vom Server gesetzt)
+        _cacheItemLabel(result);
       },
       localWrite: () async {
         debugPrint('DEBUG: Saving shopping item to local cache (offline mode)');
@@ -387,6 +408,9 @@ class HouseholdRepository {
   }
 
   Future<void> updateItem(ShoppingItem item) async {
+    // Speichere die Label-Zuordnung im Cache (vor dem API-Aufruf für Offline-Modus)
+    _cacheItemLabel(item);
+
     final token = await _tokenStorage.getToken();
     if (token == AppConstants.demoToken) {
       final listId = item.shoppingListId;
@@ -402,7 +426,11 @@ class HouseholdRepository {
       return;
     }
     await withOfflineWriteFallback(
-      apiCall: () => _api.updateShoppingItem(item.id, item),
+      apiCall: () async {
+        final result = await _api.updateShoppingItem(item.id, item);
+        // Cache das Label aus der API-Antwort
+        _cacheItemLabel(result);
+      },
       localWrite: () => _updateItemInLocalCache(item),
       enqueue: () => _syncQueue.enqueue(
         actionType: 'update',
@@ -484,6 +512,26 @@ class HouseholdRepository {
       await _storage.saveShoppingLists(updatedLists);
     } catch (e) {
       debugPrint('Failed to remove item from local cache: $e');
+    }
+  }
+
+  /// Cached alle Food-Label-Zuordnungen aus einer Liste von Shopping-Items.
+  /// Wird aufgerufen wenn Items vom Server geladen werden.
+  void _cacheFoodLabelsFromItems(List<ShoppingItem> items) {
+    for (final item in items) {
+      _cacheItemLabel(item);
+    }
+  }
+
+  /// Cached das Food-Label eines einzelnen Shopping-Items.
+  void _cacheItemLabel(ShoppingItem item) {
+    final foodName = item.food?.name ?? item.display;
+    final labelId = item.label?.id ?? item.labelId ?? item.food?.label?.id;
+
+    if (foodName.isNotEmpty && labelId != null && labelId.isNotEmpty) {
+      // Fire and forget - wir warten nicht auf das Ergebnis
+      _foodLabelCache.setLabel(foodName, labelId);
+      debugPrint('FoodLabelCache: Cached "$foodName" → $labelId');
     }
   }
 

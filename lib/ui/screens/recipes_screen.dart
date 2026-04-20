@@ -7,6 +7,7 @@ import 'package:mealique/core/utils/responsive_utils.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/ui/screens/edit_recipe_screen.dart';
 import 'package:mealique/ui/screens/recipe_detail_screen.dart';
+import 'package:mealique/ui/screens/recipe_import_screen.dart';
 import 'package:mealique/ui/widgets/recipe_actions_menu.dart';
 import 'package:mealique/ui/widgets/recipe_image.dart';
 import 'package:mealique/ui/widgets/sort_dialog.dart';
@@ -293,6 +294,15 @@ class _RecipesScreenState extends State<RecipesScreen> {
     );
   }
 
+  Future<void> _openRecipeImport(BuildContext context) async {
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const RecipeImportScreen()),
+    );
+    if (result == true && mounted) {
+      _refreshRecipes();
+    }
+  }
+
   Widget _buildRecipeGrid(AppLocalizations l10n) {
     // Initial loading
     if (_initialLoading) {
@@ -398,6 +408,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
         actions: [
           RecipeActionsMenu(
             onAddRecipe: () => _showAddRecipeSheet(context),
+            onImportFromPhoto: () => _openRecipeImport(context),
             onSort: _showSortDialog,
             onRefresh: _refreshRecipes,
           ),

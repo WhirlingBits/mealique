@@ -313,6 +313,24 @@ class RecipesApi {
     await _dio.delete('api/foods/$foodId');
   }
 
+  /// PUT /api/foods/{item_id} – updates a food (including label assignment)
+  Future<Food> updateFood(String foodId, {String? name, String? labelId}) async {
+    final data = <String, dynamic>{};
+    if (name != null) data['name'] = name;
+    if (labelId != null) data['labelId'] = labelId;
+
+    debugPrint('PUT /api/foods/$foodId with data: $data');
+    final response = await _dio.put('api/foods/$foodId', data: data);
+    debugPrint('PUT /api/foods response: ${response.statusCode}');
+    return Food.fromJson(response.data);
+  }
+
+  /// GET /api/foods/{item_id} – gets a single food by ID
+  Future<Food> getFood(String foodId) async {
+    final response = await _dio.get('api/foods/$foodId');
+    return Food.fromJson(response.data);
+  }
+
   Future<void> deleteRecipe(String slug) async {
     await _dio.delete('api/recipes/$slug');
   }

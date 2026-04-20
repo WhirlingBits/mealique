@@ -2125,6 +2125,210 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The tool \"{name}\" is still used in recipes and cannot be deleted.'**
   String toolStillInUse(String name);
+
+  /// No description provided for @importRecipeFromPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Recipe from Photo'**
+  String get importRecipeFromPhoto;
+
+  /// No description provided for @selectOrCaptureRecipePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture or select a recipe image'**
+  String get selectOrCaptureRecipePhoto;
+
+  /// No description provided for @ocrDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The app will automatically recognize text in the image and suggest recipe name, ingredients, and instructions.'**
+  String get ocrDescription;
+
+  /// No description provided for @takePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Take Photo'**
+  String get takePhoto;
+
+  /// No description provided for @chooseFromGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from Gallery'**
+  String get chooseFromGallery;
+
+  /// No description provided for @recognizingText.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognizing text...'**
+  String get recognizingText;
+
+  /// No description provided for @startRecognition.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Recognition'**
+  String get startRecognition;
+
+  /// No description provided for @recognizedRawText.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognized raw text'**
+  String get recognizedRawText;
+
+  /// No description provided for @saveRecipe.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Recipe'**
+  String get saveRecipe;
+
+  /// No description provided for @importFromPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Import from Photo'**
+  String get importFromPhoto;
+
+  /// No description provided for @shoppingLabels.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping Categories'**
+  String get shoppingLabels;
+
+  /// No description provided for @shoppingLabelsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories like Fruits & Vegetables, Dairy, etc.'**
+  String get shoppingLabelsDescription;
+
+  /// No description provided for @addLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Category'**
+  String get addLabel;
+
+  /// No description provided for @editLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Category'**
+  String get editLabel;
+
+  /// No description provided for @deleteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Category'**
+  String get deleteLabel;
+
+  /// No description provided for @confirmDeleteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete the category \"{name}\"?'**
+  String confirmDeleteLabel(String name);
+
+  /// No description provided for @labelCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Category \"{name}\" created.'**
+  String labelCreated(String name);
+
+  /// No description provided for @labelUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Category \"{name}\" updated.'**
+  String labelUpdated(String name);
+
+  /// No description provided for @labelDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Category \"{name}\" deleted.'**
+  String labelDeleted(String name);
+
+  /// No description provided for @labelName.
+  ///
+  /// In en, this message translates to:
+  /// **'Category name'**
+  String get labelName;
+
+  /// No description provided for @labelColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get labelColor;
+
+  /// No description provided for @noLabelsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No categories found. Create one!'**
+  String get noLabelsFound;
+
+  /// No description provided for @defaultLabels.
+  ///
+  /// In en, this message translates to:
+  /// **'Create default categories'**
+  String get defaultLabels;
+
+  /// No description provided for @foodLabels.
+  ///
+  /// In en, this message translates to:
+  /// **'Food Categories'**
+  String get foodLabels;
+
+  /// No description provided for @foodLabelsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently assign categories to foods'**
+  String get foodLabelsDescription;
+
+  /// No description provided for @foodLabelsInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign a category to a food. When you add the food to a shopping list, the category will be automatically applied.'**
+  String get foodLabelsInfo;
+
+  /// No description provided for @searchFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Search food...'**
+  String get searchFood;
+
+  /// No description provided for @noFoodsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No foods found.'**
+  String get noFoodsFound;
+
+  /// No description provided for @selectCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Select category'**
+  String get selectCategory;
+
+  /// No description provided for @addNewLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Add new category'**
+  String get addNewLabel;
+
+  /// No description provided for @categoryCreatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Category \"{name}\" was created'**
+  String categoryCreatedSuccess(String name);
+
+  /// No description provided for @errorCreatingCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create category: {error}'**
+  String errorCreatingCategory(String error);
+
+  /// No description provided for @errorCreatingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create category: {error}'**
+  String errorCreatingLabel(String error);
+
+  /// No description provided for @labelStillInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" is still used in a shopping list and cannot be deleted.'**
+  String labelStillInUse(String name);
 }
 
 class _AppLocalizationsDelegate

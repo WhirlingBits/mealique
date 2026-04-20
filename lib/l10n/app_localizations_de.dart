@@ -1133,4 +1133,127 @@ class AppLocalizationsDe extends AppLocalizations {
   String toolStillInUse(String name) {
     return 'Das Utensil \"$name\" wird noch in Rezepten verwendet und kann nicht gelöscht werden.';
   }
+
+  @override
+  String get importRecipeFromPhoto => 'Rezept aus Foto importieren';
+
+  @override
+  String get selectOrCaptureRecipePhoto =>
+      'Fotografiere oder wähle ein Rezeptbild aus';
+
+  @override
+  String get ocrDescription =>
+      'Die App erkennt automatisch Text im Bild und schlägt Rezeptnamen, Zutaten und Zubereitungsschritte vor.';
+
+  @override
+  String get takePhoto => 'Foto aufnehmen';
+
+  @override
+  String get chooseFromGallery => 'Aus Galerie wählen';
+
+  @override
+  String get recognizingText => 'Erkenne Text...';
+
+  @override
+  String get startRecognition => 'Erkennung starten';
+
+  @override
+  String get recognizedRawText => 'Erkannter Rohtext';
+
+  @override
+  String get saveRecipe => 'Rezept speichern';
+
+  @override
+  String get importFromPhoto => 'Aus Foto importieren';
+
+  @override
+  String get shoppingLabels => 'Einkaufs-Kategorien';
+
+  @override
+  String get shoppingLabelsDescription =>
+      'Kategorien wie Obst & Gemüse, Milchprodukte, etc.';
+
+  @override
+  String get addLabel => 'Kategorie hinzufügen';
+
+  @override
+  String get editLabel => 'Kategorie bearbeiten';
+
+  @override
+  String get deleteLabel => 'Kategorie löschen';
+
+  @override
+  String confirmDeleteLabel(String name) {
+    return 'Bist du sicher, dass du die Kategorie \"$name\" löschen möchtest?';
+  }
+
+  @override
+  String labelCreated(String name) {
+    return 'Kategorie \"$name\" erstellt.';
+  }
+
+  @override
+  String labelUpdated(String name) {
+    return 'Kategorie \"$name\" aktualisiert.';
+  }
+
+  @override
+  String labelDeleted(String name) {
+    return 'Kategorie \"$name\" gelöscht.';
+  }
+
+  @override
+  String get labelName => 'Kategoriename';
+
+  @override
+  String get labelColor => 'Farbe';
+
+  @override
+  String get noLabelsFound => 'Keine Kategorien gefunden. Erstelle eine neue!';
+
+  @override
+  String get defaultLabels => 'Standardkategorien erstellen';
+
+  @override
+  String get foodLabels => 'Lebensmittel-Kategorien';
+
+  @override
+  String get foodLabelsDescription =>
+      'Lebensmittel dauerhaft Kategorien zuordnen';
+
+  @override
+  String get foodLabelsInfo =>
+      'Weise Lebensmitteln eine Kategorie zu. Wenn du das Lebensmittel zur Einkaufsliste hinzufügst, wird die Kategorie automatisch übernommen.';
+
+  @override
+  String get searchFood => 'Lebensmittel suchen...';
+
+  @override
+  String get noFoodsFound => 'Keine Lebensmittel gefunden.';
+
+  @override
+  String get selectCategory => 'Kategorie wählen';
+
+  @override
+  String get addNewLabel => 'Neue Kategorie hinzufügen';
+
+  @override
+  String categoryCreatedSuccess(String name) {
+    return 'Kategorie \"$name\" wurde erstellt';
+  }
+
+  @override
+  String errorCreatingCategory(String error) {
+    return 'Kategorie konnte nicht erstellt werden: $error';
+  }
+
+  @override
+  String errorCreatingLabel(String error) {
+    return 'Kategorie konnte nicht erstellt werden: $error';
+  }
+
+  @override
+  String labelStillInUse(String name) {
+    return '\"$name\" wird noch in einer Einkaufsliste verwendet und kann nicht gelöscht werden.';
+  }
 }

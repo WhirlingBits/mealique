@@ -1122,4 +1122,125 @@ class AppLocalizationsEn extends AppLocalizations {
   String toolStillInUse(String name) {
     return 'The tool \"$name\" is still used in recipes and cannot be deleted.';
   }
+
+  @override
+  String get importRecipeFromPhoto => 'Import Recipe from Photo';
+
+  @override
+  String get selectOrCaptureRecipePhoto => 'Capture or select a recipe image';
+
+  @override
+  String get ocrDescription =>
+      'The app will automatically recognize text in the image and suggest recipe name, ingredients, and instructions.';
+
+  @override
+  String get takePhoto => 'Take Photo';
+
+  @override
+  String get chooseFromGallery => 'Choose from Gallery';
+
+  @override
+  String get recognizingText => 'Recognizing text...';
+
+  @override
+  String get startRecognition => 'Start Recognition';
+
+  @override
+  String get recognizedRawText => 'Recognized raw text';
+
+  @override
+  String get saveRecipe => 'Save Recipe';
+
+  @override
+  String get importFromPhoto => 'Import from Photo';
+
+  @override
+  String get shoppingLabels => 'Shopping Categories';
+
+  @override
+  String get shoppingLabelsDescription =>
+      'Categories like Fruits & Vegetables, Dairy, etc.';
+
+  @override
+  String get addLabel => 'Add Category';
+
+  @override
+  String get editLabel => 'Edit Category';
+
+  @override
+  String get deleteLabel => 'Delete Category';
+
+  @override
+  String confirmDeleteLabel(String name) {
+    return 'Are you sure you want to delete the category \"$name\"?';
+  }
+
+  @override
+  String labelCreated(String name) {
+    return 'Category \"$name\" created.';
+  }
+
+  @override
+  String labelUpdated(String name) {
+    return 'Category \"$name\" updated.';
+  }
+
+  @override
+  String labelDeleted(String name) {
+    return 'Category \"$name\" deleted.';
+  }
+
+  @override
+  String get labelName => 'Category name';
+
+  @override
+  String get labelColor => 'Color';
+
+  @override
+  String get noLabelsFound => 'No categories found. Create one!';
+
+  @override
+  String get defaultLabels => 'Create default categories';
+
+  @override
+  String get foodLabels => 'Food Categories';
+
+  @override
+  String get foodLabelsDescription => 'Permanently assign categories to foods';
+
+  @override
+  String get foodLabelsInfo =>
+      'Assign a category to a food. When you add the food to a shopping list, the category will be automatically applied.';
+
+  @override
+  String get searchFood => 'Search food...';
+
+  @override
+  String get noFoodsFound => 'No foods found.';
+
+  @override
+  String get selectCategory => 'Select category';
+
+  @override
+  String get addNewLabel => 'Add new category';
+
+  @override
+  String categoryCreatedSuccess(String name) {
+    return 'Category \"$name\" was created';
+  }
+
+  @override
+  String errorCreatingCategory(String error) {
+    return 'Could not create category: $error';
+  }
+
+  @override
+  String errorCreatingLabel(String error) {
+    return 'Could not create category: $error';
+  }
+
+  @override
+  String labelStillInUse(String name) {
+    return '\"$name\" is still used in a shopping list and cannot be deleted.';
+  }
 }

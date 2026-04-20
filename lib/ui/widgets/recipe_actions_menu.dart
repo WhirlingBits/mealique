@@ -3,12 +3,14 @@ import '../../l10n/app_localizations.dart';
 
 class RecipeActionsMenu extends StatelessWidget {
   final VoidCallback? onAddRecipe;
+  final VoidCallback? onImportFromPhoto;
   final VoidCallback? onSort;
   final VoidCallback? onRefresh;
 
   const RecipeActionsMenu({
     super.key,
     this.onAddRecipe,
+    this.onImportFromPhoto,
     this.onSort,
     this.onRefresh,
   });
@@ -21,6 +23,9 @@ class RecipeActionsMenu extends StatelessWidget {
         switch (value) {
           case 'add_recipe':
             onAddRecipe?.call();
+            break;
+          case 'import_photo':
+            onImportFromPhoto?.call();
             break;
           case 'sort':
             onSort?.call();
@@ -37,6 +42,14 @@ class RecipeActionsMenu extends StatelessWidget {
             child: ListTile(
               leading: const Icon(Icons.add),
               title: Text(l10n.addRecipe),
+            ),
+          ),
+        if (onImportFromPhoto != null)
+          PopupMenuItem<String>(
+            value: 'import_photo',
+            child: ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: Text(l10n.importFromPhoto),
             ),
           ),
         if (onSort != null)

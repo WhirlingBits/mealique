@@ -508,5 +508,79 @@
                 "type": "String"
             }
         }
+    },
+    "importRecipeFromPhoto": "Rezept aus Foto importieren",
+    "selectOrCaptureRecipePhoto": "Fotografiere oder wähle ein Rezeptbild aus",
+    "ocrDescription": "Die App erkennt automatisch Text im Bild und schlägt Rezeptnamen, Zutaten und Zubereitungsschritte vor.",
+    "takePhoto": "Foto aufnehmen",
+    "chooseFromGallery": "Aus Galerie wählen",
+    "recognizingText": "Erkenne Text...",
+    "startRecognition": "Erkennung starten",
+    "recognizedRawText": "Erkannter Rohtext",
+    "saveRecipe": "Rezept speichern",
+    "importFromPhoto": "Aus Foto importieren",
+    "shoppingLabels": "Einkaufs-Kategorien",
+    "shoppingLabelsDescription": "Kategorien wie Obst & Gemüse, Milchprodukte, etc.",
+    "addLabel": "Kategorie hinzufügen",
+    "editLabel": "Kategorie bearbeiten",
+    "deleteLabel": "Kategorie löschen",
+    "confirmDeleteLabel": "Bist du sicher, dass du die Kategorie \"{name}\" löschen möchtest?",
+    "@confirmDeleteLabel": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "labelCreated": "Kategorie \"{name}\" erstellt.",
+    "@labelCreated": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "labelUpdated": "Kategorie \"{name}\" aktualisiert.",
+    "@labelUpdated": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "labelDeleted": "Kategorie \"{name}\" gelöscht.",
+    "@labelDeleted": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "labelName": "Kategoriename",
+    "labelColor": "Farbe",
+    "noLabelsFound": "Keine Kategorien gefunden. Erstelle eine neue!",
+    "defaultLabels": "Standardkategorien erstellen",
+    "foodLabels": "Lebensmittel-Kategorien",
+    "foodLabelsDescription": "Lebensmittel dauerhaft Kategorien zuordnen",
+    "foodLabelsInfo": "Weise Lebensmitteln eine Kategorie zu. Wenn du das Lebensmittel zur Einkaufsliste hinzufügst, wird die Kategorie automatisch übernommen.",
+    "searchFood": "Lebensmittel suchen...",
+    "noFoodsFound": "Keine Lebensmittel gefunden.",
+    "selectCategory": "Kategorie wählen",
+    "addNewLabel": "Neue Kategorie hinzufügen",
+    "categoryCreatedSuccess": "Kategorie \"{name}\" wurde erstellt",
+    "@categoryCreatedSuccess": {
+        "placeholders": { "name": { "type": "String" } }
+    },
+    "errorCreatingCategory": "Kategorie konnte nicht erstellt werden: {error}",
+    "@errorCreatingCategory": {
+        "placeholders": { "error": { "type": "String" } }
+    },
+    "errorCreatingLabel": "Kategorie konnte nicht erstellt werden: {error}",
+    "@errorCreatingLabel": {
+        "placeholders": { "error": { "type": "String" } }
+    },
+    "labelStillInUse": "\"{name}\" wird noch in einer Einkaufsliste verwendet und kann nicht gelöscht werden.",
+    "@labelStillInUse": {
+        "placeholders": { "name": { "type": "String" } }
     }
 }

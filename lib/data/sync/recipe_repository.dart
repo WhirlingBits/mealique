@@ -160,6 +160,16 @@ class RecipeRepository {
     return _api.createFood(food);
   }
 
+  /// Updates a food's label assignment.
+  /// This is the key to automatic category inheritance for shopping items.
+  Future<Food> updateFoodLabel(String foodId, String? labelId) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      throw Exception('Demo mode does not support food updates');
+    }
+    return _api.updateFood(foodId, labelId: labelId);
+  }
+
   /// Gets an existing food by name or creates a new one if it doesn't exist.
   /// This handles the case where the food already exists (UniqueViolation error).
   Future<Food> getOrCreateFood(String foodName) async {
