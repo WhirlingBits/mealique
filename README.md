@@ -14,6 +14,12 @@ The app is available as a closed test on Google Play:
   <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" width="200" />
 </a>
 
+### Translation
+
+[![Translation status](https://hosted.weblate.org/widgets/mealique/-/svg-badge.svg)](https://hosted.weblate.org/engage/mealique/)
+
+Translations are managed on [Weblate](https://hosted.weblate.org/projects/mealique/). Feel free to contribute!
+
 > [!WARNING]
 > **This project is in an early development stage.** Features may be incomplete, and bugs are to be expected. Use with caution in production environments.
 
