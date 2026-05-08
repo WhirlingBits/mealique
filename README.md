@@ -16,9 +16,13 @@ The app is available as a closed test on Google Play:
 
 ### Translation
 
-[![Translation status](https://hosted.weblate.org/widgets/mealique/-/svg-badge.svg)](https://hosted.weblate.org/engage/mealique/)
+<a href="https://hosted.weblate.org/engage/mealique/">
+  <img src="https://hosted.weblate.org/widgets/mealique/-/multi-auto.svg" alt="Translation status" />
+</a>
 
-Translations are managed on [Weblate](https://hosted.weblate.org/projects/mealique/). Feel free to contribute!
+[![Hosted on Weblate](https://hosted.weblate.org/exports/6/weblate-powered-on-dark.svg)](https://hosted.weblate.org/projects/mealique/)
+
+Translations are managed on [Weblate](https://hosted.weblate.org/projects/mealique/), a web-based translation tool, which helps to translate the application into multiple languages. Feel free to contribute!
 
 > [!WARNING]
 > **This project is in an early development stage.** Features may be incomplete, and bugs are to be expected. Use with caution in production environments.
