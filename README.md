@@ -78,9 +78,9 @@ You can also build the app from source or install the APK directly if available.
 - [x] **Core Features**
   - [x] User Authentication with Mealie API
   - [x] Browse, search, and view recipes
-- [ ] **Shopping List**
+- [x] **Shopping List**
   - [x] View and manage multiple shopping lists
-  - [ ] Add recipes to a shopping list
+  - [x] Add recipes to a shopping list
   - [x] Mark items as completed
   - [x] Add and edit Shopping List items
 - [x] **Meal Planner**
