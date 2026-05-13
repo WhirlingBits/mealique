@@ -189,6 +189,45 @@ class ShoppingItem {
     return data;
   }
 
+  /// Minimales JSON für PUT /api/households/shopping/items/{id}.
+  /// Vermeidet verschachtelte Objekte (food/unit/label), die je nach
+  /// Mealie-Version zu 422 führen können.
+  Map<String, dynamic> toUpdateJson() {
+    final Map<String, dynamic> data = {
+      'id': id,
+      'shoppingListId': shoppingListId,
+      'quantity': quantity,
+      'checked': checked,
+      'position': position,
+      'extras': extras ?? {},
+    };
+
+    if (note.isNotEmpty) {
+      data['note'] = note;
+    }
+    if (display.isNotEmpty) {
+      data['display'] = display;
+    }
+
+    if (foodId != null && foodId!.isNotEmpty) {
+      data['foodId'] = foodId;
+    } else if (food != null && food!.id.isNotEmpty) {
+      data['foodId'] = food!.id;
+    }
+
+    // Bei null explizit senden, damit Unit entfernt werden kann.
+    if (unitId != null) {
+      data['unitId'] = unitId;
+    } else if (unit != null && unit!.id.isNotEmpty) {
+      data['unitId'] = unit!.id;
+    }
+
+    // Bei null explizit senden, damit Label entfernt werden kann.
+    data['labelId'] = labelId;
+
+    return data;
+  }
+
   /// Complete serialization for local cache storage.
   /// Unlike toJson() which is optimized for API calls, this always includes all fields.
   Map<String, dynamic> toCacheJson() {

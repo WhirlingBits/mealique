@@ -438,7 +438,9 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
   Widget _buildNavigationRail(AppLocalizations l10n) {
     const accentColor = Color(0xFFE58325);
-    return NavigationRail(
+    return Container(
+      color: accentColor, // Fill the entire left side including SafeArea
+      child: NavigationRail(
       backgroundColor: accentColor,
       selectedIndex: _selectedIndex,
       onDestinationSelected: _onItemTapped,
@@ -493,6 +495,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           label: Text(l10n.settings),
         ),
       ],
+      ),
     );
   }
 
@@ -514,12 +517,34 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
     if (isTablet) {
       // Tablet Layout: NavigationRail on the left
+      const accentColor = Color(0xFFE58325);
+      final topPadding = MediaQuery.of(context).padding.top;
+
       return Scaffold(
-        body: Row(
+        body: Column(
           children: [
-            _buildNavigationRail(l10n),
-            const VerticalDivider(width: 1, thickness: 1),
-            Expanded(child: content),
+            // Orange header that fills the entire top SafeArea
+            Container(
+              height: topPadding,
+              color: accentColor,
+            ),
+            // Main content area
+            Expanded(
+              child: Row(
+                children: [
+                  _buildNavigationRail(l10n),
+                  const VerticalDivider(width: 1, thickness: 1),
+                  // Remove top padding so child AppBars don't add extra space
+                  Expanded(
+                    child: MediaQuery.removePadding(
+                      context: context,
+                      removeTop: true,
+                      child: content,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       );

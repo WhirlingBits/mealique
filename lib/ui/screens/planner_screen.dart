@@ -30,6 +30,8 @@ class _PlannerScreenState extends State<PlannerScreen> {
   late DateTime _selectedDay;
   late final ValueNotifier<List<MealplanEntry>> _selectedMeals;
   late Future<void> _mealplansFuture;
+  bool _isLoading = false;
+  Object? _error;
 
   PlanEntryType? _selectedEntryType;
 
@@ -54,16 +56,24 @@ class _PlannerScreenState extends State<PlannerScreen> {
     _selectedMeals = ValueNotifier(_getMealsForDay(_selectedDay));
   }
 
-  Future<void> _fetchMealplans() async {
-    _mealsByDay.clear();
+  Future<void> _fetchMealplans({bool showLoading = false}) async {
+    if (showLoading) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
     try {
       final mealplans =
           await _mealplanRepository.getMealplans(_dateRange.start, _dateRange.end);
       if (mounted) {
         setState(() {
+          _mealsByDay.clear();
           _mealsByDay.addAll(mealplans);
           _selectedMeals.value = _getMealsForDay(_selectedDay);
           _selectedEntryType = null; // Reset filter
+          _isLoading = false;
+          _error = null;
         });
       }
     } catch (e) {
@@ -72,6 +82,8 @@ class _PlannerScreenState extends State<PlannerScreen> {
         setState(() {
           _selectedMeals.value = _getMealsForDay(_selectedDay);
           _selectedEntryType = null;
+          _isLoading = false;
+          _error = e;
         });
       }
     }
@@ -159,10 +171,12 @@ class _PlannerScreenState extends State<PlannerScreen> {
             );
 
             try {
-              await _mealplanRepository.createMealplan(entry);
+              final createdEntry = await _mealplanRepository.createMealplan(entry);
               if (mounted) {
                 setState(() {
-                  _mealplansFuture = _fetchMealplans();
+                  final dayMeals = _mealsByDay[_selectedDay] ?? [];
+                  _mealsByDay[_selectedDay] = [...dayMeals, createdEntry];
+                  _selectedMeals.value = _getMealsForDay(_selectedDay);
                 });
                 ScaffoldMessenger.of(context)
                   ..clearSnackBars()
@@ -214,7 +228,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
           onAddMeal: (entryType, recipe) async {
             final dateStr = _selectedDay.toIso8601String().split('T').first;
 
-            final updatedEntry = MealplanEntry(
+            final updatedEntryData = MealplanEntry(
               id: meal.id,
               date: dateStr,
               entryType: entryType,
@@ -225,11 +239,18 @@ class _PlannerScreenState extends State<PlannerScreen> {
             );
 
             try {
-              await _mealplanRepository.updateMealplan(meal.id, updatedEntry);
+              final result = await _mealplanRepository.updateMealplan(meal.id, updatedEntryData);
               if (mounted) {
                 setState(() {
-                  _mealplansFuture = _fetchMealplans();
+                  final dayMeals = _mealsByDay[_selectedDay] ?? [];
+                  final index = dayMeals.indexWhere((m) => m.id == meal.id);
+                  if (index != -1) {
+                    dayMeals[index] = result;
+                    _mealsByDay[_selectedDay] = [...dayMeals];
+                  }
+                  _selectedMeals.value = _getMealsForDay(_selectedDay);
                 });
+                Navigator.pop(ctx);
                 ScaffoldMessenger.of(context)
                   ..clearSnackBars()
                   ..showSnackBar(
@@ -288,7 +309,9 @@ class _PlannerScreenState extends State<PlannerScreen> {
       await _mealplanRepository.deleteMealplan(meal.id);
       if (mounted) {
         setState(() {
-          _mealplansFuture = _fetchMealplans();
+          final dayMeals = _mealsByDay[_selectedDay] ?? [];
+          _mealsByDay[_selectedDay] = dayMeals.where((m) => m.id != meal.id).toList();
+          _selectedMeals.value = _getMealsForDay(_selectedDay);
         });
         ScaffoldMessenger.of(context)
           ..clearSnackBars()
@@ -416,33 +439,14 @@ class _PlannerScreenState extends State<PlannerScreen> {
           PlannerActionsMenu(
             onAddMeal: () => _showAddMealSheet(),
             onRefresh: () {
-              setState(() {
-                _mealplansFuture = _fetchMealplans();
-              });
+              _fetchMealplans(showLoading: _mealsByDay.isEmpty);
             },
           ),
         ],
       ),
-      body: FutureBuilder<void>(
-        future: _mealplansFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return _buildErrorWidget(snapshot.error!, () {
-              setState(() {
-                _mealplansFuture = _fetchMealplans();
-              });
-            });
-          }
-
-          if (isTablet) {
-            return _buildTabletLayout(context, l10n, accentColor);
-          }
-          return _buildPhoneLayout(context, l10n, accentColor);
-        },
-      ),
+      body: _buildBody(l10n, accentColor, isTablet),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'planner_fab',
         onPressed: _showAddMealSheet,
         tooltip: l10n.addMeal,
         backgroundColor: Colors.green,
@@ -451,6 +455,20 @@ class _PlannerScreenState extends State<PlannerScreen> {
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  Widget _buildBody(AppLocalizations l10n, Color accentColor, bool isTablet) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null && _mealsByDay.isEmpty) {
+      return _buildErrorWidget(_error!, () => _fetchMealplans(showLoading: true));
+    }
+
+    if (isTablet) {
+      return _buildTabletLayout(context, l10n, accentColor);
+    }
+    return _buildPhoneLayout(context, l10n, accentColor);
   }
 
   /// Phone Layout: Vertical calendar and meal list

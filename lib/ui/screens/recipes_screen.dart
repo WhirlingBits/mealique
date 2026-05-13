@@ -137,8 +137,43 @@ class _RecipesScreenState extends State<RecipesScreen> {
     await _loadRecipes();
   }
 
-  void _refreshRecipes() {
-    _resetAndLoad();
+  Future<void> _refreshRecipes() async {
+    if (_recipes.isNotEmpty) {
+      setState(() {
+        _currentPage = 1;
+        _error = null;
+      });
+
+      try {
+        final newRecipes = await _recipeRepository.getRecipes(
+          page: 1,
+          perPage: _perPage,
+          sort: _sortField,
+          orderDirection: _sortDirection,
+          searchQuery: _searchController.text.trim().isEmpty
+              ? null
+              : _searchController.text.trim(),
+        );
+
+        if (mounted) {
+          setState(() {
+            _recipes = newRecipes;
+            _hasMore = newRecipes.length >= _perPage;
+            _initialLoading = false;
+            _isLoading = false;
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _error = e;
+            _isLoading = false;
+          });
+        }
+      }
+    } else {
+      _resetAndLoad();
+    }
   }
 
   // ─── Favoriten ──────────────────────────────────────────────────────────
@@ -211,8 +246,10 @@ class _RecipesScreenState extends State<RecipesScreen> {
     if (confirmed == true && mounted) {
       try {
         await _recipeRepository.deleteRecipe(recipe.slug);
-        _refreshRecipes();
         if (mounted) {
+          setState(() {
+            _recipes.removeWhere((r) => r.slug == recipe.slug);
+          });
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(l10n.itemDeletedSuccess(recipe.name)),
             backgroundColor: Colors.green,
@@ -266,11 +303,13 @@ class _RecipesScreenState extends State<RecipesScreen> {
             final l10n = AppLocalizations.of(context)!;
             try {
               final data = Map<String, dynamic>.from(jsonDecode(recipeJson) as Map);
-              await _recipeRepository.createRecipe(data);
+              final newRecipe = await _recipeRepository.createRecipe(data);
               if (mounted) {
+                setState(() {
+                  _recipes.insert(0, newRecipe);
+                });
                 ScaffoldMessenger.of(context)
                     .showSnackBar(SnackBar(content: Text(l10n.recipeCreated)));
-                _refreshRecipes();
               }
             } on DioException catch (e) {
               if (mounted) {
@@ -503,6 +542,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'recipes_fab',
         onPressed: () => _showAddRecipeSheet(context),
         tooltip: l10n.addRecipe,
         backgroundColor: Colors.green,

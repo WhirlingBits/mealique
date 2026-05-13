@@ -367,7 +367,7 @@ class HouseholdApi {
   Future<CreateShoppingItemResponse> updateShoppingItems(List<ShoppingItem> shoppingItems) async {
     final response = await _dio.put(
       'api/households/shopping/items',
-      data: shoppingItems.map((item) => item.toJson()).toList(),
+      data: shoppingItems.map((item) => item.toUpdateJson()).toList(),
     );
     return CreateShoppingItemResponse.fromJson(response.data);
   }
@@ -387,11 +387,21 @@ class HouseholdApi {
   }
 
   Future<ShoppingItem> updateShoppingItem(String itemId, ShoppingItem shoppingItem) async {
-    final response = await _dio.put(
-      'api/households/shopping/items/$itemId',
-      data: shoppingItem.toJson(),
-    );
-    return ShoppingItem.fromJson(response.data);
+    final payload = shoppingItem.toUpdateJson();
+    debugPrint('DEBUG: HouseholdApi.updateShoppingItem - Payload: $payload');
+    try {
+      final response = await _dio.put(
+        'api/households/shopping/items/$itemId',
+        data: payload,
+      );
+      return ShoppingItem.fromJson(response.data);
+    } on DioException catch (e) {
+      debugPrint('DEBUG: HouseholdApi.updateShoppingItem - DioException');
+      debugPrint('  - Status Code: ${e.response?.statusCode}');
+      debugPrint('  - Response Data: ${e.response?.data}');
+      debugPrint('  - Message: ${e.message}');
+      rethrow;
+    }
   }
 
   Future<void> deleteShoppingItem(String itemId) async {

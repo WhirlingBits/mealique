@@ -128,8 +128,24 @@ class RecipeRepository {
 
     return withOfflineFallbackSimple<List<Food>>(
       apiCall: () async {
-        final response = await _api.getFoods(perPage: 1000);
-        return response.items;
+        const perPage = 250;
+        final firstPage = await _api.getFoods(page: 1, perPage: perPage);
+        final allFoods = <Food>[...firstPage.items];
+
+        // Load remaining pages so the settings screen can show every food.
+        for (var page = 2; page <= firstPage.totalPages; page++) {
+          final nextPage = await _api.getFoods(page: page, perPage: perPage);
+          allFoods.addAll(nextPage.items);
+        }
+
+        // Deduplicate by id in case the backend returns overlapping pages.
+        final byId = <String, Food>{
+          for (final food in allFoods) food.id: food,
+        };
+
+        final foods = byId.values.toList()
+          ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        return foods;
       },
       cacheWrite: (foods) async {
         if (foods.isNotEmpty) {
@@ -168,6 +184,14 @@ class RecipeRepository {
       throw Exception('Demo mode does not support food updates');
     }
     return _api.updateFood(foodId, labelId: labelId);
+  }
+
+  Future<Food> updateFoodName(String foodId, String name) async {
+    final token = await _tokenStorage.getToken();
+    if (token == AppConstants.demoToken) {
+      throw Exception('Demo mode does not support food updates');
+    }
+    return _api.updateFood(foodId, name: name);
   }
 
   /// Gets an existing food by name or creates a new one if it doesn't exist.

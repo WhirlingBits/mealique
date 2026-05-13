@@ -129,11 +129,26 @@ class HouseholdRepository {
     );
   }
 
-  Future<void> createShoppingList(String name) async {
+  Future<ShoppingList> createShoppingList(String name) async {
     final token = await _tokenStorage.getToken();
-    if (token == AppConstants.demoToken) return;
+    if (token == AppConstants.demoToken) {
+      return ShoppingList(
+        id: 'demo_${DateTime.now().millisecondsSinceEpoch}',
+        name: name,
+        extras: {},
+        createdAt: DateTime.now().toIso8601String(),
+        updatedAt: DateTime.now().toIso8601String(),
+        recipeReferences: [],
+        labelSettings: [],
+        listItems: [],
+      );
+    }
+
+    ShoppingList? result;
     await withOfflineWriteFallback(
-      apiCall: () => _api.createShoppingList(name: name),
+      apiCall: () async {
+        result = await _api.createShoppingList(name: name);
+      },
       localWrite: () async {
         // Save a local-only list with a temporary ID
         final localList = ShoppingList(
@@ -146,6 +161,7 @@ class HouseholdRepository {
           labelSettings: [],
           listItems: [],
         );
+        result = localList;
         final cached = await _storage.getShoppingLists();
         final List<ShoppingList> all = [...(cached ?? <ShoppingList>[]), localList];
         await _storage.clearShoppingLists();
@@ -157,6 +173,7 @@ class HouseholdRepository {
         payload: {'name': name},
       ),
     );
+    return result!;
   }
 
   Future<void> deleteShoppingList(String id) async {
@@ -310,7 +327,7 @@ class HouseholdRepository {
     );
   }
 
-  Future<void> createShoppingItem({
+  Future<ShoppingItem> createShoppingItem({
     required String listId,
     required String foodId,
     required String foodName,
@@ -357,7 +374,7 @@ class HouseholdRepository {
       );
       final currentItems = _demoShoppingItems[listId] ?? [];
       _demoShoppingItems[listId] = [...currentItems, newItem];
-      return;
+      return newItem;
     }
 
     final item = ShoppingItem(
@@ -376,13 +393,16 @@ class HouseholdRepository {
     );
     debugPrint('DEBUG: Creating shopping item object: ${item.toJson()}');
 
+    ShoppingItem? result;
     final wasOffline = await withOfflineWriteFallback(
       apiCall: () async {
         debugPrint('DEBUG: Calling HouseholdApi.createShoppingItem');
-        final result = await _api.createShoppingItem(item);
-        debugPrint('DEBUG: Shopping item created successfully via API: ${result.id}');
+        result = await _api.createShoppingItem(item);
+        debugPrint('DEBUG: Shopping item created successfully via API: ${result?.id}');
         // Cache das Label aus der API-Antwort (falls vom Server gesetzt)
-        _cacheItemLabel(result);
+        if (result != null) {
+          _cacheItemLabel(result!);
+        }
       },
       localWrite: () async {
         debugPrint('DEBUG: Saving shopping item to local cache (offline mode)');
@@ -391,6 +411,7 @@ class HouseholdRepository {
           id: 'local_${DateTime.now().millisecondsSinceEpoch}',
           display: foodName,
         );
+        result = localItem;
         await _addItemToLocalCache(listId, localItem);
       },
       enqueue: () {
@@ -405,6 +426,7 @@ class HouseholdRepository {
     if (wasOffline) {
       debugPrint('DEBUG: Shopping item saved locally (offline)');
     }
+    return result!;
   }
 
   Future<void> updateItem(ShoppingItem item) async {

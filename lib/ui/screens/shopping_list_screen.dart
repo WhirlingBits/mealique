@@ -26,7 +26,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   final HouseholdRepository _repository = HouseholdRepository();
   final ScrollController _scrollController = ScrollController();
 
-  late Future<List<ShoppingList>> _listsFuture;
+  List<ShoppingList>? _lists;
+  bool _isLoading = true;
+  Object? _error;
   String? _sortField;
   String _sortDirection = 'asc';
   bool _isFabVisible = true;
@@ -60,17 +62,34 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     }
   }
 
-  void _loadLists() {
-    setState(() {
-      _listsFuture = _repository.getShoppingListsWithItemCount(
+  Future<void> _loadLists() async {
+    if (_lists == null) {
+      setState(() => _isLoading = true);
+    }
+    try {
+      final lists = await _repository.getShoppingListsWithItemCount(
         orderBy: _sortField,
         orderDirection: _sortDirection,
       );
-    });
+      if (mounted) {
+        setState(() {
+          _lists = lists;
+          _isLoading = false;
+          _error = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e;
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _handleRefresh() async {
-    _loadLists();
+    await _loadLists();
   }
 
   void _showSortDialog() async {
@@ -106,9 +125,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           onAddList: (name) async {
             final l10n = AppLocalizations.of(this.context)!;
             try {
-              await _repository.createShoppingList(name);
-              _loadLists();
+              final newList = await _repository.createShoppingList(name);
               if (mounted) {
+                setState(() {
+                  _lists = [...(_lists ?? []), newList];
+                });
                 Navigator.pop(context);
                 ScaffoldMessenger.of(this.context)
                   ..clearSnackBars()
@@ -147,8 +168,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     final l10n = AppLocalizations.of(context)!;
     try {
       await _repository.deleteShoppingList(listId);
-      _loadLists();
       if (mounted) {
+        setState(() {
+          _lists = _lists?.where((l) => l.id != listId).toList();
+        });
         ScaffoldMessenger.of(context)
           ..clearSnackBars()
           ..showSnackBar(
@@ -245,28 +268,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           ),
         ],
       ),
-      body: FutureBuilder<List<ShoppingList>>(
-        future: _listsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return _buildErrorWidget(snapshot.error!, _loadLists);
-          }
-
-          final lists = snapshot.data ?? [];
-
-          if (lists.isEmpty) {
-            return _buildEmptyState(l10n, theme);
-          }
-
-          if (isLargeTablet) {
-            return _buildMasterDetailLayout(lists, l10n, theme);
-          }
-          return _buildPhoneLayout(lists, l10n, theme);
-        },
-      ),
+      body: _buildBody(l10n, theme, isLargeTablet),
       floatingActionButton: AnimatedSlide(
         duration: const Duration(milliseconds: 200),
         offset: _isFabVisible ? Offset.zero : const Offset(0, 2),
@@ -274,6 +276,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           duration: const Duration(milliseconds: 200),
           opacity: _isFabVisible ? 1.0 : 0.0,
           child: FloatingActionButton(
+            heroTag: 'shopping_list_fab',
             onPressed: _isFabVisible ? _showAddListSheet : null,
             tooltip: l10n.createList,
             backgroundColor: Colors.green,
@@ -284,6 +287,26 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildBody(AppLocalizations l10n, ThemeData theme, bool isLargeTablet) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return _buildErrorWidget(_error!, _loadLists);
+    }
+
+    final lists = _lists ?? [];
+
+    if (lists.isEmpty) {
+      return _buildEmptyState(l10n, theme);
+    }
+
+    if (isLargeTablet) {
+      return _buildMasterDetailLayout(lists, l10n, theme);
+    }
+    return _buildPhoneLayout(lists, l10n, theme);
   }
 
   Widget _buildEmptyState(AppLocalizations l10n, ThemeData theme) {
@@ -357,11 +380,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       });
     }
 
+    const accentColor = Color(0xFFE58325);
+    
     return Row(
       children: [
-        // Master: List of shopping lists
-        SizedBox(
+        // Master: List of shopping lists with orange background
+        Container(
           width: 320,
+          color: accentColor.withValues(alpha: 0.08),
           child: RefreshIndicator(
             onRefresh: _handleRefresh,
             child: SlidableAutoCloseBehavior(

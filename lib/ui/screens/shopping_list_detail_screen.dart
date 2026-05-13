@@ -40,7 +40,9 @@ class ShoppingListDetailScreen extends StatefulWidget {
 class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
     with WidgetsBindingObserver {
   final _repository = HouseholdRepository();
-  late Future<List<ShoppingItem>> _itemsFuture;
+  List<ShoppingItem> _items = [];
+  bool _initialLoading = true;
+  Object? _loadError;
   Timer? _refreshTimer;
 
   // Scroll controller for hiding FAB on scroll
@@ -54,7 +56,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _scrollController.addListener(_onScroll);
-    _loadItems();
+    unawaited(_loadItems(showLoading: true));
     _startAutoRefresh();
     // Load per-list settings
     Provider.of<SettingsProvider>(context, listen: false)
@@ -87,7 +89,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _loadItems();
+      unawaited(_loadItems());
       _startAutoRefresh();
     } else if (state == AppLifecycleState.paused) {
       _refreshTimer?.cancel();
@@ -97,14 +99,37 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
   void _startAutoRefresh() {
     _refreshTimer?.cancel();
     _refreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
-      _loadItems();
+      unawaited(_loadItems());
     });
   }
 
-  void _loadItems() {
-    setState(() {
-      _itemsFuture = _repository.getItemsForList(widget.listId);
-    });
+  Future<void> _loadItems({bool showLoading = false}) async {
+    if (showLoading && mounted) {
+      setState(() {
+        _initialLoading = true;
+        _loadError = null;
+      });
+    }
+
+    try {
+      final items = await _repository.getItemsForList(widget.listId);
+      if (!mounted) return;
+      setState(() {
+        _items = items;
+        _loadError = null;
+        _initialLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loadError = e;
+        _initialLoading = false;
+      });
+    }
+  }
+
+  Future<void> _handleRefresh() async {
+    await _loadItems(showLoading: _items.isEmpty);
   }
 
   void _handleToggleShowCompleted() {
@@ -127,7 +152,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
       updatedAt: '',
       recipeReferences: [],
       labelSettings: [],
-      listItems: await _itemsFuture,
+      listItems: List<ShoppingItem>.from(_items),
     );
     if (!mounted) return;
     final result = await Navigator.push<bool>(
@@ -137,33 +162,44 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
       ),
     );
     if (result == true) {
-      _loadItems();
+      _handleRefresh();
     }
   }
 
   Future<void> _handleUncheckAll() async {
     final l10n = AppLocalizations.of(context)!;
     try {
-      final items = await _itemsFuture;
-      final checkedItems = items.where((i) => i.checked).toList();
+      final checkedItems = _items.where((i) => i.checked).toList();
       for (final item in checkedItems) {
         await _repository.updateItem(item.copyWith(checked: false));
       }
-      _loadItems();
+      if (mounted) {
+        final checkedIds = checkedItems.map((i) => i.id).toSet();
+        setState(() {
+          _items = _items
+              .map((i) => checkedIds.contains(i.id) ? i.copyWith(checked: false) : i)
+              .toList();
+        });
+      }
     } catch (e) {
       _showError(l10n.errorUpdating(e.toString()));
+      _handleRefresh();
     }
   }
 
   Future<void> _handleDeleteCompleted() async {
     final l10n = AppLocalizations.of(context)!;
     try {
-      final items = await _itemsFuture;
-      final checkedItems = items.where((i) => i.checked).toList();
+      final checkedItems = _items.where((i) => i.checked).toList();
       for (final item in checkedItems) {
         await _repository.deleteItem(item.id);
       }
-      _loadItems();
+      if (mounted) {
+        final checkedIds = checkedItems.map((i) => i.id).toSet();
+        setState(() {
+          _items = _items.where((i) => !checkedIds.contains(i.id)).toList();
+        });
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -174,6 +210,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
       }
     } catch (e) {
       _showError(l10n.errorDeleting(e.toString()));
+      _handleRefresh();
     }
   }
 
@@ -281,11 +318,22 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
 
   Future<void> _toggleItem(ShoppingItem item) async {
     final l10n = AppLocalizations.of(context)!;
+    final newItem = item.copyWith(checked: !item.checked);
+    final index = _items.indexWhere((i) => i.id == item.id);
+    if (index != -1 && mounted) {
+      setState(() {
+        _items[index] = newItem;
+      });
+    }
+
     try {
-      final newItem = item.copyWith(checked: !item.checked);
       await _repository.updateItem(newItem);
-      _loadItems();
     } catch (e) {
+      if (index != -1 && mounted) {
+        setState(() {
+          _items[index] = item;
+        });
+      }
       _showError(l10n.errorUpdating(e.toString()));
     }
   }
@@ -293,7 +341,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
   Future<void> _addComplexItem(NewShoppingItem newItemData) async {
     final l10n = AppLocalizations.of(context)!;
     try {
-       await _repository.createShoppingItem(
+       final newItem = await _repository.createShoppingItem(
         listId: newItemData.listId,
         foodId: newItemData.foodId,
         foodName: newItemData.foodName,
@@ -302,8 +350,12 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
         unitId: newItemData.unitId,
         categoryId: newItemData.categoryId,
       );
-      _loadItems();
+
       if (mounted) {
+        setState(() {
+          _items = [..._items, newItem];
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.itemAddedSuccess(newItemData.foodName)),
@@ -324,9 +376,15 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
 
   Future<void> _deleteItem(ShoppingItem item) async {
     final l10n = AppLocalizations.of(context)!;
+    final previousItems = List<ShoppingItem>.from(_items);
+    if (mounted) {
+      setState(() {
+        _items = _items.where((i) => i.id != item.id).toList();
+      });
+    }
+
     try {
       await _repository.deleteItem(item.id);
-      _loadItems();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -336,8 +394,12 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
         );
       }
     } catch (e) {
+      if (mounted) {
+        setState(() {
+          _items = previousItems;
+        });
+      }
       _showError(l10n.errorDeleting(e.toString()));
-      _loadItems();
     }
   }
 
@@ -376,9 +438,21 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
       ),
     ).then((hasChanged) {
       if (hasChanged == true) {
-        _loadItems();
+        _handleRefresh();
       }
     });
+  }
+
+  Future<void> _openItemDetails(ShoppingItem item) async {
+    final hasChanged = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ShoppingListItemDetailScreen(item: item),
+      ),
+    );
+    if (hasChanged == true) {
+      _handleRefresh();
+    }
   }
 
   Map<String, List<ShoppingItem>> _groupItemsByCategory(
@@ -518,21 +592,31 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
             ),
           ],
         ),
+        endActionPane: ActionPane(
+          motion: const ScrollMotion(),
+          extentRatio: 0.5,
+          children: [
+            SlidableAction(
+              onPressed: (_) => _toggleItem(item),
+              backgroundColor: item.checked ? Colors.blueGrey : Colors.green,
+              foregroundColor: Colors.white,
+              icon: item.checked ? Icons.radio_button_unchecked : Icons.check,
+              label: item.checked ? l10n.uncheckAllItems : l10n.done,
+            ),
+            SlidableAction(
+              onPressed: (_) => _openItemDetails(item),
+              backgroundColor: const Color(0xFF4A6FA5),
+              foregroundColor: Colors.white,
+              icon: Icons.info_outline,
+              label: l10n.details,
+            ),
+          ],
+        ),
         child: CheckboxListTile(
           value: item.checked,
           onChanged: (val) => _toggleItem(item),
           title: GestureDetector(
-            onTap: () async {
-              final hasChanged = await Navigator.push<bool>(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ShoppingListItemDetailScreen(item: item),
-                ),
-              );
-              if (hasChanged == true) {
-                _loadItems();
-              }
-            },
+            onTap: () => _openItemDetails(item),
             // Make the whole tile tappable for navigation, not just the text
             child: Container(
               color: Colors.transparent, // Makes the GestureDetector hit-testable
@@ -557,17 +641,14 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
     final settings = Provider.of<SettingsProvider>(context);
 
     // Build the main content
-    Widget content = FutureBuilder<List<ShoppingItem>>(
-      future: _itemsFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return _buildErrorWidget(snapshot.error!, _loadItems);
-        }
-        final items = snapshot.data ?? [];
-        var displayItems = items.toList();
+    Widget content;
+    if (_initialLoading && _items.isEmpty) {
+      content = const Center(child: CircularProgressIndicator());
+    } else if (_loadError != null && _items.isEmpty) {
+      content = _buildErrorWidget(_loadError!, _handleRefresh);
+    } else {
+      final items = _items;
+      var displayItems = items.toList();
 
         // Filter out completed items if toggle is off
         if (!settings.showCompletedForList(widget.listId)) {
@@ -586,12 +667,12 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
         }
 
         // Group by category or show flat list
-        if (settings.showCategoriesForList(widget.listId)) {
-          final groupedItems = _groupItemsByCategory(displayItems);
-          return SlidableAutoCloseBehavior(
+      if (settings.showCategoriesForList(widget.listId)) {
+        final groupedItems = _groupItemsByCategory(displayItems);
+        content = SlidableAutoCloseBehavior(
             child: RefreshIndicator(
               onRefresh: () async {
-                _loadItems();
+                await _loadItems();
               },
               child: CustomScrollView(
                 controller: _scrollController,
@@ -620,12 +701,12 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
               ),
             ),
           );
-        } else {
-          // Flat list without categories
-          return SlidableAutoCloseBehavior(
+      } else {
+        // Flat list without categories
+        content = SlidableAutoCloseBehavior(
             child: RefreshIndicator(
               onRefresh: () async {
-                _loadItems();
+                await _loadItems();
               },
               child: ListView.builder(
                 controller: _scrollController,
@@ -635,9 +716,8 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
               ),
             ),
           );
-        }
-      },
-    );
+      }
+    }
 
     // In embedded mode (tablet), show header row with title and actions
     if (widget.embedded) {
@@ -661,7 +741,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
                     ),
                   ),
                   ShoppingListDetailActionsMenu(
-                    onRefresh: _loadItems,
+                    onRefresh: _handleRefresh,
                     onEditList: _handleEditList,
                     onUncheckAll: _handleUncheckAll,
                     onDeleteCompleted: _handleDeleteCompleted,
@@ -685,6 +765,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
             duration: const Duration(milliseconds: 200),
             opacity: _isFabVisible ? 1.0 : 0.0,
             child: FloatingActionButton(
+              heroTag: 'shopping_list_detail_fab',
               onPressed: _isFabVisible ? _showAddItemSheet : null,
               tooltip: l10n.addItem,
               backgroundColor: Colors.green,
@@ -705,7 +786,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
         title: Text(widget.listName),
         actions: [
           ShoppingListDetailActionsMenu(
-            onRefresh: _loadItems,
+            onRefresh: _handleRefresh,
             onEditList: _handleEditList,
             onUncheckAll: _handleUncheckAll,
             onDeleteCompleted: _handleDeleteCompleted,
@@ -726,6 +807,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
           duration: const Duration(milliseconds: 200),
           opacity: _isFabVisible ? 1.0 : 0.0,
           child: FloatingActionButton(
+            heroTag: 'shopping_list_detail_fab_normal',
             onPressed: _isFabVisible ? _showAddItemSheet : null,
             tooltip: l10n.addItem,
             backgroundColor: Colors.green,

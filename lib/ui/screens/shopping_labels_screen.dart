@@ -204,30 +204,40 @@ class _ShoppingLabelsScreenState extends State<ShoppingLabelsScreen> {
     if (result != null && mounted) {
       try {
         if (isEdit) {
-          await _labelsApi.updateLabel(
+          final updatedLabel = await _labelsApi.updateLabel(
             label.id,
             name: result['name']!,
             color: result['color']!,
           );
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(l10n.labelUpdated(result['name']!)),
-              backgroundColor: Colors.green,
-            ),
-          );
+          if (mounted) {
+            setState(() {
+              final index = _labels!.indexWhere((l) => l.id == label.id);
+              if (index != -1) _labels![index] = updatedLabel;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(l10n.labelUpdated(result['name']!)),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
         } else {
-          await _labelsApi.createLabel(
+          final newLabel = await _labelsApi.createLabel(
             name: result['name']!,
             color: result['color']!,
           );
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(l10n.labelCreated(result['name']!)),
-              backgroundColor: Colors.green,
-            ),
-          );
+          if (mounted) {
+            setState(() {
+              _labels = [...(_labels ?? []), newLabel];
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(l10n.labelCreated(result['name']!)),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
         }
-        await _loadLabels();
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -265,13 +275,17 @@ class _ShoppingLabelsScreenState extends State<ShoppingLabelsScreen> {
     if (confirmed == true && mounted) {
       try {
         await _labelsApi.deleteLabel(label.id);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.labelDeleted(label.name)),
-            backgroundColor: Colors.green,
-          ),
-        );
-        await _loadLabels();
+        if (mounted) {
+          setState(() {
+            _labels = _labels?.where((l) => l.id != label.id).toList();
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.labelDeleted(label.name)),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -307,6 +321,7 @@ class _ShoppingLabelsScreenState extends State<ShoppingLabelsScreen> {
       ),
       body: _buildBody(l10n),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'shopping_labels_fab',
         onPressed: () => _showAddEditDialog(),
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
