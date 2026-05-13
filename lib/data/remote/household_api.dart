@@ -394,14 +394,44 @@ class HouseholdApi {
         'api/households/shopping/items/$itemId',
         data: payload,
       );
-      return ShoppingItem.fromJson(response.data);
+      return _parseShoppingItemUpdateResponse(response.data, shoppingItem);
     } on DioException catch (e) {
+      // Einige Mealie-Versionen validieren Update-Payloads strenger.
+      // Fallback auf das alte Payload-Format verhindert Regressionen in der Detailansicht.
+      if (e.response?.statusCode == 422) {
+        final legacyPayload = shoppingItem.toJson();
+        debugPrint(
+            'DEBUG: HouseholdApi.updateShoppingItem - Retry with legacy payload: $legacyPayload');
+        final retryResponse = await _dio.put(
+          'api/households/shopping/items/$itemId',
+          data: legacyPayload,
+        );
+        return _parseShoppingItemUpdateResponse(retryResponse.data, shoppingItem);
+      }
       debugPrint('DEBUG: HouseholdApi.updateShoppingItem - DioException');
       debugPrint('  - Status Code: ${e.response?.statusCode}');
       debugPrint('  - Response Data: ${e.response?.data}');
       debugPrint('  - Message: ${e.message}');
       rethrow;
     }
+  }
+
+  ShoppingItem _parseShoppingItemUpdateResponse(
+    dynamic data,
+    ShoppingItem fallback,
+  ) {
+    if (data is Map<String, dynamic>) {
+      if (data['updatedItems'] is List && (data['updatedItems'] as List).isNotEmpty) {
+        return ShoppingItem.fromJson((data['updatedItems'] as List).first as Map<String, dynamic>);
+      }
+      if (data['createdItems'] is List && (data['createdItems'] as List).isNotEmpty) {
+        return ShoppingItem.fromJson((data['createdItems'] as List).first as Map<String, dynamic>);
+      }
+      if (data.containsKey('id')) {
+        return ShoppingItem.fromJson(data);
+      }
+    }
+    return fallback;
   }
 
   Future<void> deleteShoppingItem(String itemId) async {

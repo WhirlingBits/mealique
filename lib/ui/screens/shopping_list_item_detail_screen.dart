@@ -46,7 +46,7 @@ class _ShoppingListItemDetailScreenState
           ..clearSnackBars()
           ..showSnackBar(
             SnackBar(
-              content: Text(l10n.itemUpdatedSuccess(_item.display)),
+                content: Text(l10n.itemUpdatedSuccess(_itemBaseName)),
               backgroundColor: Colors.green,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
@@ -78,7 +78,7 @@ class _ShoppingListItemDetailScreenState
     final l10n = AppLocalizations.of(context)!;
     _showEditDialog(
       title: l10n.editDisplay,
-      initialValue: _item.display,
+      initialValue: _itemBaseName,
       hint: l10n.newDisplayName,
       onSave: (value) => _updateItem(_item.copyWith(display: value)),
     );
@@ -88,7 +88,7 @@ class _ShoppingListItemDetailScreenState
     final l10n = AppLocalizations.of(context)!;
     _showEditDialog(
       title: l10n.editQuantity,
-      initialValue: _item.quantity.toString(),
+      initialValue: _formatQuantity(_item.quantity),
       hint: l10n.newQuantity,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       onSave: (value) {
@@ -201,7 +201,7 @@ class _ShoppingListItemDetailScreenState
             ..clearSnackBars()
             ..showSnackBar(
               SnackBar(
-                content: Text(l10n.itemDeletedSuccess(_item.display)),
+                content: Text(l10n.itemDeletedSuccess(_itemBaseName)),
                 backgroundColor: Colors.green,
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
@@ -249,7 +249,7 @@ class _ShoppingListItemDetailScreenState
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(_hasChanged),
         ),
-        title: Text(_item.display, overflow: TextOverflow.ellipsis),
+        title: Text(_combinedItemTitle, overflow: TextOverflow.ellipsis),
         actions: [
           ShoppingListItemDetailActionsMenu(
             onEdit: _handleMenuEdit,
@@ -339,12 +339,20 @@ class _ShoppingListItemDetailScreenState
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Column(
         children: [
-          // Display name
+          // Display name (without quantity prefix)
           _buildEditableRow(
             icon: Icons.label_outline,
             label: l10n.itemDetails,
-            value: _item.display.isNotEmpty ? _item.display : '–',
+            value: _itemBaseName,
             onTap: _editDisplay,
+          ),
+          const Divider(height: 1, indent: 56),
+
+          // Current amount (quantity + unit) and quantity input stay separated internally.
+          _buildInfoRow(
+            icon: Icons.shopping_bag_outlined,
+            label: '${l10n.quantity} + ${l10n.unit}',
+            value: _combinedItemTitle,
           ),
           const Divider(height: 1, indent: 56),
 
@@ -515,6 +523,36 @@ class _ShoppingListItemDetailScreenState
   }
 
   // ── Utilities ────────────────────────────────────────────────────
+
+  String get _itemBaseName {
+    // 1) Strukturierter Lebensmittelname hat Vorrang
+    final foodName = _item.food?.name ?? '';
+    if (foodName.isNotEmpty) return foodName;
+
+    // 2) Fallback: Mengen- (und ggf. Einheiten-)Präfix aus display entfernen.
+    //    Mealie formatiert display als "<menge> [einheit] <name>".
+    var base = _item.display;
+    final qtyStr = _formatQuantity(_item.quantity);
+    final unitName = _item.unit?.name ?? '';
+    if (unitName.isNotEmpty) {
+      final prefix = '$qtyStr $unitName ';
+      if (base.startsWith(prefix)) base = base.substring(prefix.length);
+    } else {
+      final prefix = '$qtyStr ';
+      if (base.startsWith(prefix)) base = base.substring(prefix.length);
+    }
+
+    return base.isNotEmpty ? base : '–';
+  }
+
+  String get _combinedItemTitle {
+    final parts = <String>[
+      _formatQuantity(_item.quantity),
+      if ((_item.unit?.name ?? '').isNotEmpty) _item.unit!.name,
+      _itemBaseName,
+    ];
+    return parts.join(' ');
+  }
 
   String _formatQuantity(double qty) {
     if (qty == qty.roundToDouble()) {
