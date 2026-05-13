@@ -18,6 +18,7 @@ push_to_github:
     - git remote add github https://matti122:${GITHUB_TOKEN}@github.com/WhirlingBits/mealique.git
     - git push github HEAD:refs/heads/main
     - git push github --tags
-  only:
-    - main
-  when: manual
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+    - when: never
