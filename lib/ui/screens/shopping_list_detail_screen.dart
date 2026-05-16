@@ -656,20 +656,17 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
         }
 
         // Apply sort
-        displayItems = _sortItems(displayItems);
+      // Apply sort
+      displayItems = _sortItems(displayItems);
 
-        if (displayItems.isEmpty && items.isNotEmpty) {
-          // All items are completed and hidden
-          return _buildEmptyState();
-        }
-        if (displayItems.isEmpty) {
-          return _buildEmptyState();
-        }
-
+      if (displayItems.isEmpty) {
+        // Alle Elemente sind erledigt und ausgeblendet oder die Liste ist generell leer
+        content = _buildEmptyState();
+      } else {
         // Group by category or show flat list
-      if (settings.showCategoriesForList(widget.listId)) {
-        final groupedItems = _groupItemsByCategory(displayItems);
-        content = SlidableAutoCloseBehavior(
+        if (settings.showCategoriesForList(widget.listId)) {
+          final groupedItems = _groupItemsByCategory(displayItems);
+          content = SlidableAutoCloseBehavior(
             child: RefreshIndicator(
               onRefresh: () async {
                 await _loadItems();
@@ -681,7 +678,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
-                        (context, index) {
+                            (context, index) {
                           final category = groupedItems.keys.elementAt(index);
                           final categoryItems = groupedItems[category]!;
 
@@ -701,9 +698,9 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
               ),
             ),
           );
-      } else {
-        // Flat list without categories
-        content = SlidableAutoCloseBehavior(
+        } else {
+          // Flat list without categories
+          content = SlidableAutoCloseBehavior(
             child: RefreshIndicator(
               onRefresh: () async {
                 await _loadItems();
@@ -716,6 +713,7 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
               ),
             ),
           );
+        }
       }
     }
 
