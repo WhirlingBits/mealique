@@ -582,5 +582,8 @@
     "labelStillInUse": "\"{name}\" wird noch in einer Einkaufsliste verwendet und kann nicht gelöscht werden.",
     "@labelStillInUse": {
         "placeholders": { "name": { "type": "String" } }
-    }
+    },
+    "reScan": "Erneut scannen",
+    "changePhoto": "Foto wechseln",
+    "remove": "Entfernen"
 }

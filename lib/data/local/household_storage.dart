@@ -460,6 +460,19 @@ class HouseholdStorage {
     await _db.delete(_db.mealplans).go();
   }
 
+  /// Removes mealplan entries whose date is strictly before [cutoff].
+  /// Uses ISO-8601 string comparison, which works correctly for date strings.
+  Future<void> clearMealplansOlderThan(DateTime cutoff) async {
+    // Keep only 'YYYY-MM-DD' prefix so the comparison is date-only.
+    final cutoffStr =
+        '${cutoff.year.toString().padLeft(4, '0')}-'
+        '${cutoff.month.toString().padLeft(2, '0')}-'
+        '${cutoff.day.toString().padLeft(2, '0')}';
+    await (_db.delete(_db.mealplans)
+          ..where((t) => t.date.isSmallerThan(Variable<String>(cutoffStr))))
+        .go();
+  }
+
   /// Clears all data from the local household database.
   Future<void> clearAll() async {
     await Future.wait([

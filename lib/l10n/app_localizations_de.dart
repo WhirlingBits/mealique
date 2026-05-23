@@ -1256,4 +1256,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String labelStillInUse(String name) {
     return '\"$name\" wird noch in einer Einkaufsliste verwendet und kann nicht gelöscht werden.';
   }
+
+  @override
+  String get reScan => 'Erneut scannen';
+
+  @override
+  String get changePhoto => 'Foto wechseln';
+
+  @override
+  String get remove => 'Entfernen';
 }

@@ -15,10 +15,8 @@ class OcrService {
     try {
       final inputImage = InputImage.fromFile(imageFile);
       final recognizedText = await _textRecognizer.processImage(inputImage);
-
       debugPrint('OCR raw text:\n${recognizedText.text}');
-
-      return _parseRecipeFromText(recognizedText.text);
+      return _parseRecipe(recognizedText);
     } catch (e) {
       debugPrint('OCR error: $e');
       return RecognizedRecipe(
@@ -30,11 +28,21 @@ class OcrService {
     }
   }
 
-  /// Parst den erkannten Text und versucht, ein strukturiertes Rezept zu extrahieren.
-  RecognizedRecipe _parseRecipeFromText(String rawText) {
-    final lines = rawText.split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty).toList();
+  /// Parst den erkannten Text mithilfe der ML Kit Block-Struktur.
+  RecognizedRecipe _parseRecipe(RecognizedText recognizedText) {
+    final rawText = recognizedText.text;
 
-    if (lines.isEmpty) {
+    // Alle Zeilen aus den Blöcken in Dokumentreihenfolge extrahieren.
+    // ML Kit liefert Blöcke bereits in Leserichtung (oben → unten, links → rechts).
+    final allLines = <String>[];
+    for (final block in recognizedText.blocks) {
+      for (final line in block.lines) {
+        final text = line.text.trim();
+        if (text.isNotEmpty) allLines.add(text);
+      }
+    }
+
+    if (allLines.isEmpty) {
       return RecognizedRecipe(
         rawText: rawText,
         suggestedName: '',
@@ -43,28 +51,25 @@ class OcrService {
       );
     }
 
-    // Heuristik: Erste Zeile ist oft der Rezeptname
-    String suggestedName = '';
-    List<String> ingredients = [];
-    List<String> instructions = [];
-
-    // Suche nach Abschnitts-Markern
-    final ingredientMarkers = [
+    // Abschnitts-Marker (DE + EN)
+    const ingredientMarkers = [
       'zutaten', 'ingredients', 'zutat', 'ingredient',
       'benötigt', 'einkaufsliste', 'was sie brauchen',
+      'für den teig', 'für die sauce', 'für die soße',
+      'für den belag', 'für die füllung',
     ];
-    final instructionMarkers = [
+    const instructionMarkers = [
       'zubereitung', 'anleitung', 'instructions', 'steps',
-      'schritte', 'so geht\'s', 'vorgehensweise', 'preparation',
+      'schritte', "so geht's", 'vorgehensweise', 'preparation',
+      "so wird's gemacht", 'zubereiten', 'so machst du',
     ];
 
     int ingredientStart = -1;
     int instructionStart = -1;
 
-    for (int i = 0; i < lines.length; i++) {
-      final lineLower = lines[i].toLowerCase();
+    for (int i = 0; i < allLines.length; i++) {
+      final lineLower = allLines[i].toLowerCase();
 
-      // Finde Zutaten-Abschnitt
       if (ingredientStart == -1) {
         for (final marker in ingredientMarkers) {
           if (lineLower.contains(marker)) {
@@ -74,7 +79,6 @@ class OcrService {
         }
       }
 
-      // Finde Zubereitungs-Abschnitt
       if (instructionStart == -1) {
         for (final marker in instructionMarkers) {
           if (lineLower.contains(marker)) {
@@ -85,77 +89,80 @@ class OcrService {
       }
     }
 
-    // Versuche den Namen zu extrahieren (erste Zeile vor Zutaten/Zubereitung)
-    if (lines.isNotEmpty) {
-      // Finde eine Zeile, die wie ein Titel aussieht
-      for (int i = 0; i < lines.length && i < 5; i++) {
-        final line = lines[i];
-        final lineLower = line.toLowerCase();
+    // Titel: erste Zeile, die kein Marker ist und nicht wie eine Zutat aussieht.
+    String suggestedName = '';
+    for (int i = 0; i < allLines.length && i < 6; i++) {
+      final line = allLines[i];
+      final lineLower = line.toLowerCase();
 
-        // Überspringe Marker-Zeilen
+      bool isMarker = false;
+      for (final m in [...ingredientMarkers, ...instructionMarkers]) {
+        if (lineLower.contains(m)) {
+          isMarker = true;
+          break;
+        }
+      }
+
+      if (!isMarker && line.length > 3 && line.length < 100) {
+        final startsWithDigit = RegExp(r'^\d+').hasMatch(line);
+        if (!startsWithDigit) {
+          suggestedName = line;
+          break;
+        }
+      }
+    }
+
+    // ── Zutaten ──────────────────────────────────────────────────────────────
+    final List<String> ingredients = [];
+    if (ingredientStart > 0) {
+      final end = (instructionStart > ingredientStart && instructionStart > 0)
+          ? instructionStart - 1
+          : allLines.length;
+
+      for (int i = ingredientStart; i < end && i < allLines.length; i++) {
+        final line = allLines[i];
+        if (line.length < 3) continue;
+        // Abschnitts-Marker überspringen
         bool isMarker = false;
-        for (final marker in [...ingredientMarkers, ...instructionMarkers]) {
-          if (lineLower.contains(marker)) {
+        for (final m in [...ingredientMarkers, ...instructionMarkers]) {
+          if (line.toLowerCase().contains(m)) {
             isMarker = true;
             break;
           }
         }
-
-        if (!isMarker && line.length > 3 && line.length < 80) {
-          // Prüfe ob es wie eine Zutat aussieht (hat Zahlen am Anfang)
-          final isIngredientLike = RegExp(r'^\d+').hasMatch(line);
-          if (!isIngredientLike) {
-            suggestedName = line;
-            break;
-          }
-        }
-      }
-    }
-
-    // Extrahiere Zutaten
-    if (ingredientStart > 0) {
-      final end = instructionStart > ingredientStart
-          ? instructionStart - 1
-          : lines.length;
-
-      for (int i = ingredientStart; i < end && i < lines.length; i++) {
-        final line = lines[i];
-        // Zutaten haben typischerweise Mengenangaben
-        if (_looksLikeIngredient(line)) {
-          ingredients.add(line);
-        }
+        if (!isMarker) ingredients.add(line);
       }
     } else {
-      // Fallback: Suche nach Zeilen, die wie Zutaten aussehen
-      for (final line in lines) {
+      // Fallback: Zeilen, die wie Zutaten aussehen
+      for (final line in allLines) {
         if (_looksLikeIngredient(line)) {
           ingredients.add(line);
         }
       }
     }
 
-    // Extrahiere Zubereitungsschritte
+    // ── Zubereitungsschritte ──────────────────────────────────────────────────
+    final List<String> instructions = [];
     if (instructionStart > 0) {
-      for (int i = instructionStart; i < lines.length; i++) {
-        final line = lines[i];
-        if (line.length > 10) {
-          // Entferne Nummerierung am Anfang
-          final cleaned = line.replaceFirst(RegExp(r'^[\d]+[.):]\s*'), '');
-          if (cleaned.isNotEmpty) {
-            instructions.add(cleaned);
-          }
+      final raw = <String>[];
+      for (int i = instructionStart; i < allLines.length; i++) {
+        final line = allLines[i];
+        if (line.length > 5) {
+          final cleaned = line.replaceFirst(RegExp(r'^[\d]+[.):\-]\s*'), '');
+          if (cleaned.isNotEmpty) raw.add(cleaned);
         }
       }
+      instructions.addAll(_mergeInstructionLines(raw));
     } else {
-      // Fallback: Längere Zeilen ohne Mengenangaben sind wahrscheinlich Schritte
-      for (final line in lines) {
+      // Fallback: längere Zeilen ohne Mengenangaben
+      final raw = <String>[];
+      for (final line in allLines) {
         if (line.length > 30 && !_looksLikeIngredient(line)) {
-          final cleaned = line.replaceFirst(RegExp(r'^[\d]+[.):]\s*'), '');
-          if (cleaned.isNotEmpty && !instructions.contains(cleaned)) {
-            instructions.add(cleaned);
-          }
+          final cleaned = line.replaceFirst(RegExp(r'^[\d]+[.):\-]\s*'), '');
+          if (cleaned.isNotEmpty && !raw.contains(cleaned)) raw.add(cleaned);
         }
       }
+      instructions.addAll(_mergeInstructionLines(raw));
     }
 
     return RecognizedRecipe(
@@ -166,15 +173,38 @@ class OcrService {
     );
   }
 
+  /// Kurze Folgezeilen werden mit dem vorherigen Schritt zusammengeführt.
+  List<String> _mergeInstructionLines(List<String> lines) {
+    if (lines.isEmpty) return lines;
+    final merged = <String>[];
+    for (final line in lines) {
+      if (merged.isEmpty) {
+        merged.add(line);
+      } else {
+        final prev = merged.last;
+        final endsWithSentence =
+            prev.endsWith('.') || prev.endsWith('!') || prev.endsWith('?');
+        // Sehr kurze Zeile ohne Satzende → anhängen
+        if (!endsWithSentence && line.length < 25) {
+          merged[merged.length - 1] = '$prev $line';
+        } else {
+          merged.add(line);
+        }
+      }
+    }
+    return merged;
+  }
+
   /// Prüft, ob eine Zeile wie eine Zutat aussieht.
   bool _looksLikeIngredient(String line) {
-    // Zutaten haben oft: Mengenangaben (Zahlen), Einheiten, kurze Länge
-    if (line.length < 5 || line.length > 80) return false;
+    if (line.length < 3 || line.length > 100) return false;
 
-    // Hat eine Zahl am Anfang oder enthält typische Einheiten
     final hasQuantity = RegExp(r'\d').hasMatch(line);
     final hasUnit = RegExp(
-      r'\b(g|kg|ml|l|EL|TL|Stück|Prise|Bund|Dose|Packung|cup|tbsp|tsp|oz|lb)\b',
+      r'\b(g|kg|ml|l|cl|dl|mg|EL|TL|Stück|Stk|Prise|Bund|Dose|Packung|Pkg|Becher|Glas|Tasse|'
+      r'cup|tbsp|tsp|oz|lb|bunch|can|piece|handful|Handvoll|'
+      r'Scheibe|Scheiben|Zehe|Zehen|Blatt|Blätter|'
+      r'Esslöffel|Teelöffel|Liter|Gramm|Kilogramm|Milliliter)\b',
       caseSensitive: false,
     ).hasMatch(line);
 
@@ -206,4 +236,3 @@ class RecognizedRecipe {
       suggestedIngredients.isNotEmpty ||
       suggestedInstructions.isNotEmpty;
 }
-

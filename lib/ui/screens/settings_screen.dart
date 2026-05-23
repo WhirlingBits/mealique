@@ -1,7 +1,7 @@
-import 'package:app_version_update/app_version_update.dart';
 import 'package:flutter/material.dart';
 import 'package:mealique/l10n/app_localizations.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:mealique/services/app_update_service.dart';
 import 'package:mealique/ui/screens/appearance_settings_screen.dart';
 import 'package:mealique/ui/screens/notification_settings_screen.dart';
 import 'package:mealique/ui/screens/server_api_settings_screen.dart';
@@ -56,13 +56,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _checkForUpdate() async {
     setState(() => _checkingUpdate = true);
     try {
-      final result = await AppVersionUpdate.checkForUpdates(
+      final result = await AppUpdateService.instance.checkForUpdate(
         playStoreId: 'de.mealique.app',
       );
       if (mounted) {
         setState(() {
-          _storeVersion = result.canUpdate == true ? result.storeVersion : null;
-          _storeUrl = result.canUpdate == true ? result.storeUrl : null;
+          _storeVersion = result.canUpdate ? result.storeVersion : null;
+          _storeUrl = result.canUpdate ? result.storeUrl : null;
           _checkingUpdate = false;
         });
       }

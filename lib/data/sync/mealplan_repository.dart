@@ -1,12 +1,10 @@
 import 'dart:collection';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mealique/config/app_constants.dart';
 import 'package:mealique/core/utils/offline_helper.dart';
 import 'package:mealique/data/local/household_storage.dart';
 import 'package:mealique/data/local/sync_queue_storage.dart';
 import 'package:mealique/data/local/token_storage.dart';
-import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/models/mealplan_model.dart';
 import '../remote/household_api.dart';
 
@@ -57,14 +55,17 @@ class MealplanRepository {
         return _groupByDay(items);
       },
       cacheWrite: (mealsByDay) async {
-        // Flatten and save all entries; clear old data for this date range first
+        // Upsert only – do NOT clear the whole table so data from other
+        // date ranges stays intact for offline use.
         final allEntries = mealsByDay.values.expand((list) => list).toList();
         debugPrint('Mealplans cacheWrite: ${allEntries.length} entries for ${mealsByDay.keys.length} days');
         try {
-          await _storage.clearMealplans();
           if (allEntries.isNotEmpty) {
             await _storage.saveMealplans(allEntries);
           }
+          // Trim entries older than 60 days to prevent unbounded growth.
+          final cutoff = DateTime.now().subtract(const Duration(days: 60));
+          await _storage.clearMealplansOlderThan(cutoff);
           debugPrint('Mealplans cacheWrite: saved successfully');
         } catch (e) {
           debugPrint('Mealplans cacheWrite error: $e');
@@ -128,7 +129,7 @@ class MealplanRepository {
       } catch (_) {}
       return result;
     } catch (e) {
-      if (_isOfflineError(e)) {
+      if (isOfflineError(e)) {
         try {
           await _storage.saveMealplans([localEntry]);
         } catch (storageError) {
@@ -165,7 +166,7 @@ class MealplanRepository {
       } catch (_) {}
       return result;
     } catch (e) {
-      if (_isOfflineError(e)) {
+      if (isOfflineError(e)) {
         // Update locally
         try {
           await _storage.saveMealplans([entry]);
@@ -197,7 +198,7 @@ class MealplanRepository {
     try {
       await _api.deleteMealplan(itemId);
     } catch (e) {
-      if (!_isOfflineError(e)) rethrow;
+      if (!isOfflineError(e)) rethrow;
       // Enqueue for sync when back online
       try {
         await _syncQueue.enqueue(
@@ -226,28 +227,6 @@ class MealplanRepository {
     }
   }
 
-  /// Check if an error indicates the device is offline.
-  bool _isOfflineError(Object e) {
-    if (e is DioException) {
-      if (e.error is NetworkException) return true;
-      switch (e.type) {
-        case DioExceptionType.connectionTimeout:
-        case DioExceptionType.sendTimeout:
-        case DioExceptionType.receiveTimeout:
-        case DioExceptionType.unknown:
-        case DioExceptionType.connectionError:
-          return true;
-        default:
-          return false;
-      }
-    }
-    if (e is NetworkException) return true;
-    final msg = e.toString().toLowerCase();
-    return msg.contains('socket') ||
-        msg.contains('connection') ||
-        msg.contains('network') ||
-        msg.contains('timeout');
-  }
 
   // ─── Demo-Daten für den Planner (ganze Woche) ────────────────────────────
 

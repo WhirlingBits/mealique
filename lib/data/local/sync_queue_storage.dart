@@ -74,10 +74,12 @@ class SyncQueueStorage {
         .go();
   }
 
-  /// Number of pending operations.
+  /// Number of pending operations (efficient DB-level COUNT).
   Future<int> count() async {
-    final rows = await getAll();
-    return rows.length;
+    final countExp = _db.pendingOperations.id.count();
+    final query = _db.selectOnly(_db.pendingOperations)..addColumns([countExp]);
+    final row = await query.getSingle();
+    return row.read(countExp) ?? 0;
   }
 
   /// Remove all pending operations (e.g. on logout).

@@ -9,6 +9,11 @@ class LabelsApi {
   final Dio _dio;
   final TokenStorage _tokenStorage;
 
+  static List<ShoppingItemLabel>? _labelsCache;
+  static DateTime? _labelsCacheTimestamp;
+  static Future<List<ShoppingItemLabel>>? _inFlightGetLabels;
+  static const Duration _labelsCacheTtl = Duration(minutes: 5);
+
   LabelsApi()
       : _tokenStorage = TokenStorage(),
         _dio = DioClient.createDio() {
@@ -31,25 +36,65 @@ class LabelsApi {
     ));
   }
 
+  /// Leert den RAM-Cache (z. B. beim Logout).
+  static void clearRamCache() {
+    _labelsCache = null;
+    _labelsCacheTimestamp = null;
+    _inFlightGetLabels = null;
+  }
+
+  /// Gibt gecachte Labels zurück ohne API-Aufruf. Gibt null zurück, wenn kein RAM-Cache vorhanden.
+  List<ShoppingItemLabel>? getLabelsLocalOnly() => _labelsCache;
+
   /// GET /api/groups/labels - Ruft alle Labels ab
-  Future<List<ShoppingItemLabel>> getLabels() async {
+  Future<List<ShoppingItemLabel>> getLabels({bool forceRefresh = false}) async {
+    final now = DateTime.now();
+    final hasFreshCache =
+        !forceRefresh &&
+        _labelsCache != null &&
+        _labelsCacheTimestamp != null &&
+        now.difference(_labelsCacheTimestamp!) < _labelsCacheTtl;
+
+    if (hasFreshCache) {
+      return _labelsCache!;
+    }
+
+    if (_inFlightGetLabels != null) {
+      return _inFlightGetLabels!;
+    }
+
+    final request = _fetchLabels();
+    _inFlightGetLabels = request;
+
+    try {
+      return await request;
+    } finally {
+      _inFlightGetLabels = null;
+    }
+  }
+
+  Future<List<ShoppingItemLabel>> _fetchLabels() async {
     try {
       final response = await _dio.get('api/groups/labels');
-      debugPrint('getLabels response: ${response.data}');
+      List<ShoppingItemLabel> labels = const [];
 
       if (response.data is List) {
-        return (response.data as List)
+        labels = (response.data as List)
             .map((e) => ShoppingItemLabel.fromJson(e as Map<String, dynamic>))
             .toList();
       } else if (response.data is Map && response.data['items'] is List) {
-        return (response.data['items'] as List)
+        labels = (response.data['items'] as List)
             .map((e) => ShoppingItemLabel.fromJson(e as Map<String, dynamic>))
             .toList();
       }
-      return [];
+
+      _labelsCache = labels;
+      _labelsCacheTimestamp = DateTime.now();
+      debugPrint('getLabels response: ${labels.length} labels');
+      return labels;
     } catch (e) {
       debugPrint('getLabels error: $e');
-      return [];
+      return _labelsCache ?? [];
     }
   }
 
@@ -67,7 +112,13 @@ class LabelsApi {
       },
     );
     debugPrint('createLabel response: ${response.statusCode}');
-    return ShoppingItemLabel.fromJson(response.data as Map<String, dynamic>);
+    final created = ShoppingItemLabel.fromJson(response.data as Map<String, dynamic>);
+    final cache = _labelsCache;
+    if (cache != null) {
+      _labelsCache = [...cache, created];
+      _labelsCacheTimestamp = DateTime.now();
+    }
+    return created;
   }
 
   /// GET /api/groups/labels/{item_id} - Ruft ein einzelnes Label ab
@@ -90,13 +141,24 @@ class LabelsApi {
         'color': color,
       },
     );
-    return ShoppingItemLabel.fromJson(response.data as Map<String, dynamic>);
+    final updated = ShoppingItemLabel.fromJson(response.data as Map<String, dynamic>);
+    final cache = _labelsCache;
+    if (cache != null) {
+      _labelsCache = cache.map((label) => label.id == updated.id ? updated : label).toList();
+      _labelsCacheTimestamp = DateTime.now();
+    }
+    return updated;
   }
 
   /// DELETE /api/groups/labels/{item_id} - Löscht ein Label
   Future<void> deleteLabel(String itemId) async {
     debugPrint('DELETE /api/groups/labels/$itemId');
     await _dio.delete('api/groups/labels/$itemId');
+    final cache = _labelsCache;
+    if (cache != null) {
+      _labelsCache = cache.where((label) => label.id != itemId).toList();
+      _labelsCacheTimestamp = DateTime.now();
+    }
   }
 
   /// Gets an existing label by name or creates a new one if it doesn't exist

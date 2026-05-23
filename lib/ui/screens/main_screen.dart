@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:app_version_update/app_version_update.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +9,7 @@ import 'package:mealique/data/remote/auth_api.dart';
 import 'package:mealique/data/remote/recipes_api.dart';
 import 'package:mealique/l10n/app_localizations.dart';
 import 'package:mealique/services/background_service.dart';
+import 'package:mealique/services/app_update_service.dart';
 import 'package:mealique/services/quick_actions_service.dart';
 import 'package:mealique/services/sync_service.dart';
 import 'package:mealique/ui/widgets/recipe_image.dart';
@@ -337,12 +337,12 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     }
 
     try {
-      final result = await AppVersionUpdate.checkForUpdates(
+      final result = await AppUpdateService.instance.checkForUpdate(
         playStoreId: 'de.mealique.app',
       );
       _lastUpdateCheck = DateTime.now();
-      if (result.canUpdate == true && mounted) {
-        _showUpdateDialog(result.storeVersion ?? '', result.storeUrl ?? '');
+      if (result.canUpdate && mounted && result.storeVersion != null) {
+        _showUpdateDialog(result.storeVersion!, result.storeUrl);
       }
     } catch (e) {
       // App noch nicht öffentlich im Play Store → still überspringen

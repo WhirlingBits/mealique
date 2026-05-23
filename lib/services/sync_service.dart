@@ -39,8 +39,9 @@ class SyncService {
         processQueue();
       }
     });
-    // Also try to sync immediately in case we start online with a backlog.
+    // Try to sync immediately – the device may already be online with a backlog.
     _refreshCount();
+    processQueue();
   }
 
   void dispose() {

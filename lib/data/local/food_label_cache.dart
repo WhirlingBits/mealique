@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,6 +17,9 @@ class FoodLabelCache {
 
   /// In-Memory Cache für schnelleren Zugriff
   Map<String, String>? _cache;
+  Timer? _saveDebounceTimer;
+
+  static const Duration _saveDebounceDuration = Duration(milliseconds: 500);
 
   /// Lädt alle Food-Label-Mappings aus dem Cache.
   Future<Map<String, String>> _loadCache() async {
@@ -53,6 +57,14 @@ class FoodLabelCache {
     }
   }
 
+  /// Bündelt viele schnelle Änderungen zu einem einzigen Persist-Schreibvorgang.
+  void _scheduleSave() {
+    _saveDebounceTimer?.cancel();
+    _saveDebounceTimer = Timer(_saveDebounceDuration, () {
+      _saveCache();
+    });
+  }
+
   /// Normalisiert einen Food-Namen für konsistente Lookups.
   String _normalizeKey(String foodName) {
     return foodName.toLowerCase().trim();
@@ -64,16 +76,23 @@ class FoodLabelCache {
   Future<void> setLabel(String foodName, String? labelId) async {
     final cache = await _loadCache();
     final key = _normalizeKey(foodName);
+    final currentLabelId = cache[key];
 
     if (labelId != null && labelId.isNotEmpty) {
+      if (currentLabelId == labelId) {
+        return;
+      }
       cache[key] = labelId;
       debugPrint('FoodLabelCache: Set "$foodName" → labelId=$labelId');
     } else {
+      if (!cache.containsKey(key)) {
+        return;
+      }
       cache.remove(key);
       debugPrint('FoodLabelCache: Removed label for "$foodName"');
     }
 
-    await _saveCache();
+    _scheduleSave();
   }
 
   /// Holt die gespeicherte Label-ID für ein Lebensmittel.
@@ -93,14 +112,20 @@ class FoodLabelCache {
   /// Speichert mehrere Food-Label-Zuordnungen auf einmal.
   Future<void> setLabels(Map<String, String> mappings) async {
     final cache = await _loadCache();
+    var hasChanges = false;
 
     for (final entry in mappings.entries) {
       final key = _normalizeKey(entry.key);
-      cache[key] = entry.value;
+      if (cache[key] != entry.value) {
+        cache[key] = entry.value;
+        hasChanges = true;
+      }
     }
 
-    await _saveCache();
-    debugPrint('FoodLabelCache: Set ${mappings.length} labels');
+    if (hasChanges) {
+      await _saveCache();
+      debugPrint('FoodLabelCache: Set ${mappings.length} labels');
+    }
   }
 
   /// Löscht alle gespeicherten Zuordnungen.

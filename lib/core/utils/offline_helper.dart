@@ -116,6 +116,15 @@ bool _isLikelyNetworkError(Object e) {
       msg.contains('xmlhttprequest');
 }
 
+/// Public helper: returns true if [e] represents a network / connectivity error.
+/// Can be used by repositories that need to check errors outside of the
+/// [withOfflineFallback] / [withOfflineWriteFallback] helpers.
+bool isOfflineError(Object e) {
+  if (e is DioException) return _isNetworkError(e);
+  if (e is NetworkException) return true;
+  return _isLikelyNetworkError(e);
+}
+
 /// Helper for write operations (create/update/delete) that should
 /// apply changes locally when offline, so the UI stays responsive.
 ///

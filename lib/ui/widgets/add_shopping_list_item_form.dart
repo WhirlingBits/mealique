@@ -84,6 +84,10 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
   late Future<void> _loadFuture;
   _FormData? _formData;
 
+  static _FormData? _cachedFormData;
+  static DateTime? _cachedFormDataAt;
+  static const Duration _formDataCacheTtl = Duration(minutes: 5);
+
   final _quantityController = TextEditingController(text: '1');
   final _notesController = TextEditingController();
   final _foodController = TextEditingController();
@@ -108,7 +112,20 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
   void initState() {
     super.initState();
     _selectedListId = widget.shoppingListId;
-    _loadFuture = _loadFormData();
+
+    final hasFreshCache =
+        _cachedFormData != null &&
+        _cachedFormDataAt != null &&
+        DateTime.now().difference(_cachedFormDataAt!) < _formDataCacheTtl;
+
+    if (hasFreshCache) {
+      _formData = _cachedFormData;
+      // Nutze sofort gecachte Daten für schnelle Anzeige und aktualisiere parallel.
+      _loadFuture = _loadFormData(forceRefresh: true);
+    } else {
+      _loadFuture = _loadFormData();
+    }
+
     _foodController.addListener(_onFoodTextChanged);
     _categoryController.addListener(_onCategoryTextChanged);
   }
@@ -190,28 +207,87 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
     );
   }
 
-  Future<void> _loadFormData() async {
-    try {
-      final results = await Future.wait([
-        _householdRepo.getShoppingLists(),
-        _recipeRepo.getFoods(),
-        _recipeRepo.getUnits(),
-        _labelsApi.getLabels(),
-      ]);
-      final lists = (results[0] as List<ShoppingList>?) ?? [];
-      final foods = results[1] as List<Food>;
-      final apiUnits = results[2] as List;
-      final units = apiUnits.map((u) => Unit(id: u.id, name: u.name)).toList();
-      final labels = results[3] as List<ShoppingItemLabel>;
-
-      if (mounted) {
-        setState(() {
-          _formData = _FormData(lists: lists, foods: foods, units: units, labels: labels);
-        });
+  Future<void> _loadFormData({bool forceRefresh = false}) async {
+    // Phase 1: Lokale SQLite-Daten sofort anzeigen (kein Spinner wenn Cache vorhanden)
+    if (_formData == null) {
+      try {
+        final localData = await _loadLocalFormData();
+        if (localData != null && mounted) {
+          setState(() => _formData = localData);
+        }
+      } catch (_) {
+        // Fehler beim Lesen lokaler Daten ignorieren – API-Fetch folgt
       }
-    } catch (e) {
-      throw Exception('Failed to load form data: $e');
     }
+
+    // Phase 2: Alle API-Quellen PARALLEL starten, aber Fehler einzeln behandeln.
+    // Wichtig: jede Quelle wird unabhängig behandelt — ein Fehler bei Shopping-Lists
+    // verhindert nicht das Laden der Kategorien (Labels).
+    final listsFuture = _householdRepo.getShoppingLists();
+    final foodsFuture = _recipeRepo.getFoods();
+    final unitsFuture = _recipeRepo.getUnits();
+    final labelsFuture = _labelsApi.getLabels(forceRefresh: forceRefresh);
+
+    List<ShoppingList> lists = _formData?.lists ?? [];
+    List<Food> foods = _formData?.foods ?? [];
+    List<Unit> units = _formData?.units ?? [];
+    List<ShoppingItemLabel> labels = _formData?.labels ?? [];
+
+    bool anySuccess = false;
+
+    try { lists = await listsFuture; anySuccess = true; }
+    catch (e) { debugPrint('_loadFormData: getShoppingLists fehlgeschlagen: $e'); }
+
+    try {
+      foods = await foodsFuture;
+      anySuccess = true;
+    } catch (e) { debugPrint('_loadFormData: getFoods fehlgeschlagen: $e'); }
+
+    try {
+      final rawUnits = await unitsFuture;
+      units = rawUnits.map((u) => Unit(id: u.id, name: u.name)).toList();
+      anySuccess = true;
+    } catch (e) { debugPrint('_loadFormData: getUnits fehlgeschlagen: $e'); }
+
+    try {
+      labels = await labelsFuture;
+      anySuccess = true;
+    } catch (e) { debugPrint('_loadFormData: getLabels fehlgeschlagen: $e'); }
+
+    if (!anySuccess && _formData == null) {
+      throw Exception('Formulardaten konnten nicht geladen werden');
+    }
+
+    if (mounted) {
+      setState(() {
+        _formData = _FormData(lists: lists, foods: foods, units: units, labels: labels);
+        _cachedFormData = _formData;
+        _cachedFormDataAt = DateTime.now();
+      });
+    }
+  }
+
+  /// Lädt Formulardaten nur aus dem lokalen SQLite-Cache (kein Netzwerkaufruf).
+  Future<_FormData?> _loadLocalFormData() async {
+    final results = await Future.wait([
+      _householdRepo.getShoppingListsLocalOnly(),
+      _recipeRepo.getFoodsLocalOnly(),
+      _recipeRepo.getUnitsLocalOnly(),
+    ]);
+    final localLabels = _labelsApi.getLabelsLocalOnly();
+
+    final lists = (results[0] as List<ShoppingList>?) ?? [];
+    final foods = (results[1] as List<Food>?) ?? [];
+    final apiUnits = (results[2] as List<ShoppingItemUnit>?) ?? [];
+
+    if (foods.isEmpty) return null;
+
+    return _FormData(
+      lists: lists,
+      foods: foods,
+      units: apiUnits.map((u) => Unit(id: u.id, name: u.name)).toList(),
+      labels: localLabels ?? [],
+    );
   }
 
   Future<void> _handleCreateAndSelectFood(String foodName) async {

@@ -64,7 +64,7 @@ class NotificationService {
     );
 
     await _notifications.initialize(
-      initSettings,
+      settings: initSettings,
       onDidReceiveNotificationResponse: _onNotificationResponse,
       onDidReceiveBackgroundNotificationResponse: _onBackgroundNotificationResponse,
     );
@@ -81,12 +81,10 @@ class NotificationService {
   /// Configures the local timezone based on the device's timezone.
   Future<void> _configureLocalTimeZone() async {
     try {
-      // Get the device's timezone name
       final String timeZoneName = await _getDeviceTimeZone();
       tz.setLocalLocation(tz.getLocation(timeZoneName));
       debugPrint('NotificationService: Timezone set to $timeZoneName');
     } catch (e) {
-      // Fallback to UTC if timezone detection fails
       debugPrint('NotificationService: Failed to get device timezone, using UTC: $e');
       tz.setLocalLocation(tz.UTC);
     }
@@ -96,29 +94,23 @@ class NotificationService {
   Future<String> _getDeviceTimeZone() async {
     if (Platform.isAndroid || Platform.isIOS) {
       try {
-        // Try to get timezone from platform channel
         const channel = MethodChannel('flutter_local_notifications');
         final String? timeZone = await channel.invokeMethod<String>('getTimeZoneName');
         if (timeZone != null && timeZone.isNotEmpty) {
           return timeZone;
         }
-      } catch (_) {
-        // Platform channel not available, try DateTime offset approach
-      }
+      } catch (_) {}
     }
     
-    // Fallback: Use DateTime to get offset and map to common timezone
     final now = DateTime.now();
     final offset = now.timeZoneOffset;
     
-    // Map common offsets to timezone names
     if (offset.inHours == 1) return 'Europe/Berlin';
-    if (offset.inHours == 2) return 'Europe/Berlin'; // CEST (summer time)
+    if (offset.inHours == 2) return 'Europe/Berlin';
     if (offset.inHours == 0) return 'Europe/London';
     if (offset.inHours == -5) return 'America/New_York';
     if (offset.inHours == -8) return 'America/Los_Angeles';
     
-    // Default fallback
     return 'Europe/Berlin';
   }
 
@@ -129,7 +121,6 @@ class NotificationService {
 
     if (androidPlugin == null) return;
 
-    // Meal reminder channel (high priority for reminders)
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
         NotificationChannels.mealReminder,
@@ -141,7 +132,6 @@ class NotificationService {
       ),
     );
 
-    // Sync status channel (low priority, silent)
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
         NotificationChannels.sync,
@@ -153,7 +143,6 @@ class NotificationService {
       ),
     );
 
-    // General notifications channel
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
         NotificationChannels.general,
@@ -174,7 +163,6 @@ class NotificationService {
   /// Request notification permissions.
   Future<bool> requestPermissions() async {
     if (Platform.isAndroid) {
-      // Android 13+ requires explicit permission
       final status = await Permission.notification.request();
       return status.isGranted;
     } else if (Platform.isIOS) {
@@ -215,18 +203,17 @@ class NotificationService {
 
     final tzScheduledTime = tz.TZDateTime.from(scheduledTime, tz.local);
 
-    // Don't schedule notifications in the past
     if (tzScheduledTime.isBefore(tz.TZDateTime.now(tz.local))) {
       debugPrint('NotificationService: Skipping past notification');
       return;
     }
 
     await _notifications.zonedSchedule(
-      id,
-      title,
-      body,
-      tzScheduledTime,
-      NotificationDetails(
+      id: id,
+      title: title,
+      body: body,
+      scheduledDate: tzScheduledTime,
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           NotificationChannels.mealReminder,
           'Mahlzeiten-Erinnerungen',
@@ -243,9 +230,7 @@ class NotificationService {
         ),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       payload: payload ?? NotificationPayloads.openPlanner,
-      matchDateTimeComponents: null, // One-time notification
     );
 
     debugPrint('NotificationService: Scheduled meal reminder for $scheduledTime');
@@ -263,30 +248,25 @@ class NotificationService {
   }) async {
     if (!_isInitialized) return;
 
-    // Cancel existing daily reminders first
     await cancelDailyMealReminders();
 
     final now = tz.TZDateTime.now(tz.local);
 
     if (breakfastTime != null) {
       var scheduledDate = tz.TZDateTime(
-        tz.local,
-        now.year,
-        now.month,
-        now.day,
-        breakfastTime.hour,
-        breakfastTime.minute,
+        tz.local, now.year, now.month, now.day,
+        breakfastTime.hour, breakfastTime.minute,
       );
       if (scheduledDate.isBefore(now)) {
         scheduledDate = scheduledDate.add(const Duration(days: 1));
       }
 
       await _notifications.zonedSchedule(
-        NotificationIds.breakfastReminder,
-        breakfastTitle,
-        body,
-        scheduledDate,
-        NotificationDetails(
+        id: NotificationIds.breakfastReminder,
+        title: breakfastTitle,
+        body: body,
+        scheduledDate: scheduledDate,
+        notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
             NotificationChannels.mealReminder,
             'Mahlzeiten-Erinnerungen',
@@ -298,31 +278,26 @@ class NotificationService {
           iOS: const DarwinNotificationDetails(),
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         payload: NotificationPayloads.openPlanner,
-        matchDateTimeComponents: DateTimeComponents.time, // Daily repeating
+        matchDateTimeComponents: DateTimeComponents.time,
       );
     }
 
     if (lunchTime != null) {
       var scheduledDate = tz.TZDateTime(
-        tz.local,
-        now.year,
-        now.month,
-        now.day,
-        lunchTime.hour,
-        lunchTime.minute,
+        tz.local, now.year, now.month, now.day,
+        lunchTime.hour, lunchTime.minute,
       );
       if (scheduledDate.isBefore(now)) {
         scheduledDate = scheduledDate.add(const Duration(days: 1));
       }
 
       await _notifications.zonedSchedule(
-        NotificationIds.lunchReminder,
-        lunchTitle,
-        body,
-        scheduledDate,
-        NotificationDetails(
+        id: NotificationIds.lunchReminder,
+        title: lunchTitle,
+        body: body,
+        scheduledDate: scheduledDate,
+        notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
             NotificationChannels.mealReminder,
             'Mahlzeiten-Erinnerungen',
@@ -334,7 +309,6 @@ class NotificationService {
           iOS: const DarwinNotificationDetails(),
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         payload: NotificationPayloads.openPlanner,
         matchDateTimeComponents: DateTimeComponents.time,
       );
@@ -342,23 +316,19 @@ class NotificationService {
 
     if (dinnerTime != null) {
       var scheduledDate = tz.TZDateTime(
-        tz.local,
-        now.year,
-        now.month,
-        now.day,
-        dinnerTime.hour,
-        dinnerTime.minute,
+        tz.local, now.year, now.month, now.day,
+        dinnerTime.hour, dinnerTime.minute,
       );
       if (scheduledDate.isBefore(now)) {
         scheduledDate = scheduledDate.add(const Duration(days: 1));
       }
 
       await _notifications.zonedSchedule(
-        NotificationIds.dinnerReminder,
-        dinnerTitle,
-        body,
-        scheduledDate,
-        NotificationDetails(
+        id: NotificationIds.dinnerReminder,
+        title: dinnerTitle,
+        body: body,
+        scheduledDate: scheduledDate,
+        notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
             NotificationChannels.mealReminder,
             'Mahlzeiten-Erinnerungen',
@@ -370,7 +340,6 @@ class NotificationService {
           iOS: const DarwinNotificationDetails(),
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         payload: NotificationPayloads.openPlanner,
         matchDateTimeComponents: DateTimeComponents.time,
       );
@@ -381,9 +350,9 @@ class NotificationService {
 
   /// Cancel all daily meal reminders.
   Future<void> cancelDailyMealReminders() async {
-    await _notifications.cancel(NotificationIds.breakfastReminder);
-    await _notifications.cancel(NotificationIds.lunchReminder);
-    await _notifications.cancel(NotificationIds.dinnerReminder);
+    await _notifications.cancel(id: NotificationIds.breakfastReminder);
+    await _notifications.cancel(id: NotificationIds.lunchReminder);
+    await _notifications.cancel(id: NotificationIds.dinnerReminder);
     debugPrint('NotificationService: Cancelled daily meal reminders');
   }
 
@@ -398,10 +367,10 @@ class NotificationService {
     if (!_isInitialized) return;
 
     await _notifications.show(
-      id,
-      title,
-      body,
-      NotificationDetails(
+      id: id,
+      title: title,
+      body: body,
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           channelId,
           channelId == NotificationChannels.sync ? 'Synchronisierung' : 'Allgemein',
@@ -420,7 +389,7 @@ class NotificationService {
 
   /// Cancel a specific notification.
   Future<void> cancelNotification(int id) async {
-    await _notifications.cancel(id);
+    await _notifications.cancel(id: id);
   }
 
   /// Cancel all notifications.
@@ -435,7 +404,6 @@ class NotificationService {
   }
 
   /// Restore scheduled notifications from saved settings.
-  /// Call this after app startup when settings are loaded.
   Future<void> restoreScheduledNotifications({
     required bool notificationsEnabled,
     required bool breakfastEnabled,
@@ -451,14 +419,12 @@ class NotificationService {
   }) async {
     if (!_isInitialized) return;
 
-    // Check if we have permission first
     final hasPermissionGranted = await hasPermission();
     if (!hasPermissionGranted || !notificationsEnabled) {
       debugPrint('NotificationService: Skipping restore - notifications disabled or no permission');
       return;
     }
 
-    // Check if there are already pending notifications
     final pending = await getPendingNotifications();
     final hasMealReminders = pending.any((n) =>
         n.id == NotificationIds.breakfastReminder ||
@@ -470,7 +436,6 @@ class NotificationService {
       return;
     }
 
-    // Restore the notifications
     await scheduleDailyMealReminders(
       breakfastTime: breakfastEnabled ? breakfastTime : null,
       lunchTime: lunchEnabled ? lunchTime : null,
@@ -489,6 +454,4 @@ class NotificationService {
 @pragma('vm:entry-point')
 void _onBackgroundNotificationResponse(NotificationResponse response) {
   debugPrint('NotificationService: Background notification: ${response.payload}');
-  // Handle background notification response if needed
 }
-

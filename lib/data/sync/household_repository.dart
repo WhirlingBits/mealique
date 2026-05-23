@@ -44,6 +44,10 @@ class HouseholdRepository {
 
   // ─── Shopping Lists ────────────────────────────────────────────────
 
+  /// Gibt Shopping-Listen aus dem lokalen SQLite-Cache zurück (kein Netzwerkaufruf).
+  Future<List<ShoppingList>?> getShoppingListsLocalOnly() =>
+      _storage.getShoppingLists();
+
   Future<List<ShoppingList>> getShoppingLists({String? orderBy, String? orderDirection}) async {
     final token = await _tokenStorage.getToken();
     if (token == AppConstants.demoToken) {
@@ -488,7 +492,21 @@ class HouseholdRepository {
   Future<void> _addItemToLocalCache(String listId, ShoppingItem item) async {
     try {
       final cached = await _storage.getShoppingLists();
-      if (cached == null) return;
+      if (cached == null) {
+        // No cached lists yet – persist a stub entry so the item is not lost.
+        final stubList = ShoppingList(
+          id: listId,
+          name: '',
+          extras: {},
+          createdAt: '',
+          updatedAt: '',
+          recipeReferences: [],
+          labelSettings: [],
+          listItems: [item],
+        );
+        await _storage.saveShoppingLists([stubList]);
+        return;
+      }
       final updatedLists = cached.map((l) {
         if (l.id == listId) {
           return l.copyWith(listItems: [...l.listItems, item]);

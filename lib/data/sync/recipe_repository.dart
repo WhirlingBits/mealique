@@ -13,10 +13,30 @@ class RecipeRepository {
   final RecipeStorage _storage;
   final TokenStorage _tokenStorage;
 
+  // ── RAM-Cache für Foods ───────────────────────────────────────────────────
+  static List<Food>? _foodsCache;
+  static DateTime? _foodsCacheTimestamp;
+  static Future<List<Food>>? _inFlightGetFoods;
+  static const Duration _foodsCacheTtl = Duration(minutes: 10);
+
+  // ── RAM-Cache für Units ───────────────────────────────────────────────────
+  static List<ShoppingItemUnit>? _unitsCache;
+  static DateTime? _unitsCacheTimestamp;
+  static const Duration _unitsCacheTtl = Duration(minutes: 10);
+
   RecipeRepository()
       : _api = RecipesApi(),
         _storage = RecipeStorage(),
         _tokenStorage = TokenStorage();
+
+  /// Leert alle RAM-Caches (z. B. beim Logout).
+  static void clearRamCaches() {
+    _foodsCache = null;
+    _foodsCacheTimestamp = null;
+    _inFlightGetFoods = null;
+    _unitsCache = null;
+    _unitsCacheTimestamp = null;
+  }
 
   Future<List<Recipe>> getRecipes(
       {int page = 1,
@@ -120,39 +140,76 @@ class RecipeRepository {
     return _api.getRandomRecipe(date: date, entryType: entryType);
   }
 
-  Future<List<Food>> getFoods() async {
+  /// Gibt Foods aus dem lokalen SQLite-Cache zurück (kein Netzwerkaufruf).
+  Future<List<Food>?> getFoodsLocalOnly() => _storage.getFoods();
+
+  Future<List<Food>> getFoods({bool forceRefresh = false}) async {
     final token = await _tokenStorage.getToken();
-    if (token == AppConstants.demoToken) {
-      return _getDemoFoods();
+    if (token == AppConstants.demoToken) return _getDemoFoods();
+
+    // RAM-Cache-Treffer
+    if (!forceRefresh &&
+        _foodsCache != null &&
+        _foodsCacheTimestamp != null &&
+        DateTime.now().difference(_foodsCacheTimestamp!) < _foodsCacheTtl) {
+      return _foodsCache!;
     }
 
+    // Parallele In-Flight-Anfragen zusammenführen
+    if (_inFlightGetFoods != null) return _inFlightGetFoods!;
+
+    final future = _doGetFoods(forceRefresh: forceRefresh);
+    _inFlightGetFoods = future;
+    try {
+      return await future;
+    } finally {
+      _inFlightGetFoods = null;
+    }
+  }
+
+  Future<List<Food>> _doGetFoods({bool forceRefresh = false}) {
     return withOfflineFallbackSimple<List<Food>>(
       apiCall: () async {
         const perPage = 250;
         final firstPage = await _api.getFoods(page: 1, perPage: perPage);
         final allFoods = <Food>[...firstPage.items];
 
-        // Load remaining pages so the settings screen can show every food.
-        for (var page = 2; page <= firstPage.totalPages; page++) {
-          final nextPage = await _api.getFoods(page: page, perPage: perPage);
-          allFoods.addAll(nextPage.items);
+        // Restliche Seiten PARALLEL laden (statt sequentiell)
+        if (firstPage.totalPages > 1) {
+          final pageNumbers =
+              List.generate(firstPage.totalPages - 1, (i) => i + 2);
+          final pages = await Future.wait(
+            pageNumbers.map((p) => _api.getFoods(page: p, perPage: perPage)),
+          );
+          for (final p in pages) {
+            allFoods.addAll(p.items);
+          }
         }
 
-        // Deduplicate by id in case the backend returns overlapping pages.
-        final byId = <String, Food>{
-          for (final food in allFoods) food.id: food,
-        };
-
+        // Deduplizieren
+        final byId = <String, Food>{for (final f in allFoods) f.id: f};
         final foods = byId.values.toList()
-          ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+          ..sort(
+              (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+
+        _foodsCache = foods;
+        _foodsCacheTimestamp = DateTime.now();
+        debugPrint('getFoods: ${foods.length} Lebensmittel vom API geladen');
         return foods;
       },
       cacheWrite: (foods) async {
-        if (foods.isNotEmpty) {
-          await _storage.saveFoods(foods);
-        }
+        if (foods.isNotEmpty) await _storage.saveFoods(foods);
       },
-      cacheRead: () => _storage.getFoods(),
+      cacheRead: () async {
+        final cached = await _storage.getFoods();
+        if (cached != null && cached.isNotEmpty) {
+          _foodsCache = cached;
+          _foodsCacheTimestamp = DateTime.now();
+          debugPrint(
+              'getFoods: ${cached.length} Lebensmittel aus SQLite geladen');
+        }
+        return cached;
+      },
     );
   }
 
@@ -956,6 +1013,9 @@ class RecipeRepository {
     await _api.setFavorite(slug, isFavorite: isFavorite);
   }
 
+  /// Gibt Einheiten aus dem lokalen SQLite-Cache zurück (kein Netzwerkaufruf).
+  Future<List<ShoppingItemUnit>?> getUnitsLocalOnly() => _storage.getUnits();
+
   Future<List<ShoppingItemUnit>> getUnits() async {
     final token = await _tokenStorage.getToken();
     if (token == AppConstants.demoToken) {
@@ -965,14 +1025,33 @@ class RecipeRepository {
       ];
     }
 
+    // RAM-Cache-Treffer
+    if (_unitsCache != null &&
+        _unitsCacheTimestamp != null &&
+        DateTime.now().difference(_unitsCacheTimestamp!) < _unitsCacheTtl) {
+      return _unitsCache!;
+    }
+
     return withOfflineFallbackSimple<List<ShoppingItemUnit>>(
-      apiCall: () => _api.getUnits(),
+      apiCall: () async {
+        final units = await _api.getUnits();
+        _unitsCache = units;
+        _unitsCacheTimestamp = DateTime.now();
+        return units;
+      },
       cacheWrite: (units) async {
         if (units.isNotEmpty) {
           await _storage.saveUnits(units);
         }
       },
-      cacheRead: () => _storage.getUnits(),
+      cacheRead: () async {
+        final cached = await _storage.getUnits();
+        if (cached != null && cached.isNotEmpty) {
+          _unitsCache = cached;
+          _unitsCacheTimestamp = DateTime.now();
+        }
+        return cached;
+      },
     );
   }
 

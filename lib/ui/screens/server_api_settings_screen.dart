@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mealique/data/local/household_storage.dart';
 import 'package:mealique/data/local/recipe_storage.dart';
 import 'package:mealique/data/local/token_storage.dart';
+import 'package:mealique/data/remote/labels_api.dart';
+import 'package:mealique/data/sync/recipe_repository.dart';
 import 'package:mealique/services/sync_service.dart';
 import 'package:mealique/ui/screens/login_screen.dart';
 import 'package:mealique/ui/widgets/recipe_image.dart';
@@ -63,6 +65,10 @@ class _ServerApiSettingsScreenState extends State<ServerApiSettingsScreen> {
     try { await HouseholdStorage().clearAll(); } catch (e) { debugPrint('Logout: clearAll household error: $e'); }
     try { await RecipeStorage().clearAll(); } catch (e) { debugPrint('Logout: clearAll recipe error: $e'); }
     try { await SyncService().clearQueue(); } catch (e) { debugPrint('Logout: clearQueue error: $e'); }
+
+    // RAM-Caches leeren
+    RecipeRepository.clearRamCaches();
+    LabelsApi.clearRamCache();
 
     // Invalidate image cache
     RecipeImage.invalidateCache();
