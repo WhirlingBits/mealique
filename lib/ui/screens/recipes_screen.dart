@@ -101,6 +101,20 @@ class _RecipesScreenState extends State<RecipesScreen> {
       _error = null;
     });
 
+    // Phase 1: Gecachte Rezepte sofort anzeigen (nur beim initialen Laden der ersten Seite)
+    if (_initialLoading && _currentPage == 1 && _searchController.text.trim().isEmpty) {
+      try {
+        final cached = await _recipeRepository.getRecipesLocalOnly();
+        if (cached != null && cached.isNotEmpty && mounted) {
+          setState(() {
+            _recipes = cached;
+            _initialLoading = false;
+          });
+        }
+      } catch (_) {}
+    }
+
+    // Phase 2: Frische Daten vom Server holen
     try {
       final newRecipes = await _recipeRepository.getRecipes(
         page: _currentPage,
@@ -114,7 +128,11 @@ class _RecipesScreenState extends State<RecipesScreen> {
 
       if (mounted) {
         setState(() {
-          _recipes.addAll(newRecipes);
+          if (_currentPage == 1) {
+            _recipes = newRecipes;
+          } else {
+            _recipes.addAll(newRecipes);
+          }
           _hasMore = newRecipes.length >= _perPage;
           _isLoading = false;
           _initialLoading = false;
@@ -123,7 +141,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e;
+          if (_recipes.isEmpty) _error = e;
           _isLoading = false;
           _initialLoading = false;
         });
@@ -282,7 +300,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
       currentField: _sortField,
       currentDirection: _sortDirection,
     );
-    if (result != null) {
+    if (result != null && mounted) {
       _sortField = result.field;
       _sortDirection = result.direction;
       Provider.of<SettingsProvider>(context, listen: false)
@@ -300,32 +318,29 @@ class _RecipesScreenState extends State<RecipesScreen> {
         child: AddRecipeForm(
           onAddRecipe: (recipeJson) async {
             Navigator.pop(ctx);
-            final l10n = AppLocalizations.of(context)!;
+            final l10n = AppLocalizations.of(this.context)!;
             try {
               final data = Map<String, dynamic>.from(jsonDecode(recipeJson) as Map);
               final newRecipe = await _recipeRepository.createRecipe(data);
-              if (mounted) {
-                setState(() {
-                  _recipes.insert(0, newRecipe);
-                });
-                ScaffoldMessenger.of(context)
-                    .showSnackBar(SnackBar(content: Text(l10n.recipeCreated)));
-              }
+              if (!mounted) return;
+              setState(() {
+                _recipes.insert(0, newRecipe);
+              });
+              ScaffoldMessenger.of(this.context)
+                  .showSnackBar(SnackBar(content: Text(l10n.recipeCreated)));
             } on DioException catch (e) {
-              if (mounted) {
-                final detail = e.response?.data?['detail'] ?? e.message;
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('${l10n.error}: $detail'),
-                  backgroundColor: Colors.red,
-                ));
-              }
+              if (!mounted) return;
+              final detail = e.response?.data?['detail'] ?? e.message;
+              ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(
+                content: Text('${l10n.error}: $detail'),
+                backgroundColor: Colors.red,
+              ));
             } catch (e) {
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('${l10n.error}: $e'),
-                  backgroundColor: Colors.red,
-                ));
-              }
+              if (!mounted) return;
+              ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(
+                content: Text('${l10n.error}: $e'),
+                backgroundColor: Colors.red,
+              ));
             }
           },
         ),

@@ -226,6 +226,8 @@ class _PlannerScreenState extends State<PlannerScreen> {
           occupiedEntryTypes: occupiedTypes,
           editingEntryType: meal.entryType,
           onAddMeal: (entryType, recipe) async {
+            // Pop immediately before any async gap so ctx stays valid
+            Navigator.pop(ctx);
             final dateStr = _selectedDay.toIso8601String().split('T').first;
 
             final updatedEntryData = MealplanEntry(
@@ -240,42 +242,39 @@ class _PlannerScreenState extends State<PlannerScreen> {
 
             try {
               final result = await _mealplanRepository.updateMealplan(meal.id, updatedEntryData);
-              if (mounted) {
-                setState(() {
-                  final dayMeals = _mealsByDay[_selectedDay] ?? [];
-                  final index = dayMeals.indexWhere((m) => m.id == meal.id);
-                  if (index != -1) {
-                    dayMeals[index] = result;
-                    _mealsByDay[_selectedDay] = [...dayMeals];
-                  }
-                  _selectedMeals.value = _getMealsForDay(_selectedDay);
-                });
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context)
-                  ..clearSnackBars()
-                  ..showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.mealUpdatedSuccess),
-                      backgroundColor: Colors.green,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  );
-              }
+              if (!mounted) return;
+              setState(() {
+                final dayMeals = _mealsByDay[_selectedDay] ?? [];
+                final index = dayMeals.indexWhere((m) => m.id == meal.id);
+                if (index != -1) {
+                  dayMeals[index] = result;
+                  _mealsByDay[_selectedDay] = [...dayMeals];
+                }
+                _selectedMeals.value = _getMealsForDay(_selectedDay);
+              });
+              ScaffoldMessenger.of(context)
+                ..clearSnackBars()
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(l10n.mealUpdatedSuccess),
+                    backgroundColor: Colors.green,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                );
             } catch (e) {
-              if (mounted) {
-                ScaffoldMessenger.of(context)
-                  ..clearSnackBars()
-                  ..showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.errorCreating(e.toString())),
-                      backgroundColor: Colors.red,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      duration: const Duration(seconds: 4),
-                    ),
-                  );
-              }
+              if (!mounted) return;
+              ScaffoldMessenger.of(context)
+                ..clearSnackBars()
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(l10n.errorCreating(e.toString())),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    duration: const Duration(seconds: 4),
+                  ),
+                );
             }
           },
         ),

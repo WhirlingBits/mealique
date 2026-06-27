@@ -143,6 +143,9 @@ class RecipeRepository {
   /// Gibt Foods aus dem lokalen SQLite-Cache zurück (kein Netzwerkaufruf).
   Future<List<Food>?> getFoodsLocalOnly() => _storage.getFoods();
 
+  /// Gibt gecachte Rezepte direkt aus SQLite zurück (kein Netzwerkaufruf).
+  Future<List<Recipe>?> getRecipesLocalOnly() => _storage.getRecipes();
+
   Future<List<Food>> getFoods({bool forceRefresh = false}) async {
     final token = await _tokenStorage.getToken();
     if (token == AppConstants.demoToken) return _getDemoFoods();

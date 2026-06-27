@@ -13,8 +13,8 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 class DioClient {
   static Dio createDio() {
     final dio = Dio(BaseOptions(
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
+      connectTimeout: const Duration(seconds: 7),
+      receiveTimeout: const Duration(seconds: 20),
       headers: {'Content-Type': 'application/json'},
     ));
 
@@ -110,11 +110,13 @@ class ErrorInterceptor extends Interceptor {
 }
 
 /// Interceptor to automatically retry requests on network-related failures.
+/// Only retries on connection-level errors (not receive/send timeouts, which
+/// indicate the server is reachable but slow – retrying would make things worse).
 class RetryInterceptor extends Interceptor {
   final Dio dio;
   final int maxRetries;
 
-  RetryInterceptor({required this.dio, this.maxRetries = 3});
+  RetryInterceptor({required this.dio, this.maxRetries = 1});
 
   @override
   Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
@@ -124,8 +126,8 @@ class RetryInterceptor extends Interceptor {
         retryCount++;
         err.requestOptions.extra['retry_count'] = retryCount;
 
-        // Exponential back-off delay
-        await Future.delayed(Duration(seconds: retryCount * 2));
+        // Short fixed delay before retry
+        await Future.delayed(const Duration(seconds: 1));
 
         try {
           // Re-run the request.
@@ -142,10 +144,9 @@ class RetryInterceptor extends Interceptor {
   }
 
   bool _shouldRetry(DioException err) {
+    // Only retry on actual connection errors, not on timeouts caused by a slow server
     return err.type == DioExceptionType.connectionTimeout ||
-        err.type == DioExceptionType.receiveTimeout ||
-        err.type == DioExceptionType.sendTimeout ||
-        err.type == DioExceptionType.unknown;
+        err.type == DioExceptionType.connectionError;
   }
 }
 

@@ -104,13 +104,27 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
   }
 
   Future<void> _loadItems({bool showLoading = false}) async {
-    if (showLoading && mounted) {
-      setState(() {
-        _initialLoading = true;
-        _loadError = null;
-      });
+    // Phase 1: Gecachte Items sofort anzeigen (nur beim ersten Laden)
+    if (showLoading) {
+      try {
+        final localItems = await _repository.getItemsForListLocalOnly(widget.listId);
+        if (localItems != null && localItems.isNotEmpty && mounted) {
+          setState(() {
+            _items = localItems;
+            _initialLoading = false;
+            _loadError = null;
+          });
+        } else if (mounted && _items.isEmpty) {
+          setState(() => _initialLoading = true);
+        }
+      } catch (_) {
+        if (mounted && _items.isEmpty) {
+          setState(() => _initialLoading = true);
+        }
+      }
     }
 
+    // Phase 2: Frische Daten vom Server holen
     try {
       final items = await _repository.getItemsForList(widget.listId);
       if (!mounted) return;
@@ -122,7 +136,8 @@ class _ShoppingListDetailScreenState extends State<ShoppingListDetailScreen>
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _loadError = e;
+        // Fehler nur anzeigen wenn noch keine Daten vorhanden
+        if (_items.isEmpty) _loadError = e;
         _initialLoading = false;
       });
     }

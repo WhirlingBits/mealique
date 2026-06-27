@@ -63,9 +63,25 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   }
 
   Future<void> _loadLists() async {
-    if (_lists == null) {
-      setState(() => _isLoading = true);
+    // Phase 1: Gecachte Listen sofort anzeigen (kein Spinner wenn Cache vorhanden)
+    try {
+      final cachedLists = await _repository.getShoppingListsLocalOnly();
+      if (cachedLists != null && cachedLists.isNotEmpty && mounted) {
+        final listsWithCount = cachedLists.map((list) {
+          final unchecked = list.listItems.where((i) => !i.checked).length;
+          return list.copyWith(itemCount: unchecked);
+        }).toList();
+        setState(() {
+          _lists = listsWithCount;
+          _isLoading = false;
+          _error = null;
+        });
+      }
+    } catch (_) {
+      // Fehler beim Lesen lokaler Daten ignorieren – API-Fetch folgt
     }
+
+    // Phase 2: Im Hintergrund frische Daten vom Server holen
     try {
       final lists = await _repository.getShoppingListsWithItemCount(
         orderBy: _sortField,
@@ -81,7 +97,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e;
+          // Fehler nur anzeigen wenn noch keine Daten vorhanden
+          if (_lists == null || _lists!.isEmpty) _error = e;
           _isLoading = false;
         });
       }
@@ -105,7 +122,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       currentDirection: _sortDirection,
     );
 
-    if (result != null) {
+    if (result != null && mounted) {
       _sortField = result.field;
       _sortDirection = result.direction;
       Provider.of<SettingsProvider>(context, listen: false)
@@ -118,45 +135,43 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) => Padding(
+      builder: (ctx) => Padding(
         padding:
-        EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: AddShoppingListForm(
           onAddList: (name) async {
+            // Pop immediately before any async gap so ctx stays valid
+            Navigator.pop(ctx);
             final l10n = AppLocalizations.of(this.context)!;
             try {
               final newList = await _repository.createShoppingList(name);
-              if (mounted) {
-                setState(() {
-                  _lists = [...(_lists ?? []), newList];
-                });
-                Navigator.pop(context);
-                ScaffoldMessenger.of(this.context)
-                  ..clearSnackBars()
-                  ..showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.listCreatedSuccess(name)),
-                      backgroundColor: Colors.green,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  );
-              }
+              if (!mounted) return;
+              setState(() {
+                _lists = [...(_lists ?? []), newList];
+              });
+              ScaffoldMessenger.of(this.context)
+                ..clearSnackBars()
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(l10n.listCreatedSuccess(name)),
+                    backgroundColor: Colors.green,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                );
             } catch (e) {
-              if (mounted) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(this.context)
-                  ..clearSnackBars()
-                  ..showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.errorCreating(e.toString())),
-                      backgroundColor: Colors.red,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      duration: const Duration(seconds: 4),
-                    ),
-                  );
-              }
+              if (!mounted) return;
+              ScaffoldMessenger.of(this.context)
+                ..clearSnackBars()
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(l10n.errorCreating(e.toString())),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    duration: const Duration(seconds: 4),
+                  ),
+                );
             }
           },
         ),

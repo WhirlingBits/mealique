@@ -48,6 +48,16 @@ class HouseholdRepository {
   Future<List<ShoppingList>?> getShoppingListsLocalOnly() =>
       _storage.getShoppingLists();
 
+  /// Gibt die Items einer bestimmten Liste aus dem lokalen Cache zurück – ohne API-Aufruf.
+  Future<List<ShoppingItem>?> getItemsForListLocalOnly(String listId) async {
+    final cached = await _storage.getShoppingLists();
+    if (cached == null) return null;
+    final list = cached.where((l) => l.id == listId).firstOrNull;
+    final items = list?.listItems;
+    if (items == null || items.isEmpty) return null;
+    return items;
+  }
+
   Future<List<ShoppingList>> getShoppingLists({String? orderBy, String? orderDirection}) async {
     final token = await _tokenStorage.getToken();
     if (token == AppConstants.demoToken) {
@@ -94,22 +104,23 @@ class HouseholdRepository {
       apiCall: () async {
         final response = await _api.getShoppingLists(1, 100, orderBy: orderBy, orderDirection: orderDirection);
         final lists = response.items;
-        final listsWithItems = <ShoppingList>[];
 
-        for (var list in lists) {
-          try {
-            // Fetch full list with items from the detail endpoint
-            final fullList = await _api.getShoppingList(list.id);
-            final items = fullList.listItems;
-            final uncheckedItemsCount = items.where((item) => !item.checked).length;
-            listsWithItems.add(list.copyWith(
-              itemCount: uncheckedItemsCount,
-              listItems: items,
-            ));
-          } catch (e) {
-            listsWithItems.add(list.copyWith(itemCount: 0));
-          }
-        }
+        // Alle Listen PARALLEL laden (statt sequentiell)
+        final listsWithItems = await Future.wait(
+          lists.map((list) async {
+            try {
+              final fullList = await _api.getShoppingList(list.id);
+              final items = fullList.listItems;
+              final uncheckedItemsCount = items.where((item) => !item.checked).length;
+              return list.copyWith(
+                itemCount: uncheckedItemsCount,
+                listItems: items,
+              );
+            } catch (e) {
+              return list.copyWith(itemCount: 0);
+            }
+          }),
+        );
         return listsWithItems;
       },
       cacheWrite: (lists) async {
@@ -409,14 +420,23 @@ class HouseholdRepository {
         }
       },
       localWrite: () async {
-        debugPrint('DEBUG: Saving shopping item to local cache (offline mode)');
-        // Create a local-only item with a temporary ID
-        final localItem = item.copyWith(
-          id: 'local_${DateTime.now().millisecondsSinceEpoch}',
-          display: foodName,
-        );
-        result = localItem;
-        await _addItemToLocalCache(listId, localItem);
+        if (result != null) {
+          // API war erfolgreich – speichere das Ergebnis vom Server im lokalen Cache.
+          // result NICHT überschreiben, damit der Aufrufer die echte Server-ID erhält.
+          final serverItem = result!.display.isNotEmpty
+              ? result!
+              : result!.copyWith(display: foodName);
+          await _addItemToLocalCache(listId, serverItem);
+        } else {
+          // Offline-Fallback – lege ein temporäres Element mit lokaler ID an.
+          debugPrint('DEBUG: Saving shopping item to local cache (offline mode)');
+          final localItem = item.copyWith(
+            id: 'local_${DateTime.now().millisecondsSinceEpoch}',
+            display: foodName,
+          );
+          result = localItem;
+          await _addItemToLocalCache(listId, localItem);
+        }
       },
       enqueue: () {
         debugPrint('DEBUG: Enqueueing sync task for createShoppingItem');

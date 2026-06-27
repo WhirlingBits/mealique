@@ -332,15 +332,16 @@ class HouseholdApi {
     debugPrint('DEBUG: HouseholdApi.createShoppingItem - Final Payload: $jsonData');
 
     try {
+      // Mealie v2 API expects a list of items
       final response = await _dio.post(
         'api/households/shopping/items',
-        data: jsonData, // Mealie API expects a single object, not an array
+        data: [jsonData],
       );
       
       debugPrint('DEBUG: HouseholdApi.createShoppingItem - Response status: ${response.statusCode}');
       debugPrint('DEBUG: HouseholdApi.createShoppingItem - Response data: ${response.data}');
       
-      // Response can be either a single item or a CreateShoppingItemResponse structure
+      // Response is a CreateShoppingItemResponse structure with createdItems / updatedItems
       if (response.data is Map && response.data['createdItems'] != null) {
         final parsed = CreateShoppingItemResponse.fromJson(response.data);
         if (parsed.createdItems.isNotEmpty) {
@@ -349,8 +350,9 @@ class HouseholdApi {
         if (parsed.updatedItems.isNotEmpty) {
           return parsed.updatedItems.first;
         }
+        throw Exception('Shopping item creation returned empty lists (createdItems and updatedItems are both empty)');
       }
-      // If response is a direct item object
+      // Fallback: direct item object (older Mealie versions)
       return ShoppingItem.fromJson(response.data);
     } on DioException catch (e) {
       debugPrint('DEBUG: HouseholdApi.createShoppingItem - DioException caught!');

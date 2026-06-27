@@ -40,6 +40,30 @@ class MealplanRepository {
     return mealsByDay;
   }
 
+  /// Gibt Mahlzeiteneinträge für den angegebenen Datumsbereich direkt aus dem
+  /// lokalen SQLite-Cache zurück – ohne Netzwerkaufruf.
+  Future<LinkedHashMap<DateTime, List<MealplanEntry>>?> getMealplansLocalOnly(
+      DateTime start, DateTime end) async {
+    final cached = await _storage.getMealplans();
+    if (cached == null || cached.isEmpty) return null;
+
+    final startUtc = DateTime.utc(start.year, start.month, start.day);
+    final endUtc = DateTime.utc(end.year, end.month, end.day);
+
+    final filtered = cached.where((entry) {
+      try {
+        final entryDate = DateTime.parse(entry.date).toLocal();
+        final entryDayUtc = DateTime.utc(entryDate.year, entryDate.month, entryDate.day);
+        return !entryDayUtc.isBefore(startUtc) && !entryDayUtc.isAfter(endUtc);
+      } catch (_) {
+        return false;
+      }
+    }).toList();
+
+    if (filtered.isEmpty) return null;
+    return _groupByDay(filtered);
+  }
+
   Future<LinkedHashMap<DateTime, List<MealplanEntry>>> getMealplans(
       DateTime start, DateTime end) async {
     final token = await _tokenStorage.getToken();

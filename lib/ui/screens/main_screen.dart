@@ -14,6 +14,7 @@ import 'package:mealique/services/quick_actions_service.dart';
 import 'package:mealique/services/sync_service.dart';
 import 'package:mealique/ui/widgets/recipe_image.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../data/sync/household_repository.dart';
 import '../widgets/add_recipe_form.dart';
 import '../widgets/add_shopping_list_form.dart';
 import '../widgets/add_shopping_list_item_form.dart';
@@ -42,6 +43,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   late bool _isOffline;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   final SyncService _syncService = SyncService();
+  final HouseholdRepository _householdRepository = HouseholdRepository();
 
   // Zeitpunkt, zu dem die App zuletzt im Vordergrund war
   DateTime? _lastResumeTime;
@@ -228,13 +230,44 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       builder: (ctx) => AddShoppingListItemForm(
         onAddItem: (item) async {
           Navigator.pop(ctx);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(l10n.itemAddedSuccess(item.foodName)),
-                backgroundColor: Colors.green,
-              ),
+          try {
+            await _householdRepository.createShoppingItem(
+              listId: item.listId,
+              foodId: item.foodId,
+              foodName: item.foodName,
+              quantity: item.quantity.toDouble(),
+              note: item.notes,
+              unitId: item.unitId,
+              categoryId: item.categoryId,
             );
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(l10n.itemAddedSuccess(item.foodName)),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+          } on DioException catch (e) {
+            debugPrint('main_screen: API Error creating shopping item: ${e.response?.statusCode}, ${e.response?.data}');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(l10n.errorAdding('${e.response?.data?['detail'] ?? e.message}')),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          } catch (e) {
+            debugPrint('main_screen: Error creating shopping item: $e');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(l10n.errorAdding(e.toString())),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
           }
         },
       ),

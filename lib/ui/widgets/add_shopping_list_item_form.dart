@@ -101,6 +101,7 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
   String? _selectedCategoryId;
 
   bool _showAddFoodButton = false;
+  bool _foodsLoading = false;
   bool _showAddCategoryButton = false;
   bool _showAdvanced = false;
 
@@ -220,6 +221,12 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
       }
     }
 
+    // Ladeindikator starten, solange Foods noch leer sind
+    final needsFoodsFromApi = _formData == null || _formData!.foods.isEmpty;
+    if (needsFoodsFromApi && mounted) {
+      setState(() => _foodsLoading = true);
+    }
+
     // Phase 2: Alle API-Quellen PARALLEL starten, aber Fehler einzeln behandeln.
     // Wichtig: jede Quelle wird unabhängig behandelt — ein Fehler bei Shopping-Lists
     // verhindert nicht das Laden der Kategorien (Labels).
@@ -263,6 +270,7 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
         _formData = _FormData(lists: lists, foods: foods, units: units, labels: labels);
         _cachedFormData = _formData;
         _cachedFormDataAt = DateTime.now();
+        _foodsLoading = false;
       });
     }
   }
@@ -280,7 +288,11 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
     final foods = (results[1] as List<Food>?) ?? [];
     final apiUnits = (results[2] as List<ShoppingItemUnit>?) ?? [];
 
-    if (foods.isEmpty) return null;
+    // Auch ohne Foods zeigen, damit das Formular sofort erscheint
+    // (Foods werden parallel im Hintergrund via API nachgeladen)
+    if (lists.isEmpty && foods.isEmpty && (localLabels == null || localLabels.isEmpty)) {
+      return null;
+    }
 
     return _FormData(
       lists: lists,
@@ -490,6 +502,8 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
         // Use getOrCreateFood to handle duplicates gracefully
         try {
           final food = await _recipeRepo.getOrCreateFood(text);
+          // Widget might have been dismissed (back gesture / swipe-down) during await
+          if (!mounted) return;
           _selectedFoodId = food.id;
 
           // Update local food list
@@ -501,6 +515,7 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
             });
           }
         } catch (e) {
+          if (!mounted) return;
           _showToast(l10n.errorCreatingFood(e.toString()), backgroundColor: Colors.red);
           return;
         }
@@ -837,10 +852,16 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
     return RawAutocomplete<Food>(
       textEditingController: _foodController,
       focusNode: _foodFocusNode,
+      // Im Bottom Sheet öffnet das Dropdown nach OBEN, da die Tastatur den Bereich
+      // unterhalb des Feldes verdeckt.
+      optionsViewOpenDirection: OptionsViewOpenDirection.up,
       displayStringForOption: (food) => food.name,
       optionsBuilder: (textEditingValue) {
         final query = textEditingValue.text.toLowerCase();
-        if (query.isEmpty) return const Iterable.empty();
+        if (query.isEmpty) {
+          // Zeige die ersten 20 Foods als Vorschläge (wie bei Kategorien)
+          return foodOptions.take(20);
+        }
         return foodOptions.where((food) => food.name.toLowerCase().contains(query));
       },
       onSelected: (food) => setState(() => _selectedFoodId = food.id),
@@ -851,25 +872,39 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
           decoration: InputDecoration(
             labelText: l10n.food,
             border: const OutlineInputBorder(),
-            suffixIcon: _showAddFoodButton
-              ? IconButton(
-                  icon: const Icon(Icons.add_circle_outline),
-                  onPressed: () => _handleCreateAndSelectFood(controller.text),
-                  tooltip: l10n.addNewFood,
-                )
-              : null,
+            hintText: _foodsLoading ? l10n.loading : null,
+            suffixIcon: _foodsLoading
+                ? const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : _showAddFoodButton
+                    ? IconButton(
+                        icon: const Icon(Icons.add_circle_outline),
+                        onPressed: () => _handleCreateAndSelectFood(controller.text),
+                        tooltip: l10n.addNewFood,
+                      )
+                    : null,
           ),
         );
       },
       optionsViewBuilder: (context, onSelected, options) {
         return Align(
-          alignment: Alignment.topLeft,
+          // Beim Öffnen nach oben muss bottomLeft verwendet werden,
+          // damit das Dropdown direkt am oberen Rand des Eingabefeldes anliegt.
+          alignment: Alignment.bottomLeft,
           child: Material(
             elevation: 4.0,
-            child: SizedBox(
-               width: MediaQuery.of(context).size.width * 0.55,
-               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 250),
+            borderRadius: BorderRadius.circular(8),
+            child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: 250,
+                  maxWidth: MediaQuery.of(context).size.width - 32,
+                ),
                 child: ListView.builder(
                   padding: EdgeInsets.zero,
                   shrinkWrap: true,
@@ -911,13 +946,12 @@ class _AddShoppingListItemFormState extends State<AddShoppingListItemForm> {
                       ),
                     );
                   },
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
+                 ),
+             ),
+           ),
+         );
+       },
+     );
   }
 
   Widget _buildQuantityField() {

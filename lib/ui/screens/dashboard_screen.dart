@@ -33,25 +33,127 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final UserRepository _userRepository = UserRepository();
   final HouseholdRepository _householdRepository = HouseholdRepository();
 
-  late Future<List<MealplanEntry>> _todaysMealsFuture;
-  late Future<List<Recipe>> _popularRecipesFuture;
-  late Future<UserSelf> _userFuture;
+  // Zustandsvariablen statt FutureBuilder – ermöglicht zweiphasiges Laden
+  List<MealplanEntry>? _todaysMeals;
+  List<Recipe>? _popularRecipes;
+  UserSelf? _user;
+  bool _loadingMeals = true;
+  bool _loadingRecipes = true;
+  Object? _mealsError;
+  Object? _recipesError;
 
   @override
   void initState() {
     super.initState();
-    _todaysMealsFuture = _fetchTodaysMeals();
-    _popularRecipesFuture = _fetchPopularRecipes();
-    _userFuture = _userRepository.getSelfUser();
+    _loadAll();
   }
 
-  Future<List<MealplanEntry>> _fetchTodaysMeals() async {
+  Future<void> _loadAll() async {
+    await Future.wait([
+      _loadMeals(),
+      _loadPopularRecipes(),
+      _loadUser(),
+    ]);
+  }
+
+  Future<void> _refreshAll() async {
+    setState(() {
+      _loadingMeals = true;
+      _loadingRecipes = true;
+      _mealsError = null;
+      _recipesError = null;
+    });
+    await Future.wait([
+      _loadMeals(skipCache: true),
+      _loadPopularRecipes(skipCache: true),
+      _loadUser(),
+    ]);
+  }
+
+  Future<void> _loadMeals({bool skipCache = false}) async {
     final now = DateTime.now();
     final today = DateTime.utc(now.year, now.month, now.day);
-    final mealsByDay = await _mealplanRepository.getMealplans(today, today);
-    final meals = mealsByDay[today] ?? [];
 
-    // Sort logically: breakfast -> lunch -> dinner -> rest
+    // Phase 1: Lokalen Cache sofort anzeigen
+    if (!skipCache) {
+      try {
+        final cached = await _mealplanRepository.getMealplansLocalOnly(today, today);
+        if (cached != null && mounted) {
+          final meals = cached[today] ?? [];
+          setState(() {
+            _todaysMeals = _sortMeals(meals);
+            _loadingMeals = false;
+          });
+        }
+      } catch (_) {}
+    }
+
+    // Phase 2: API-Daten holen und Cache aktualisieren
+    try {
+      final mealsByDay = await _mealplanRepository.getMealplans(today, today);
+      final meals = mealsByDay[today] ?? [];
+      if (mounted) {
+        setState(() {
+          _todaysMeals = _sortMeals(meals);
+          _loadingMeals = false;
+          _mealsError = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          if (_todaysMeals == null) _mealsError = e;
+          _loadingMeals = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadPopularRecipes({bool skipCache = false}) async {
+    // Phase 1: Lokalen Cache sofort anzeigen
+    if (!skipCache) {
+      try {
+        final cached = await _recipeRepository.getRecipesLocalOnly();
+        if (cached != null && cached.isNotEmpty && mounted) {
+          setState(() {
+            _popularRecipes = cached.take(5).toList();
+            _loadingRecipes = false;
+          });
+        }
+      } catch (_) {}
+    }
+
+    // Phase 2: API
+    try {
+      final recipes = await _recipeRepository.getRecipes(
+          sort: 'rating', orderDirection: 'desc', perPage: 5);
+      if (mounted) {
+        setState(() {
+          _popularRecipes = recipes;
+          _loadingRecipes = false;
+          _recipesError = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          if (_popularRecipes == null) _recipesError = e;
+          _loadingRecipes = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadUser() async {
+    try {
+      final user = await _userRepository.getSelfUser();
+      if (mounted) setState(() => _user = user);
+    } catch (_) {
+      // Benutzername ist nicht kritisch – Fehler still ignorieren
+    }
+  }
+
+  List<MealplanEntry> _sortMeals(List<MealplanEntry> meals) {
     final order = {
       PlanEntryType.breakfast: 0,
       PlanEntryType.lunch: 1,
@@ -61,18 +163,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       PlanEntryType.drink: 5,
       PlanEntryType.dessert: 6,
     };
-
-    meals.sort((a, b) {
+    final sorted = List<MealplanEntry>.from(meals);
+    sorted.sort((a, b) {
       final aOrder = order[a.entryType] ?? 99;
       final bOrder = order[b.entryType] ?? 99;
       return aOrder.compareTo(bOrder);
     });
-
-    return meals;
-  }
-
-  Future<List<Recipe>> _fetchPopularRecipes() async {
-    return _recipeRepository.getRecipes(sort: 'rating', orderDirection: 'desc', perPage: 5);
+    return sorted;
   }
 
   void _showAddRecipeSheet(BuildContext context) {
@@ -84,39 +181,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: AddRecipeForm(
           onAddRecipe: (recipeJson) async {
+            // Pop immediately before any async gap so ctx stays valid
             Navigator.pop(ctx);
-            final l10n = AppLocalizations.of(context)!;
+            final l10n = AppLocalizations.of(this.context)!;
             try {
               final data = Map<String, dynamic>.from(
                   jsonDecode(recipeJson) as Map);
               await _recipeRepository.createRecipe(data);
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.recipeCreated)),
-                );
-                setState(() {}); // refresh dashboard
-              }
+              if (!mounted) return;
+              ScaffoldMessenger.of(this.context).showSnackBar(
+                SnackBar(content: Text(l10n.recipeCreated)),
+              );
+              setState(() {}); // refresh dashboard
             } on DioException catch (e) {
               debugPrint('DioException creating recipe: ${e.response?.statusCode} - ${e.response?.data}');
-              if (mounted) {
-                final detail = e.response?.data?['detail'] ?? e.message;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${l10n.error}: $detail'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
+              if (!mounted) return;
+              final detail = e.response?.data?['detail'] ?? e.message;
+              ScaffoldMessenger.of(this.context).showSnackBar(
+                SnackBar(
+                  content: Text('${l10n.error}: $detail'),
+                  backgroundColor: Colors.red,
+                ),
+              );
             } catch (e) {
               debugPrint('Error creating recipe: $e');
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${l10n.error}: $e'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
+              if (!mounted) return;
+              ScaffoldMessenger.of(this.context).showSnackBar(
+                SnackBar(
+                  content: Text('${l10n.error}: $e'),
+                  backgroundColor: Colors.red,
+                ),
+              );
             }
           },
         ),
@@ -131,6 +226,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => AddShoppingListItemForm(
         onAddItem: (item) async {
+          // Pop immediately before any async gap so ctx stays valid
+          Navigator.pop(ctx);
           final l10n = AppLocalizations.of(this.context)!;
           try {
             await _householdRepository.createShoppingItem(
@@ -142,50 +239,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
               unitId: item.unitId,
               categoryId: item.categoryId,
             );
-            if (mounted) {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(this.context)
-                ..clearSnackBars()
-                ..showSnackBar(
-                  SnackBar(
-                    content: Text(l10n.itemAddedSuccess(item.foodName)),
-                    backgroundColor: Colors.green,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                );
-            }
+            if (!mounted) return;
+            ScaffoldMessenger.of(this.context)
+              ..clearSnackBars()
+              ..showSnackBar(
+                SnackBar(
+                  content: Text(l10n.itemAddedSuccess(item.foodName)),
+                  backgroundColor: Colors.green,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              );
           } on DioException catch (e) {
             final responseData = e.response?.data;
             debugPrint('API Error creating shopping item: ${e.response?.statusCode}, $responseData');
-            if (mounted) {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(this.context)
-                ..clearSnackBars()
-                ..showSnackBar(
-                  SnackBar(
-                    content: Text(l10n.errorAdding('${responseData?['detail'] ?? e.message}')),
-                    backgroundColor: Colors.red,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                );
-            }
+            if (!mounted) return;
+            ScaffoldMessenger.of(this.context)
+              ..clearSnackBars()
+              ..showSnackBar(
+                SnackBar(
+                  content: Text(l10n.errorAdding('${responseData?['detail'] ?? e.message}')),
+                  backgroundColor: Colors.red,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              );
           } catch (e) {
             debugPrint('Error creating shopping item: $e');
-            if (mounted) {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(this.context)
-                ..clearSnackBars()
-                ..showSnackBar(
-                  SnackBar(
-                    content: Text(l10n.errorAdding(e.toString())),
-                    backgroundColor: Colors.red,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                );
-            }
+            if (!mounted) return;
+            ScaffoldMessenger.of(this.context)
+              ..clearSnackBars()
+              ..showSnackBar(
+                SnackBar(
+                  content: Text(l10n.errorAdding(e.toString())),
+                  backgroundColor: Colors.red,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              );
           }
         },
       ),
@@ -201,37 +292,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: AddShoppingListForm(
           onAddList: (listName) async {
+            // Pop immediately before any async gap so ctx stays valid
+            Navigator.pop(ctx);
             final l10n = AppLocalizations.of(this.context)!;
             try {
               await _householdRepository.createShoppingList(listName);
-              if (mounted) {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(this.context)
-                  ..clearSnackBars()
-                  ..showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.listCreatedSuccess(listName)),
-                      backgroundColor: Colors.green,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  );
-              }
+              if (!mounted) return;
+              ScaffoldMessenger.of(this.context)
+                ..clearSnackBars()
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(l10n.listCreatedSuccess(listName)),
+                    backgroundColor: Colors.green,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                );
             } catch (e) {
               debugPrint('Error creating shopping list: $e');
-              if (mounted) {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(this.context)
-                  ..clearSnackBars()
-                  ..showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.errorCreating(e.toString())),
-                      backgroundColor: Colors.red,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  );
-              }
+              if (!mounted) return;
+              ScaffoldMessenger.of(this.context)
+                ..clearSnackBars()
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(l10n.errorCreating(e.toString())),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                );
             }
           },
         ),
@@ -242,14 +331,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _getGreeting(BuildContext context, String name) {
     final l10n = AppLocalizations.of(context)!;
     final hour = DateTime.now().hour;
+    if (hour < 12) return l10n.greetingGoodMorning(name);
+    if (hour < 18) return l10n.greetingGoodDay(name);
+    return l10n.greetingGoodEvening(name);
+  }
 
-    if (hour < 12) {
-      return l10n.greetingGoodMorning(name);
-    } else if (hour < 18) {
-      return l10n.greetingGoodDay(name);
-    } else {
-      return l10n.greetingGoodEvening(name);
-    }
+  String _getGreetingNoName(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final hour = DateTime.now().hour;
+    if (hour < 12) return l10n.greetingGoodMorning('');
+    if (hour < 18) return l10n.greetingGoodDay('');
+    return l10n.greetingGoodEvening('');
   }
 
   Widget _buildErrorWidget(Object error, VoidCallback onRetry) {
@@ -304,14 +396,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         foregroundColor: Colors.white,
         title: Text(l10n.home),
         actions: [
-          DashboardActionsMenu(
-            onRefresh: () {
-              setState(() {
-                _todaysMealsFuture = _fetchTodaysMeals();
-                _popularRecipesFuture = _fetchPopularRecipes();
-                _userFuture = _userRepository.getSelfUser();
-              });
-            },
+       DashboardActionsMenu(
+            onRefresh: () => _refreshAll(),
           ),
         ],
       ),
@@ -382,22 +468,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildGreetingSection(BuildContext context, AppLocalizations l10n) {
+    final name = _user?.fullName;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        FutureBuilder<UserSelf>(
-          future: _userFuture,
-          builder: (context, snapshot) {
-            String name = 'there'; // Default name
-            if (snapshot.connectionState == ConnectionState.done &&
-                snapshot.hasData) {
-              name = snapshot.data!.fullName;
-            }
-            return Text(
-              _getGreeting(context, name),
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            );
-          },
+        Text(
+          name != null && name.isNotEmpty ? _getGreeting(context, name) : _getGreetingNoName(context),
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
         Text(
@@ -456,51 +533,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
       children: [
         _buildSectionTitle(l10n.today.toUpperCase()),
         const SizedBox(height: 8),
-        FutureBuilder<List<MealplanEntry>>(
-          future: _todaysMealsFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return _buildErrorWidget(snapshot.error!, () {
-                setState(() {
-                  _todaysMealsFuture = _fetchTodaysMeals();
-                });
-              });
-            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return Center(child: Text(l10n.noMealsPlanned));
-            }
-
-            final meals = snapshot.data!;
-            return Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: List.generate(meals.length, (index) {
-                    final meal = meals[index];
-                    final entryType = toBeginningOfSentenceCase(
-                            meal.entryType.name);
-                    return Column(
-                      children: [
-                        _buildMealRow(
-                          meal.recipe?.name ??
-                              meal.title ??
-                              l10n.unnamedMeal,
-                          entryType,
-                        ),
-                        if (index < meals.length - 1)
-                          const Divider(height: 24),
-                      ],
-                    );
-                  }),
-                ),
+        if (_loadingMeals && _todaysMeals == null)
+          const Center(child: CircularProgressIndicator())
+        else if (_mealsError != null && (_todaysMeals == null || _todaysMeals!.isEmpty))
+          _buildErrorWidget(_mealsError!, () => _loadMeals(skipCache: true))
+        else if (_todaysMeals == null || _todaysMeals!.isEmpty)
+          Center(child: Text(l10n.noMealsPlanned))
+        else
+          Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: List.generate(_todaysMeals!.length, (index) {
+                  final meal = _todaysMeals![index];
+                  final entryType = toBeginningOfSentenceCase(meal.entryType.name);
+                  return Column(
+                    children: [
+                      _buildMealRow(
+                        meal.recipe?.name ?? meal.title ?? l10n.unnamedMeal,
+                        entryType,
+                      ),
+                      if (index < _todaysMeals!.length - 1) const Divider(height: 24),
+                    ],
+                  );
+                }),
               ),
-            );
-          },
-        ),
+            ),
+          ),
       ],
     );
   }
@@ -513,34 +574,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(height: 8),
         SizedBox(
           height: 150,
-          child: FutureBuilder<List<Recipe>>(
-            future: _popularRecipesFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return _buildErrorWidget(snapshot.error!, () {
-                  setState(() {
-                    _popularRecipesFuture = _fetchPopularRecipes();
-                  });
-                });
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return Center(child: Text(l10n.noPopularRecipesFound));
-              }
-
-              final recipes = snapshot.data!;
-              return ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: recipes.length,
-                itemBuilder: (context, index) {
-                  final recipe = recipes[index];
-                  return _buildRecipeCard(recipe);
-                },
-              );
-            },
-          ),
+          child: _buildRecipesContent(l10n, isGrid: false),
         ),
       ],
+    );
+  }
+
+  Widget _buildRecipesContent(AppLocalizations l10n, {required bool isGrid}) {
+    if (_loadingRecipes && _popularRecipes == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_recipesError != null && (_popularRecipes == null || _popularRecipes!.isEmpty)) {
+      return _buildErrorWidget(_recipesError!, () => _loadPopularRecipes(skipCache: true));
+    }
+    if (_popularRecipes == null || _popularRecipes!.isEmpty) {
+      return Center(child: Text(l10n.noPopularRecipesFound));
+    }
+    if (isGrid) {
+      return GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.85,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+        ),
+        itemCount: _popularRecipes!.length,
+        itemBuilder: (context, index) => _buildRecipeGridCard(_popularRecipes![index]),
+      );
+    }
+    return ListView.builder(
+      scrollDirection: Axis.horizontal,
+      itemCount: _popularRecipes!.length,
+      itemBuilder: (context, index) => _buildRecipeCard(_popularRecipes![index]),
     );
   }
 
@@ -551,39 +618,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       children: [
         _buildSectionTitle(l10n.popularRecipes.toUpperCase()),
         const SizedBox(height: 8),
-        FutureBuilder<List<Recipe>>(
-          future: _popularRecipesFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return _buildErrorWidget(snapshot.error!, () {
-                setState(() {
-                  _popularRecipesFuture = _fetchPopularRecipes();
-                });
-              });
-            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return Center(child: Text(l10n.noPopularRecipesFound));
-            }
-
-            final recipes = snapshot.data!;
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.85,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemCount: recipes.length,
-              itemBuilder: (context, index) {
-                final recipe = recipes[index];
-                return _buildRecipeGridCard(recipe);
-              },
-            );
-          },
-        ),
+        _buildRecipesContent(l10n, isGrid: true),
       ],
     );
   }
