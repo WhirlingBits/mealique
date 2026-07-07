@@ -13,15 +13,25 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 class DioClient {
   static Dio createDio() {
     final dio = Dio(BaseOptions(
-      connectTimeout: const Duration(seconds: 7),
-      receiveTimeout: const Duration(seconds: 20),
+      // Erhöhte Timeouts für große Datenmengen
+      // receiveTimeout: Wartet auf Daten NACH der Verbindung
+      // sendTimeout: Wartet auf Verbindung BEIM Senden
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 60), // Erhöht von 20 auf 60 Sekunden
       headers: {'Content-Type': 'application/json'},
+      baseUrl: '', // Start with empty, will be set by interceptor
     ));
 
+    // Order matters: add interceptors from innermost (first to execute) to outermost
+    // 1. First: BaseUrl and Auth setup (must happen before everything else)
+    // 2. Second: Retry logic (for network errors)
+    // 3. Third: Token refresh (for 401 errors)
+    // 4. Fourth: Error handling (converts exceptions to custom types)
+    
     dio.interceptors.addAll([
-      RetryInterceptor(dio: dio),
-      TokenRefreshInterceptor(dio: dio),
       ErrorInterceptor(),
+      TokenRefreshInterceptor(dio: dio),
+      RetryInterceptor(dio: dio),
     ]);
 
     return dio;
@@ -33,6 +43,8 @@ class ErrorInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     ApiException apiException;
+
+    debugPrint('DioClient.ErrorInterceptor: type=${err.type}, statusCode=${err.response?.statusCode}, url=${err.requestOptions.path}');
 
     // Helper to extract detail message from response data
     String? extractDetail(dynamic data) {
@@ -64,13 +76,16 @@ class ErrorInterceptor extends Interceptor {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
+        debugPrint('DioClient.ErrorInterceptor: Timeout error');
         apiException = NetworkException('Connection timeout');
         break;
       case DioExceptionType.unknown:
+        debugPrint('DioClient.ErrorInterceptor: Unknown error - ${err.message}');
         apiException = NetworkException(err.message ?? 'Please check your internet connection.');
         break;
       case DioExceptionType.badResponse:
         final detail = extractDetail(err.response?.data);
+        debugPrint('DioClient.ErrorInterceptor: Bad response - ${err.response?.statusCode} - $detail');
         switch (err.response?.statusCode) {
           case 401:
             apiException = UnauthorizedException();
@@ -98,6 +113,7 @@ class ErrorInterceptor extends Interceptor {
         }
         break;
       default:
+        debugPrint('DioClient.ErrorInterceptor: Other error - ${err.message}');
         apiException = ApiException(message: err.message ?? 'An unexpected error occurred');
         break;
     }
@@ -126,14 +142,18 @@ class RetryInterceptor extends Interceptor {
         retryCount++;
         err.requestOptions.extra['retry_count'] = retryCount;
 
+        debugPrint('RetryInterceptor: Retrying request (attempt $retryCount/$maxRetries) - ${err.requestOptions.path}');
+
         // Short fixed delay before retry
         await Future.delayed(const Duration(seconds: 1));
 
         try {
           // Re-run the request.
           final response = await dio.fetch(err.requestOptions);
+          debugPrint('RetryInterceptor: Retry succeeded');
           return handler.resolve(response);
         } on DioException catch (e) {
+          debugPrint('RetryInterceptor: Retry failed - ${e.message}');
           // If the retry also fails, pass the error to the next interceptor.
           return handler.next(e);
         }
@@ -144,9 +164,9 @@ class RetryInterceptor extends Interceptor {
   }
 
   bool _shouldRetry(DioException err) {
-    // Only retry on actual connection errors, not on timeouts caused by a slow server
-    return err.type == DioExceptionType.connectionTimeout ||
-        err.type == DioExceptionType.connectionError;
+    // Only retry on actual connection errors, not on timeouts
+    // Timeouts mean the server is slow - retrying just wastes more time
+    return err.type == DioExceptionType.connectionError;
   }
 }
 

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mealique/models/cookbook_model.dart';
 import 'package:mealique/models/mealplan_model.dart';
 import 'package:mealique/models/mealplan_rule_model.dart';
@@ -416,6 +417,43 @@ class HouseholdStorage {
 
   Future<void> clearShoppingLists() async {
     await _db.delete(_db.shoppingLists).go();
+  }
+
+  /// Replace a local shopping list ID with a real UUID from the API.
+  /// Updates the shopping list record and all its items to use the new ID.
+  Future<void> replaceShoppingListId({
+    required String oldId,
+    required String newId,
+  }) async {
+    // Get the old list with all its items
+    final allLists = await getShoppingLists();
+    if (allLists == null) return;
+
+    final oldListIndex = allLists.indexWhere((l) => l.id == oldId);
+    if (oldListIndex == -1) return;
+
+    final oldList = allLists[oldListIndex];
+
+    // Update all items to use the new list ID
+    final updatedItems = oldList.listItems.map((item) {
+      return item.copyWith(shoppingListId: newId);
+    }).toList();
+
+    // Create the new list with the real UUID
+    final newList = oldList.copyWith(
+      id: newId,
+      listItems: updatedItems,
+    );
+
+    // Delete the old record by its primary key
+    await (_db.delete(_db.shoppingLists)
+          ..where((t) => t.id.equals(oldId)))
+        .go();
+
+    // Insert the new record with the new ID
+    await _db.into(_db.shoppingLists).insert(newList.toDriftCompanion());
+
+    debugPrint('HouseholdStorage.replaceShoppingListId: replaced "$oldId" with "$newId"');
   }
 
   Future<void> saveMealplanRules(List<MealplanRule> rules) async {

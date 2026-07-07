@@ -80,18 +80,22 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
   Future<void> _validateTokenAndNavigate(
       String serverUrl, String token, {bool isRetry = false}) async {
     try {
+      debugPrint('AuthCheckScreen: Validating token with API call...');
       final api = RecipesApi();
       // Kurzes Timeout beim Start, damit die App nicht ewig hängt
       await api.getRecipes(page: 1, perPage: 1);
+      debugPrint('AuthCheckScreen: Token validation successful');
       // User-ID im Hintergrund cachen – nicht auf Ergebnis warten
       _fetchAndSaveUserId();
       if (mounted) _navigateToHome();
     } on DioException catch (e) {
+      debugPrint('AuthCheckScreen: DioException - type=${e.type}, statusCode=${e.response?.statusCode}, message=${e.message}');
       if (!mounted) return;
 
       final statusCode = e.response?.statusCode;
 
       if (statusCode == 401) {
+        debugPrint('AuthCheckScreen: Token expired (401), attempting to refresh...');
         // Token abgelaufen → mit gespeicherten Credentials erneuern
         final authApi = AuthApi();
         final newToken = await authApi.refreshToken();
@@ -100,18 +104,19 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
         }
       } else if (_isNetworkError(e) && !isRetry) {
         // Netzwerk direkt nach Standby noch nicht bereit → 1,5 s warten, retry
-        debugPrint('AuthCheck: Netzwerk nicht bereit, retry nach 1.5 s...');
+        debugPrint('AuthCheckScreen: Network error, retrying after 1.5s...');
         await Future.delayed(const Duration(milliseconds: 1500));
         if (mounted) {
           await _validateTokenAndNavigate(serverUrl, token, isRetry: true);
         }
       } else {
+        debugPrint('AuthCheckScreen: Network/Server error, starting offline - ${e.message}');
         // Anderer Netzwerkfehler (Server nicht erreichbar etc.)
         // → Home im Offline-Modus starten, nicht zum Login
         if (mounted) _navigateToHome(isOffline: true);
       }
     } catch (e) {
-      debugPrint('AuthCheck unerwarteter Fehler: $e');
+      debugPrint('AuthCheckScreen: Unexpected error: $e');
       // Sicherheitsnetz: wenn Token vorhanden, lieber offline starten als Login
       if (mounted) _navigateToHome(isOffline: true);
     }

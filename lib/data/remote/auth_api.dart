@@ -9,6 +9,8 @@ class AuthApi {
   AuthApi() : _dio = Dio() {
     _dio.options.connectTimeout = const Duration(seconds: 15);
     _dio.options.receiveTimeout = const Duration(seconds: 15);
+    // Initialize with empty baseUrl to avoid Dio 5.9.2 validation errors
+    _dio.options.baseUrl = '';
     // Note: We are not including the central error interceptor from DioClient here
     // because we need to handle the login error case specifically.
   }

@@ -173,19 +173,34 @@ class RecipeRepository {
   Future<List<Food>> _doGetFoods({bool forceRefresh = false}) {
     return withOfflineFallbackSimple<List<Food>>(
       apiCall: () async {
-        const perPage = 250;
+        const perPage = 500; // Größere Seiten = weniger Anfragen
+        debugPrint('getFoods: Starting to load foods from API (500 items per page)');
+        
         final firstPage = await _api.getFoods(page: 1, perPage: perPage);
         final allFoods = <Food>[...firstPage.items];
+        debugPrint('getFoods: Loaded page 1 with ${firstPage.items.length} items, total pages: ${firstPage.totalPages}');
 
-        // Restliche Seiten PARALLEL laden (statt sequentiell)
+        // Restliche Seiten mit LIMITED parallel loading (max 3 gleichzeitig um Overload zu vermeiden)
         if (firstPage.totalPages > 1) {
           final pageNumbers =
               List.generate(firstPage.totalPages - 1, (i) => i + 2);
-          final pages = await Future.wait(
-            pageNumbers.map((p) => _api.getFoods(page: p, perPage: perPage)),
-          );
-          for (final p in pages) {
-            allFoods.addAll(p.items);
+          
+          // In Batches laden um Server nicht zu überlasten
+          for (int i = 0; i < pageNumbers.length; i += 3) {
+            final batch = pageNumbers.skip(i).take(3);
+            debugPrint('getFoods: Loading pages $batch');
+            try {
+              final pages = await Future.wait(
+                batch.map((p) => _api.getFoods(page: p, perPage: perPage)),
+              );
+              for (final p in pages) {
+                allFoods.addAll(p.items);
+              }
+              debugPrint('getFoods: Batch complete, total items so far: ${allFoods.length}');
+            } catch (e) {
+              debugPrint('getFoods: Error loading batch: $e');
+              // Continue with what we have
+            }
           }
         }
 
@@ -197,11 +212,14 @@ class RecipeRepository {
 
         _foodsCache = foods;
         _foodsCacheTimestamp = DateTime.now();
-        debugPrint('getFoods: ${foods.length} Lebensmittel vom API geladen');
+        debugPrint('getFoods: ${foods.length} unique foods loaded from API');
         return foods;
       },
       cacheWrite: (foods) async {
-        if (foods.isNotEmpty) await _storage.saveFoods(foods);
+        if (foods.isNotEmpty) {
+          debugPrint('getFoods: Saving ${foods.length} foods to local cache');
+          await _storage.saveFoods(foods);
+        }
       },
       cacheRead: () async {
         final cached = await _storage.getFoods();
@@ -209,7 +227,7 @@ class RecipeRepository {
           _foodsCache = cached;
           _foodsCacheTimestamp = DateTime.now();
           debugPrint(
-              'getFoods: ${cached.length} Lebensmittel aus SQLite geladen');
+              'getFoods: ${cached.length} foods loaded from local SQLite cache');
         }
         return cached;
       },
@@ -1032,18 +1050,22 @@ class RecipeRepository {
     if (_unitsCache != null &&
         _unitsCacheTimestamp != null &&
         DateTime.now().difference(_unitsCacheTimestamp!) < _unitsCacheTtl) {
+      debugPrint('getUnits: Using cached units (${_unitsCache!.length} items)');
       return _unitsCache!;
     }
 
     return withOfflineFallbackSimple<List<ShoppingItemUnit>>(
       apiCall: () async {
+        debugPrint('getUnits: Loading units from API');
         final units = await _api.getUnits();
         _unitsCache = units;
         _unitsCacheTimestamp = DateTime.now();
+        debugPrint('getUnits: Loaded ${units.length} units from API');
         return units;
       },
       cacheWrite: (units) async {
         if (units.isNotEmpty) {
+          debugPrint('getUnits: Saving ${units.length} units to local cache');
           await _storage.saveUnits(units);
         }
       },
@@ -1052,6 +1074,7 @@ class RecipeRepository {
         if (cached != null && cached.isNotEmpty) {
           _unitsCache = cached;
           _unitsCacheTimestamp = DateTime.now();
+          debugPrint('getUnits: Loaded ${cached.length} units from local cache');
         }
         return cached;
       },

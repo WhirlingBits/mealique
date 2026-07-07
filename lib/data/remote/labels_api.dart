@@ -17,8 +17,10 @@ class LabelsApi {
   LabelsApi()
       : _tokenStorage = TokenStorage(),
         _dio = DioClient.createDio() {
-    _dio.interceptors.add(InterceptorsWrapper(
+    // Add the auth/baseUrl interceptor at the very beginning (before error handling)
+    _dio.interceptors.insert(0, InterceptorsWrapper(
       onRequest: (options, handler) async {
+        // Ensure baseUrl is set from storage if not already set
         if (options.baseUrl.isEmpty) {
           final serverUrl = await _tokenStorage.getServerUrl();
           if (serverUrl != null && serverUrl.isNotEmpty) {
@@ -26,6 +28,7 @@ class LabelsApi {
           }
         }
 
+        // Add authorization header
         final token = await _tokenStorage.getToken();
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -22,7 +24,8 @@ class ShoppingListScreen extends StatefulWidget {
   State<ShoppingListScreen> createState() => _ShoppingListScreenState();
 }
 
-class _ShoppingListScreenState extends State<ShoppingListScreen> {
+class _ShoppingListScreenState extends State<ShoppingListScreen>
+    with WidgetsBindingObserver {
   final HouseholdRepository _repository = HouseholdRepository();
   final ScrollController _scrollController = ScrollController();
 
@@ -32,6 +35,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   String? _sortField;
   String _sortDirection = 'asc';
   bool _isFabVisible = true;
+  Timer? _refreshTimer;
 
   // For tablet master-detail view
   ShoppingList? _selectedList;
@@ -39,17 +43,21 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     final settings = Provider.of<SettingsProvider>(context, listen: false);
     _sortField = settings.shoppingListSortField;
     _sortDirection = settings.shoppingListSortDirection;
     _scrollController.addListener(_onScroll);
-    _loadLists();
+    unawaited(_loadLists());
+    _startAutoRefresh();
   }
 
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -60,6 +68,23 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     } else if (direction == ScrollDirection.forward && !_isFabVisible) {
       setState(() => _isFabVisible = true);
     }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_loadLists());
+      _startAutoRefresh();
+    } else if (state == AppLifecycleState.paused) {
+      _refreshTimer?.cancel();
+    }
+  }
+
+  void _startAutoRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
+      unawaited(_loadLists());
+    });
   }
 
   Future<void> _loadLists() async {

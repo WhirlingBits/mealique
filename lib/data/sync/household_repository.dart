@@ -159,6 +159,9 @@ class HouseholdRepository {
       );
     }
 
+    // Generate a temporary local ID that will be stored in the sync queue
+    final localId = 'local_${DateTime.now().millisecondsSinceEpoch}';
+
     ShoppingList? result;
     await withOfflineWriteFallback(
       apiCall: () async {
@@ -167,7 +170,7 @@ class HouseholdRepository {
       localWrite: () async {
         // Save a local-only list with a temporary ID
         final localList = ShoppingList(
-          id: 'local_${DateTime.now().millisecondsSinceEpoch}',
+          id: localId,
           name: name,
           extras: {},
           createdAt: DateTime.now().toIso8601String(),
@@ -185,6 +188,7 @@ class HouseholdRepository {
       enqueue: () => _syncQueue.enqueue(
         actionType: 'create',
         entityType: 'shopping_list',
+        entityId: localId,  // Store the local ID so we can replace it later
         payload: {'name': name},
       ),
     );
@@ -211,6 +215,11 @@ class HouseholdRepository {
         payload: {'id': id},
       ),
     );
+  }
+
+  /// Called during sync to replace a local shopping list ID with the real UUID from the API.
+  Future<void> replaceShoppingListIdAfterSync(String oldId, String newId) async {
+    await _storage.replaceShoppingListId(oldId: oldId, newId: newId);
   }
 
   Future<void> updateShoppingListName(String listId, String newName) async {

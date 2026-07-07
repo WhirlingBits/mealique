@@ -424,11 +424,21 @@ class _RecipesScreenState extends State<RecipesScreen> {
     if (error is DioException && error.error is ApiException) {
       final e = error.error as ApiException;
       if (e is NetworkException) {
-        msg = l10n.checkInternetConnection;
+        if (error.type == DioExceptionType.receiveTimeout) {
+          msg = l10n.serverError; // "Server responds too slowly"
+        } else {
+          msg = l10n.checkInternetConnection;
+        }
       } else if (e is ServerException) {
         msg = l10n.serverError;
       } else {
         msg = e.message;
+      }
+    } else if (error is DioException) {
+      if (error.type == DioExceptionType.receiveTimeout) {
+        msg = 'Server antwortet sehr langsam. Versuchen Sie es später erneut.';
+      } else {
+        msg = l10n.unexpectedError;
       }
     } else {
       msg = l10n.unexpectedError;

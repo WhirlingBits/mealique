@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:mealique/data/local/sync_queue_storage.dart';
 import 'package:mealique/data/remote/api_exceptions.dart';
 import 'package:mealique/data/remote/household_api.dart';
+import 'package:mealique/data/sync/household_repository.dart';
 import 'package:mealique/models/mealplan_model.dart';
 import 'package:mealique/models/shopping_item_model.dart';
 
@@ -21,6 +22,7 @@ class SyncService {
 
   final SyncQueueStorage _queue = SyncQueueStorage();
   final HouseholdApi _api = HouseholdApi();
+  final HouseholdRepository _repository = HouseholdRepository();
 
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
 
@@ -137,7 +139,13 @@ class SyncService {
       String action, String? entityId, Map<String, dynamic> payload) async {
     switch (action) {
       case 'create':
-        await _api.createShoppingList(name: payload['name'] as String);
+        final newList = await _api.createShoppingList(name: payload['name'] as String);
+        
+        // If the original list had a local ID (local_*), replace it with the real UUID
+        if (entityId != null && entityId.startsWith('local_')) {
+          await _repository.replaceShoppingListIdAfterSync(entityId, newList.id);
+          debugPrint('SyncService: replaced local shopping list ID "$entityId" with "${newList.id}"');
+        }
         break;
       case 'update':
         if (entityId == null) return;

@@ -90,10 +90,11 @@ bool _isNetworkError(DioException e) {
   if (e.error is NetworkException) return true;
 
   // Also check raw Dio exception types that indicate connectivity issues
+  // WICHTIG: receiveTimeout bedeutet, dass der Server langsam ist - das ist auch ein Offline-Fall
   switch (e.type) {
     case DioExceptionType.connectionTimeout:
     case DioExceptionType.sendTimeout:
-    case DioExceptionType.receiveTimeout:
+    case DioExceptionType.receiveTimeout: // Langsamer Server = Offline-Fallback
     case DioExceptionType.unknown:
     case DioExceptionType.connectionError:
       return true;

@@ -28,8 +28,10 @@ class HouseholdApi {
   HouseholdApi({String? baseUrl})
       : _tokenStorage = TokenStorage(),
         _dio = DioClient.createDio() {
-    _dio.interceptors.add(InterceptorsWrapper(
+    // Add the auth/baseUrl interceptor at the very beginning (before error handling)
+    _dio.interceptors.insert(0, InterceptorsWrapper(
       onRequest: (options, handler) async {
+        // Ensure baseUrl is set from storage if not already set
         if (options.baseUrl.isEmpty) {
           final serverUrl = await _tokenStorage.getServerUrl();
           if (serverUrl != null && serverUrl.isNotEmpty) {
@@ -37,6 +39,7 @@ class HouseholdApi {
           }
         }
 
+        // Add authorization header
         final token = await _tokenStorage.getToken();
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
@@ -332,10 +335,10 @@ class HouseholdApi {
     debugPrint('DEBUG: HouseholdApi.createShoppingItem - Final Payload: $jsonData');
 
     try {
-      // Mealie v2 API expects a list of items
+      // Most Mealie versions expect a single object for single-item create.
       final response = await _dio.post(
         'api/households/shopping/items',
-        data: [jsonData],
+        data: jsonData,
       );
       
       debugPrint('DEBUG: HouseholdApi.createShoppingItem - Response status: ${response.statusCode}');
@@ -355,6 +358,30 @@ class HouseholdApi {
       // Fallback: direct item object (older Mealie versions)
       return ShoppingItem.fromJson(response.data);
     } on DioException catch (e) {
+      // Compatibility fallback: some server versions may expect a list payload.
+      final detail = e.response?.data?['detail']?.toString().toLowerCase() ?? '';
+      final expectsList = e.response?.statusCode == 422 &&
+          (detail.contains('valid list') || detail.contains('list type'));
+
+      if (expectsList) {
+        debugPrint('DEBUG: HouseholdApi.createShoppingItem - Retrying with list payload for compatibility');
+        final retryResponse = await _dio.post(
+          'api/households/shopping/items',
+          data: [jsonData],
+        );
+
+        if (retryResponse.data is Map && retryResponse.data['createdItems'] != null) {
+          final parsed = CreateShoppingItemResponse.fromJson(retryResponse.data);
+          if (parsed.createdItems.isNotEmpty) {
+            return parsed.createdItems.first;
+          }
+          if (parsed.updatedItems.isNotEmpty) {
+            return parsed.updatedItems.first;
+          }
+        }
+        return ShoppingItem.fromJson(retryResponse.data);
+      }
+
       debugPrint('DEBUG: HouseholdApi.createShoppingItem - DioException caught!');
       debugPrint('  - Status Code: ${e.response?.statusCode}');
       debugPrint('  - Response Data: ${e.response?.data}');
